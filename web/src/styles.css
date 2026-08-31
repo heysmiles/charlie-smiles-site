@@ -1,0 +1,175 @@
+:root {
+  --cream: #fff9f5;
+  --ink: #66564a;
+  --ink-soft: #66564ab3;
+  --ember: #e86a17;
+  --mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { margin: 0; padding: 0; }
+
+html { scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--mono);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+/* ---------------------------------------------------------------- stage -- */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+.stage canvas { display: block; }
+
+/* The page's height lives here and nowhere else. */
+.track { height: 760vh; }
+
+/* -------------------------------------------------------------- landing -- */
+
+.landing {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: var(--cream);
+  display: grid;
+  place-items: center;
+  will-change: transform;
+}
+
+.landing__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.5rem, 2vh, 1.5rem);
+  will-change: transform, opacity;
+}
+
+.landing__star {
+  width: clamp(230px, 38vmin, 460px);
+  height: auto;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* The signature, drawn as vector so no licensed webfont has to ship. */
+.landing__name {
+  width: clamp(240px, 42vmin, 500px);
+  aspect-ratio: 3340 / 941;
+  margin: 0;
+  background: var(--ink);
+  -webkit-mask: url('/brand/wordmark.svg') no-repeat center / contain;
+  mask: url('/brand/wordmark.svg') no-repeat center / contain;
+}
+
+.landing__cue {
+  margin-top: clamp(1.2rem, 5vh, 3rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.landing__tagline {
+  font-size: clamp(0.62rem, 1.5vw, 0.78rem);
+  letter-spacing: 0.24em;
+  text-transform: lowercase;
+  color: var(--ink-soft);
+}
+
+.landing__arrow {
+  width: 10px;
+  height: 10px;
+  border-right: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  transform: rotate(45deg);
+  animation: nudge 1.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  opacity: 0.75;
+}
+
+@keyframes nudge {
+  0%, 100% { transform: rotate(45deg) translate(0, 0); opacity: 0.35; }
+  45%      { transform: rotate(45deg) translate(4px, 4px); opacity: 0.85; }
+}
+
+/* ------------------------------------------------------------ landmarks -- */
+
+.landmark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0;
+  user-select: none;
+  transition: color 0.25s ease;
+  color: var(--cream);
+}
+
+.landmark__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(255, 249, 245, 0.16);
+  margin-bottom: 0.35rem;
+}
+
+.landmark__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 12px rgba(20, 30, 32, 0.65);
+}
+
+.landmark__leads {
+  font-size: 0.6rem;
+  letter-spacing: 0.11em;
+  opacity: 0.66;
+  text-shadow: 0 1px 10px rgba(20, 30, 32, 0.7);
+}
+
+.landmark:hover { color: #ffd9b0; }
+
+/* -------------------------------------------------------------- scrubber -- */
+
+.scrubber {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(20, 28, 30, 0.82);
+  color: #eaf2ef;
+  font-size: 11px;
+  backdrop-filter: blur(8px);
+}
+.scrubber input { width: 46vw; max-width: 520px; accent-color: var(--ember); }
+.scrubber button {
+  font: inherit;
+  font-family: var(--mono);
+  color: inherit;
+  background: transparent;
+  border: 1px solid rgba(234, 242, 239, 0.35);
+  border-radius: 999px;
+  padding: 2px 9px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing__arrow { animation: none; }
+}
