@@ -4,13 +4,13 @@ import * as THREE from 'three';
 import { buildProfileTexture } from './waveProfile';
 import { noiseGLSL } from './glsl/noise.glsl';
 import { palette } from '../lib/palette';
-import { WAVE } from './constants';
+import { WAVE, SUN_DIR, BEND } from './constants';
 
 const vert = /* glsl */ `
 uniform sampler2D uProfile;
-uniform float uFront, uBreakWidth, uWaveLen, uWaveHeight, uTime, uChop;
+uniform float uFront, uBreakWidth, uWaveLen, uWaveHeight, uTime, uChop, uCamU, uBendK, uBendSlope, uBendLead;
 
-varying float vU, vS, vP, vPhi;
+varying float vU, vS, vP, vPhi, vCut, vEdge;
 varying vec3 vWorld;
 varying vec3 vNrm;
 
@@ -24,8 +24,20 @@ float phaseAt(float u){
   return clamp(p, 0.0, 1.0);
 }
 
+// How much of the cross-section is solid water. Through the standing-face
+// phase the sheet stops just past the crest: the lip hangs in the air and what
+// falls from it is spray, not a wall. Let the sheet run all the way to the
+// trough there and every section becomes a sealed hump — the tube has no mouth.
+float cutAt(float pSmooth){
+  return 1.0 - 0.36 * smoothstep(0.22, 0.46, pSmooth) * (1.0 - smoothstep(0.60, 0.70, pSmooth));
+}
+
 vec3 wavePoint(float u, float s, out float pOut, out float phiOut){
   float p = phaseAt(u);
+  // The cut follows the smooth phase, not the ragged one — otherwise the
+  // lip's edge saw-tooths from column to column.
+  float cut = cutAt(clamp((u - uFront) / uBreakWidth, 0.0, 1.0));
+  s = min(s, cut);
   vec4 pr = texture2D(uProfile, vec2(s, p));
   pOut = p;
   phiOut = pr.b;
@@ -37,6 +49,10 @@ vec3 wavePoint(float u, float s, out float pOut, out float phiOut){
   float x = (u - 0.5) * uWaveLen;
   float y = pr.g * uWaveHeight * taper;
   float z = -pr.r * uWaveHeight * taper;
+
+  // The wave peels away offshore ahead of the tube (see constants.ts BEND).
+  float ahead = max(0.0, uCamU - u - uBendLead) * uWaveLen;
+  z += uBendSlope * ahead + uBendK * ahead * ahead;
 
   // Long-period swell riding through the whole wave.
   float swell = sin(x * 0.030 + uTime * 0.55) * 0.85
@@ -78,7 +94,10 @@ void main(){
   vec3 pv = wavePoint(u, min(s + ds, 1.0), tp, tphi);
   vec3 nrm = normalize(cross(pv - pos, pu - pos));
 
+  float cut = cutAt(clamp((u - uFront) / uBreakWidth, 0.0, 1.0));
   vU = u; vS = s; vP = p; vPhi = phi;
+  vCut = 1.0 - smoothstep(cut - 0.05, cut, s);
+  vEdge = smoothstep(cut - 0.14, cut - 0.02, s) * step(cut, 0.99);
   vNrm = nrm;
   vec4 wp = modelMatrix * vec4(pos, 1.0);
   vWorld = wp.xyz;
@@ -88,10 +107,10 @@ void main(){
 
 const frag = /* glsl */ `
 uniform float uTime, uOpacity;
-uniform vec3 uDeep, uMid, uFace, uLit, uFoam, uSky, uFog;
+uniform vec3 uDeep, uMid, uFace, uLit, uFoam, uSky, uFog, uSun, uSunDir;
 uniform float uFogNear, uFogFar;
 
-varying float vU, vS, vP, vPhi;
+varying float vU, vS, vP, vPhi, vCut, vEdge;
 varying vec3 vWorld;
 varying vec3 vNrm;
 
@@ -100,74 +119,78 @@ ${noiseGLSL}
 void main(){
   vec3 N = normalize(vNrm);
   vec3 V = normalize(cameraPosition - vWorld);
-  if (dot(N, V) < 0.0) N = -N;
+  bool flipped = dot(N, V) < 0.0;
+  if (flipped) N = -N;
 
-  // Water body: dark in the trough, greener up the face.
+  // Water body: near-black navy in the trough, bluer up the face.
   vec3 col = mix(uDeep, uMid, smoothstep(0.0, 0.5, vS));
-  col = mix(col, uFace, smoothstep(0.38, 0.86, vS));
+  col = mix(col, uFace, smoothstep(0.4, 0.86, vS));
 
-  // Light coming through thin water near the throwing lip — the green glow
-  // that makes a barrel read as a barrel.
-  float thin = smoothstep(0.52, 0.98, vS) * smoothstep(0.20, 0.72, vP);
-  col = mix(col, uLit, thin * 0.9);
-
-  // Past horizontal, the surface is the roof of the barrel. It sits in shadow,
-  // but water is never black — light still comes through the sheet and bounces
-  // off the wall, so shade toward deep green rather than toward nothing.
+  // Fine surface texture, running with the face.
+  float ripple = fbm(vec2(vU * 320.0, vS * 74.0) + uTime * 0.30);
+  float ripple2 = fbm(vec2(vU * 90.0, vS * 220.0) - uTime * 0.22);
   float inside = smoothstep(1.7, 3.1, vPhi);
-  vec3 roof = mix(uDeep, uLit, 0.16) * 0.72;
-  col = mix(col, roof, inside * 0.7);
-  // Light spilling in from the mouth of the tube.
-  col += uLit * inside * smoothstep(0.55, 1.0, vS) * 0.12;
+  col *= 1.0 - (0.07 - 0.12 * ripple) * (1.0 - inside);
+  col *= 0.96 + 0.08 * ripple2 * (1.0 - inside);
+
+  // Past horizontal the surface is the roof of the tube. From inside it is
+  // dark, but streaked along the wave — that streaking is what sells the
+  // sense of a surface rushing past overhead.
+  float roofStreak = fbm(vec2(vU * 9.0, vS * 26.0) + vec2(uTime * 0.25, 0.0));
+  vec3 roof = mix(uDeep * 2.0, uMid * 1.25, 0.22 * smoothstep(0.4, 0.8, roofStreak));
+  col = mix(col, roof, inside * 0.85);
+  col += uSky * 0.05 * inside;
+
+  // Backlight. The lip is thin water between the eye and a sun sitting on the
+  // horizon, so it glows amber from behind — the single most important cue in
+  // the reference. Strongest where the sheet is thinnest and the sun is
+  // behind it.
+  float thin = smoothstep(0.72, 0.98, vS) * smoothstep(0.15, 0.7, vP);
+  float behind = pow(clamp(-dot(V, uSunDir) * 0.5 + 0.5, 0.0, 1.0), 4.0);
+  col += uLit * thin * behind * 0.55;
+
+  // Rim along the edge of the lip.
+  float rim = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 3.0);
+  col += uLit * rim * thin * 0.3;
+
+  // Warm key from the sun on whatever faces it — the back of a distant wave
+  // is dark against the sky in the reference, but never black.
+  float key = clamp(dot(N, uSunDir), 0.0, 1.0);
+  col += uLit * key * 0.12 * (1.0 - inside);
 
   // Foam.
   float grain = fbm(vec2(vU * 150.0, vS * 42.0) + uTime * 0.18);
   float fine = fbm(vec2(vU * 520.0, vS * 150.0) - uTime * 0.35);
   float lipFoam = smoothstep(0.88, 1.0, vS) * smoothstep(0.06, 0.40, vP);
   float white = smoothstep(0.62, 0.92, vP);
-  // Foam draining down the face in streaks, rather than a wash of flat white.
   float streak = smoothstep(0.52, 0.88, fbm(vec2(vU * 60.0, vS * 260.0)))
                * smoothstep(0.28, 0.72, vP) * 0.6;
-  float f = clamp(lipFoam * 1.05 + white + streak, 0.0, 1.0);
+  float f = clamp(lipFoam * 1.05 + white + streak + vEdge * (0.5 + 0.6 * fine), 0.0, 1.0);
   f *= 0.40 + 0.75 * grain + 0.25 * fine;
   f = clamp(f * (0.75 + 0.45 * fine), 0.0, 1.0);
-  col = mix(col, uFoam, f);
+  // Foam facing the sun is lit cream; in the tube's shadow it goes dusky.
+  float foamLit = clamp(dot(N, uSunDir) * 0.5 + 0.5, 0.0, 1.0);
+  vec3 foamCol = mix(uFoam * 0.55, uFoam, foamLit);
+  col = mix(col, foamCol, f);
 
-  // Fine surface texture. Without this the water reads as poured resin — a big
-  // smooth shape needs high-frequency detail before the eye accepts it as
-  // liquid, and the detail has to run with the face rather than across it.
-  float ripple = fbm(vec2(vU * 320.0, vS * 74.0) + uTime * 0.30);
-  float ripple2 = fbm(vec2(vU * 90.0, vS * 220.0) - uTime * 0.22);
-  col *= 0.92 + 0.15 * ripple;
-  col *= 0.96 + 0.08 * ripple2;
+  // Sun glints on the face, shattered by the ripple.
+  vec3 R = reflect(-V, N);
+  float glint = pow(clamp(dot(R, uSunDir), 0.0, 1.0), 40.0);
+  col += uSun * glint * (0.2 + 0.8 * ripple) * 0.6 * (1.0 - f);
 
-  // Sky in the glancing angles.
+  // Sky in glancing angles.
   float fres = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 3.5);
-  col = mix(col, uSky, fres * 0.30 * (1.0 - f * 0.8));
-
-  // A soft key from high and behind, so the crest catches light, plus a
-  // scattered glint that the ripple breaks up.
-  vec3 L = normalize(vec3(-0.25, 0.85, -0.45));
-  float key = clamp(dot(N, L), 0.0, 1.0);
-  col += key * 0.10 * (1.0 - f * 0.5);
-  float glint = pow(clamp(dot(reflect(-V, N), L), 0.0, 1.0), 22.0);
-  col += glint * (0.2 + 0.8 * ripple) * 0.35 * (1.0 - f);
+  col = mix(col, uSky, fres * 0.22 * (1.0 - f * 0.8) * (1.0 - inside));
 
   float d = length(cameraPosition - vWorld);
   col = mix(col, uFog, smoothstep(uFogNear, uFogFar, d));
 
-  // The wave is a sheet, not a solid. Where it has not broken, its leading edge
-  // rests just above the open water and the camera can see under it — a black
-  // strip along the horizon. Fade the last of the tail out there so it melts
-  // into the ocean instead; a thrown lip stays solid, because that edge is
-  // meant to be seen.
   float tail = 1.0 - smoothstep(0.84, 1.0, vS) * (1.0 - smoothstep(0.22, 0.48, vP));
-
-  gl_FragColor = vec4(col, uOpacity * tail);
+  gl_FragColor = vec4(col, uOpacity * tail * vCut);
 }
 `;
 
-export type WaveHandle = { front: number; chop: number; opacity: number };
+export type WaveHandle = { front: number; camU: number; chop: number; opacity: number };
 
 export function Wave({ handle }: { handle: React.MutableRefObject<WaveHandle> }) {
   const mat = useRef<THREE.ShaderMaterial>(null!);
@@ -182,16 +205,22 @@ export function Wave({ handle }: { handle: React.MutableRefObject<WaveHandle> })
       uWaveHeight: { value: WAVE.height },
       uTime: { value: 0 },
       uChop: { value: 1 },
+      uCamU: { value: 1 },
+      uBendK: { value: BEND.k },
+      uBendSlope: { value: BEND.slope },
+      uBendLead: { value: BEND.lead },
       uOpacity: { value: 1 },
       uDeep: { value: new THREE.Color(palette.waterDeep) },
       uMid: { value: new THREE.Color(palette.waterMid) },
       uFace: { value: new THREE.Color(palette.waterFace) },
       uLit: { value: new THREE.Color(palette.waterLit) },
       uFoam: { value: new THREE.Color(palette.foam) },
-      uSky: { value: new THREE.Color(palette.skyHorizonCold) },
-      uFog: { value: new THREE.Color(palette.skyHorizonCold) },
-      uFogNear: { value: 180 },
-      uFogFar: { value: 620 },
+      uSky: { value: new THREE.Color(palette.skyMid) },
+      uFog: { value: new THREE.Color(palette.skyHorizon) },
+      uSun: { value: new THREE.Color(palette.sun) },
+      uSunDir: { value: new THREE.Vector3(...SUN_DIR).normalize() },
+      uFogNear: { value: 30 },
+      uFogFar: { value: 420 },
     }),
     [profile]
   );
@@ -200,6 +229,7 @@ export function Wave({ handle }: { handle: React.MutableRefObject<WaveHandle> })
     const u = mat.current.uniforms;
     u.uTime.value += dt;
     u.uFront.value = handle.current.front;
+    u.uCamU.value = handle.current.camU;
     u.uChop.value = handle.current.chop;
     u.uOpacity.value = handle.current.opacity;
   });

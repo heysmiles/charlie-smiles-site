@@ -26,12 +26,14 @@ body {
 .stage {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: 20;
+  pointer-events: none;
 }
 .stage canvas { display: block; }
+.stage .landmark { pointer-events: auto; }
 
 /* The page's height lives here and nowhere else. */
-.track { height: 760vh; }
+.track { height: 330vh; }
 
 /* -------------------------------------------------------------- landing -- */
 
@@ -42,7 +44,6 @@ body {
   background: var(--cream);
   display: grid;
   place-items: center;
-  will-change: transform;
 }
 
 .landing__inner {
@@ -138,7 +139,7 @@ body {
   text-shadow: 0 1px 10px rgba(20, 30, 32, 0.7);
 }
 
-.landmark:hover { color: #ffd9b0; }
+.landmark:hover { color: #ffb36b; }
 
 /* -------------------------------------------------------------- scrubber -- */
 

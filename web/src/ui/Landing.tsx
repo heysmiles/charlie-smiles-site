@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { clamp, smoothstep } from '../lib/anim';
+import { smoothstep } from '../lib/anim';
+import { TL } from '../lib/timeline';
 
 /**
- * The still, warm page you land on. It does not fade — it lifts, carrying the
- * cream ground up and off the screen to uncover the ocean already running
- * underneath it.
+ * The still, warm page you land on. It does not move. The ocean rises over
+ * it — the canvas sits above this sheet, the sky starts transparent, and the
+ * sunset's zenith is the same cream as this page, so there is no seam to
+ * cross. The content simply fades as the water reaches it.
  */
 export function Landing({ progress }: { progress: React.MutableRefObject<number> }) {
-  const sheet = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const cue = useRef<HTMLDivElement>(null);
 
@@ -15,21 +16,12 @@ export function Landing({ progress }: { progress: React.MutableRefObject<number>
     let raf = 0;
     const tick = () => {
       const t = progress.current;
-      const lift = smoothstep(0.0, 0.14, t);
-      const s = sheet.current;
-      const i = inner.current;
-      const c = cue.current;
-      if (s) {
-        s.style.transform = `translate3d(0, ${-lift * 108}vh, 0)`;
-        s.style.pointerEvents = lift > 0.02 ? 'none' : 'auto';
+      const gone = smoothstep(TL.landingOut[0], TL.landingOut[1], t);
+      if (inner.current) {
+        inner.current.style.opacity = String(1 - gone);
+        inner.current.style.transform = `translate3d(0, ${-gone * 6}vh, 0) scale(${1 + gone * 0.04})`;
       }
-      if (i) {
-        // Content drifts a touch slower than the sheet — a little parallax so
-        // the page feels like it has depth as it leaves.
-        i.style.transform = `translate3d(0, ${lift * 26}vh, 0) scale(${1 + lift * 0.06})`;
-        i.style.opacity = String(1 - smoothstep(0.02, 0.11, t));
-      }
-      if (c) c.style.opacity = String(clamp(1 - t * 22));
+      if (cue.current) cue.current.style.opacity = String(1 - smoothstep(0.0, 0.06, t));
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -37,7 +29,7 @@ export function Landing({ progress }: { progress: React.MutableRefObject<number>
   }, [progress]);
 
   return (
-    <div className="landing" ref={sheet}>
+    <div className="landing">
       <div className="landing__inner" ref={inner}>
         <video
           className="landing__star"

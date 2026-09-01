@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { WAVE } from './constants';
+import { WAVE, CAM_P, bendZ } from './constants';
 import { sampleProfile } from './waveProfile';
 import { smoothstep } from '../lib/anim';
 
@@ -15,9 +15,9 @@ export function Surfer({ front }: { front: React.MutableRefObject<number> }) {
   useFrame(() => {
     const f = front.current;
     // Sit a little way into the breaking side of the front.
-    const p = 0.36;
+    const p = 0.5;
     const u = f + WAVE.breakWidth * p;
-    const prof = sampleProfile(0.34, p);
+    const prof = sampleProfile(0.14, p);
 
     // The wave mesh tapers to nothing at both ends; the surfer has to ride the
     // tapered surface, not the height the profile would have had, or he hangs
@@ -27,7 +27,7 @@ export function Surfer({ front }: { front: React.MutableRefObject<number> }) {
     g.current.position.set(
       (u - 0.5) * WAVE.length,
       prof.y * WAVE.height * taper,
-      -prof.n * WAVE.height * taper + 1.2
+      -prof.n * WAVE.height * taper - 2.5 + bendZ(u, f + WAVE.breakWidth * CAM_P, WAVE.length)
     );
 
     // Only present while there is actually a barrel to be in.
@@ -37,20 +37,24 @@ export function Surfer({ front }: { front: React.MutableRefObject<number> }) {
 
   return (
     <group ref={g} rotation={[0, 0, 0.22]}>
-      {/* board */}
-      <mesh rotation={[0, 0, Math.PI / 2]} position={[0, -0.55, 0]}>
-        <capsuleGeometry args={[0.16, 1.9, 3, 8]} />
-        <meshBasicMaterial color="#1b2426" />
+      {/* board — a thin plank, top edge catching the sun */}
+      <mesh rotation={[0, 0, Math.PI / 2]} position={[0, -0.62, 0]} scale={[1, 1, 0.35]}>
+        <capsuleGeometry args={[0.13, 1.7, 3, 8]} />
+        <meshBasicMaterial color="#d9c3ad" />
       </mesh>
-      {/* crouched body */}
-      <mesh position={[0, 0.2, 0]}>
-        <capsuleGeometry args={[0.27, 0.72, 4, 10]} />
-        <meshBasicMaterial color="#141b1d" />
+      {/* crouched body, backlit: dark core with a thin amber rim (inverted hull) */}
+      <mesh position={[0, 0.18, 0]}>
+        <capsuleGeometry args={[0.24, 0.62, 4, 10]} />
+        <meshBasicMaterial color="#0e1224" />
+      </mesh>
+      <mesh position={[0, 0.18, 0]} scale={1.05}>
+        <capsuleGeometry args={[0.24, 0.62, 4, 10]} />
+        <meshBasicMaterial color="#e08a3a" side={THREE.BackSide} transparent opacity={0.8} />
       </mesh>
       {/* trailing arm */}
-      <mesh position={[0.42, 0.34, 0.1]} rotation={[0, 0, -0.9]}>
-        <capsuleGeometry args={[0.1, 0.6, 3, 6]} />
-        <meshBasicMaterial color="#141b1d" />
+      <mesh position={[0.38, 0.3, 0.1]} rotation={[0, 0, -0.9]}>
+        <capsuleGeometry args={[0.08, 0.55, 3, 6]} />
+        <meshBasicMaterial color="#0e1224" />
       </mesh>
     </group>
   );

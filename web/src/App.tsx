@@ -17,8 +17,8 @@ export default function App() {
         <Canvas
           flat
           dpr={[1, IS_COARSE ? 1.5 : 2]}
-          gl={{ antialias: !IS_COARSE, powerPreference: 'high-performance' }}
-          camera={{ fov: 44, near: 0.5, far: 4000, position: [40, 11, -104] }}
+          gl={{ antialias: !IS_COARSE, powerPreference: 'high-performance', alpha: true }}
+          camera={{ fov: 50, near: 0.3, far: 5000, position: [0, 4, -40] }}
         >
           <Scene progress={progress} />
         </Canvas>

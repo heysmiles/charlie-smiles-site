@@ -1,32 +1,29 @@
 /**
- * The site runs a temperature arc: warm paper -> cold ocean -> warm coastline.
- * Cold values are sampled from Charlie's reference surf clip
- * (assets/reference/wave-reference.mov); warm values come from the brand doc.
+ * Golden hour. Sampled from Charlie's surf-game reference
+ * (assets/reference/game-reference.mov) and pulled toward the brand: the top
+ * of the sky is the brand cream, so the ocean world can sit on the landing
+ * page without a seam, and the sun is the brand ember.
  */
 export const palette = {
-  // brand
   cream: '#fff9f5',
   ink: '#66564a',
   ember: '#e86a17',
 
-  // sky
-  skyTopCold: '#3f545c',
-  skyHorizonCold: '#93a6ac',
-  skyTopWarm: '#6d7f88',
-  skyHorizonWarm: '#e6d2bd',
+  skyTop: '#fff4ea',
+  skyMid: '#f4c092',
+  skyLow: '#ee8a3a',
+  skyHorizon: '#d4531a',
+  sun: '#ffd47a',
+  cloud: '#f7b39a',
 
-  // water
-  waterDeep: '#2c4448',
-  waterMid: '#4a6a66',
-  waterFace: '#63887a',
-  waterLit: '#a9c9b5',
-  foam: '#eaf2ef',
-  foamDim: '#c3d2d1',
+  waterDeep: '#0c2038',
+  waterMid: '#183b5e',
+  waterFace: '#24507a',
+  waterLit: '#f2a24a',
+  foam: '#ffe6cc',
+  foamDim: '#d9a98a',
 
-  // shore
-  seaNear: '#93a6ac',
-  seaFar: '#7d9198',
-  landFar: '#7b8b90',
-  landMid: '#5d6b6d',
-  landNear: '#46514f',
+  landFar: '#c27a52',
+  landMid: '#5e3324',
+  landNear: '#2b1813',
 } as const;

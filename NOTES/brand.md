@@ -51,6 +51,15 @@ slightly Japanese-woodblock, saturated against the cream ground.
 Bottom of the doc has a soft blurred gradient wash (orange / yellow / cool blue).
 That aurora-wash is a usable transition device between sections.
 
+## The world's light (decided 2026-09-01)
+
+The ocean world is **golden hour**: cream at the zenith down through peach and
+amber to a deep-orange horizon, a low sun, dark navy water with a sun path.
+Reference: `assets/reference/game-reference.mov` (a surf game; graphics target)
+and `assets/reference/wave-reference.mov` (real; the wave's motion and the
+surfer inside). The zenith is the brand cream on purpose — the ocean can sit
+on the landing page with no seam.
+
 ## Feel, in one line
 
 Warm paper, monospace precision, a handwritten hand in the margins, and one

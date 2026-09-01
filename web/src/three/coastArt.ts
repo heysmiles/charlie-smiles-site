@@ -64,11 +64,12 @@ export function mountainLayer() {
   x.globalAlpha = 1;
 
   // Haze that eats the base of the hills.
-  const g = x.createLinearGradient(0, base - H * 0.34, 0, base);
-  g.addColorStop(0, 'rgba(147,166,172,0)');
-  g.addColorStop(1, 'rgba(147,166,172,0.85)');
+  const g = x.createLinearGradient(0, base - H * 0.6, 0, base);
+  g.addColorStop(0, 'rgba(232,132,58,0)');
+  g.addColorStop(0.5, 'rgba(232,132,58,0.12)');
+  g.addColorStop(1, 'rgba(232,132,58,0.5)');
   x.fillStyle = g;
-  x.fillRect(0, base - H * 0.34, W, H * 0.34);
+  x.fillRect(0, base - H * 0.6, W, H * 0.6);
   return toTexture(c);
 }
 
@@ -131,7 +132,7 @@ export function cityLayer() {
   // --- a taller block at Stanley's office, world x = +290 ---
   const stanX = ux(250);
   x.fillRect(stanX - 26, base - H * 0.235, 52, H * 0.235);
-  x.fillStyle = 'rgba(234,242,239,0.30)';
+  x.fillStyle = 'rgba(255,214,150,0.55)';
   for (let r = 0; r < 7; r++)
     for (let cc = 0; cc < 3; cc++)
       x.fillRect(stanX - 18 + cc * 13, base - H * 0.222 + r * H * 0.030, 7, H * 0.016);
@@ -158,7 +159,7 @@ export function beachLayer() {
   x.closePath();
   x.fillStyle = palette.landNear;
   x.fill();
-  x.strokeStyle = 'rgba(234,242,239,0.35)';
+  x.strokeStyle = 'rgba(255,214,150,0.35)';
   x.lineWidth = 2;
   x.beginPath();
   x.moveTo(skX - 56, base - H * 0.125);

@@ -1,10 +1,11 @@
 # Charlie Smiles — personal site
 
 A portfolio built as a place you enter rather than a page you scroll. Section
-one is the landing and the wave: the cream page lifts away, an ocean is already
-running underneath it, a wave barrels past, and the camera comes over the back
-of it to find the Venice coastline — where five landmarks are the doors to the
-rest of the site.
+one is the landing and the wave: a golden-hour ocean rises over the cream page,
+a wave stands up beside you and throws over, you ride inside the barrel looking
+out of its mouth at the sun and the Venice coastline, and then you're out
+through the mouth and onto the coast — where five landmarks are the doors to
+the rest of the site.
 
 ```bash
 npm run dev --prefix web
@@ -12,6 +13,8 @@ npm run dev --prefix web
 
 Then scroll. `?debug` adds a timeline scrubber; in dev, `window.__p(0.55)` jumps
 the timeline from the console and `window.__p(null)` hands it back to the scroll.
+`window.__eye = [x, y, z, yaw, pitch]` parks the camera anywhere to inspect the
+geometry; `window.__eye = null` releases it.
 
 ## Layout
 
@@ -43,7 +46,15 @@ so the vertex shader gets a position for a lookup instead of a simulation.
 A wave *breaks along its length* rather than all at once, so `p` varies across
 the wave: `p = (u - front) / breakWidth`. Sliding `front` from one end to the
 other is the whole animation. Everything else — where the barrel is, where the
-surfer sits, where spray is born — is derived from `front`.
+surfer sits, where spray is born — is derived from `front`. The camera is keyed
+*relative to the barrel*, so it rides the break like a surfer.
+
+Three things make the view out of the mouth possible, and all three are needed
+(see `web/src/three/waveProfile.ts`, `constants.ts` and the `cutAt` function in
+`Wave.tsx`): the wave ahead is a low shoulder below eye level; the wave line
+angles away offshore ahead of the camera; and in the standing-face phase the
+sheet is cut short past the crest so the lip hangs in the air instead of
+sealing the tube into a hump.
 
 ## What is real and what is standing in
 
@@ -65,8 +76,8 @@ videography, but that mapping is Charlie's call — see `NOTES/concepts.md`.
 - Fonts: Fira Code is open and self-hosted. **Revive 80 Signature and Biro
   Script Plus are commercial** and still need webfont licences before launch.
   The wordmark sidesteps this by being an SVG path; live accent text does not.
-- The collapse into whitewater is the weakest stretch of the sequence — it goes
-  soft where it should be violent.
+- The whitewater behind the tube and the spray off the hanging lip are the
+  softest parts of the picture.
 - Mobile runs at reduced mesh and particle counts (`web/src/three/constants.ts`)
   but the choreography has not been tuned for a phone's field of view yet.
 - The JS bundle is ~310 kB gzipped, nearly all three.js.

@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { WAVE, IS_COARSE } from './constants';
+import { WAVE, IS_COARSE, CAM_P, BEND } from './constants';
 import { sampleProfile } from './waveProfile';
 
 /**
@@ -19,14 +19,15 @@ const LIFE = 0.17; // in break-front units
 const vert = /* glsl */ `
 attribute float aU;
 attribute vec3 aSeed;
-uniform float uFront, uWaveLen, uLipY, uLipZ, uSize, uPixelRatio;
+uniform float uFront, uWaveLen, uLipY, uLipZ, uSize, uPixelRatio, uCamU, uBendK, uBendSlope, uBendLead;
 varying float vAlpha;
 varying float vSeed;
 
 void main(){
   float age = (aU - uFront) / ${LIFE.toFixed(3)};
   vAlpha = 0.0;
-  vec3 pos = vec3((aU - 0.5) * uWaveLen, uLipY, uLipZ);
+  float ahead = max(0.0, uCamU - aU - uBendLead) * uWaveLen;
+  vec3 pos = vec3((aU - 0.5) * uWaveLen, uLipY, uLipZ + uBendSlope * ahead + uBendK * ahead * ahead);
 
   if (age > 0.0 && age < 1.0) {
     // Offshore wind carries the plume back over the crest (toward +Z).
@@ -97,17 +98,22 @@ export function Spray({
     const lip = sampleProfile(0.97, 0.42);
     return {
       uFront: { value: 1 },
+      uCamU: { value: 1 },
+      uBendK: { value: BEND.k },
+      uBendSlope: { value: BEND.slope },
+      uBendLead: { value: BEND.lead },
       uWaveLen: { value: WAVE.length },
       uLipY: { value: lip.y * WAVE.height },
       uLipZ: { value: -lip.n * WAVE.height },
-      uSize: { value: 0.85 },
+      uSize: { value: 1.0 },
       uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
-      uColor: { value: new THREE.Color('#f2f7f5') },
+      uColor: { value: new THREE.Color('#ffd9a8') },
     };
   }, []);
 
   useFrame(() => {
     mat.current.uniforms.uFront.value = front.current;
+    mat.current.uniforms.uCamU.value = front.current + WAVE.breakWidth * CAM_P;
     mat.current.visible = opacity.current > 0.02;
   });
 

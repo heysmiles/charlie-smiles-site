@@ -55,15 +55,24 @@ const crestTurn = (p: number) =>
   Math.PI / 2 - baseAngle(p) + 0.1 + 0.55 * smoothstep(0.1, 0.6, p);
 
 /** Turn 2: the throw. Small for a swell rolling over, ~3 rad for a full barrel. */
-const throwTurn = (p: number) => 0.55 + 2.6 * smoothstep(0.15, 0.78, p);
+// The throw switches on late and fast. Ahead of the tube the wave is an open
+// standing face; it only rolls over into a roof in the last stretch. Spread
+// the throw out and the wave ahead becomes a smaller closed tube whose roof
+// comes down to meet the floor — a tunnel with no end.
+const throwTurn = (p: number) => 0.9 + 2.3 * smoothstep(0.46, 0.62, p);
 
 /** Where along the arc each turn happens. The gap between them is the tube. */
 const CREST_SPAN = [0.3, 0.52] as const;
 const THROW_SPAN = [0.6, 1.0] as const;
 
-/** Wave height: swell rises, stands up, then collapses. */
+/**
+ * Wave height. Ahead of the break the wave is a low shoulder — lower than a
+ * surfer's eye line in the tube — and it stands up only in the last stretch
+ * before it throws. That is what lets you see out of a barrel: you look over
+ * the shoulder, not through a wall.
+ */
 const heightAt = (p: number) =>
-  0.55 + 0.5 * smoothstep(0.0, 0.4, p) - 0.65 * smoothstep(0.62, 1.0, p);
+  0.42 + 0.63 * smoothstep(0.4, 0.58, p) - 0.62 * smoothstep(0.66, 1.0, p);
 
 export function buildProfileTexture() {
   const data = new Float32Array(PROFILE_P * PROFILE_S * 4);

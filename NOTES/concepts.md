@@ -153,7 +153,23 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
-## Status — 2026-08-30
+## Status — 2026-09-01
+
+Rebuilt the wave after Charlie's verdict ("completely unrealistic") and two new
+references. The shot is now **from inside the tube**: the wave stands up beside
+you on the left, the lip throws over, and you ride the barrel looking out of
+its mouth at the sun and the Venice coastline — then out through the mouth into
+the world. Short scroll (330vh). The landing no longer lifts; the ocean rises
+over it and the sunset paints in, cream-on-cream.
+
+What made the mouth possible (three things, all needed):
+1. The wave ahead of the tube is a **low shoulder** below eye level — it only
+   stands up in the last stretch before it throws.
+2. The wave line **angles away offshore** ahead of the camera (the peel angle).
+3. Through the standing-face phase the sheet is **cut short past the crest** —
+   the lip hangs in the air and what falls is spray, not a solid wall.
+
+## Status — 2026-08-30 (superseded)
 
 Section one is built and running (`README.md` at the repo root explains how).
 Landing, wave, and coastline reveal all work off a single scroll position.

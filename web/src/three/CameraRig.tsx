@@ -1,54 +1,42 @@
 import { useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { keyframes, smootherstep, lerp, damp, dampAngle, lerpAngle } from '../lib/anim';
-import { WAVE } from './constants';
-import { sampleProfile } from './waveProfile';
+import { keyframes, damp } from '../lib/anim';
+import { WAVE, MOUTH_YAW, CAM_P, bendZ } from './constants';
 
 /**
- * The camera is the narrator here, so it gets its own timeline.
+ * The camera is a surfer.
  *
- * Position and field of view are keyframed against scroll. Where it *looks* is
- * not keyframed — it tracks the barrel while the wave is breaking, then swings
- * to the coastline as the wave collapses. Aiming is interpolated as angles
- * rather than as a target point, because lerping a look-at target across the
- * camera's own position makes it snap through the turn instead of sweeping.
+ * It looks down the line the whole way — toward the sun, toward the mouth of
+ * the tube, toward the coast — and its position is keyed *relative to the
+ * barrel*, so it rides along with the break instead of watching it go past.
+ * Being inside a wave is the one camera move in the sequence; everything else
+ * is how it gets in and how it gets out.
  */
 
-// [x, y, z, fov]
-// The break peels toward -X, so the tube's open mouth faces that way. Sitting
-// on the +X side would put the camera at the closed, collapsing end and the
-// barrel would only ever be a dark sliver — hence the negative offsets.
+// [x offset from the barrel, y, z, pitch, fov]
+// dx is measured from the barrel and z from the wave line at the camera's
+// own position, so the camera rides the break rather than outrunning it. The
+// wave stands up beside it on the left and throws over from left to right.
 const RIG: { t: number; v: number[] }[] = [
-  { t: 0.0, v: [-32, 9.5, -132, 44] },
-  { t: 0.2, v: [-28, 9.0, -116, 42] },
-  { t: 0.42, v: [-21, 8.4, -98, 38] },
-  { t: 0.58, v: [-14, 8.0, -86, 35] },
-  { t: 0.72, v: [-8, 7.6, -76, 33] },
-  { t: 0.8, v: [-3, 8.2, -72, 32] },
-  { t: 0.86, v: [0, 17, -64, 36] },
-  { t: 0.92, v: [0, 34, -30, 42] },
-  { t: 0.97, v: [0, 36, 8, 47] },
-  { t: 1.0, v: [0, 31, 30, 49] },
+  { t: 0.0, v: [-16, 4.0, -26, 0.44, 50] }, // low on the water, horizon at the foot of the screen
+  { t: 0.14, v: [-14, 5.2, -24, 0.2, 48] },
+  { t: 0.3, v: [-10, 7.0, -16, 0.08, 50] },
+  { t: 0.46, v: [-4, 9.0, -10, 0.03, 56] }, // the lip comes over
+  { t: 0.62, v: [2, 10.0, -8, 0.0, 62] }, // deep in the tube, eye up on the face
+  { t: 0.78, v: [-3, 10.0, -8.5, 0.0, 60] },
+  { t: 0.86, v: [-36, 10.0, -14, -0.01, 56] }, // heading for the mouth
+  { t: 0.93, v: [-150, 16, -40, -0.035, 50] }, // out
+  { t: 1.0, v: [-260, 24, -70, -0.05, 50] },
 ];
 
-/**
- * The camera rides along with the break rather than watching it go past.
- * DRIFT just short of 1 leaves a little relative motion, so the barrel still
- * slides across frame instead of sitting nailed to the centre.
- */
-const TRACK = 1.0;
-const DRIFT = 0.85;
-
-const COAST = new THREE.Vector3(0, 32, -430);
-
-function yawPitchTo(cam: THREE.Vector3, tgt: THREE.Vector3) {
-  const dx = tgt.x - cam.x;
-  const dy = tgt.y - cam.y;
-  const dz = tgt.z - cam.z;
-  const horiz = Math.hypot(dx, dz) || 1e-6;
-  return { yaw: Math.atan2(dx, -dz), pitch: Math.atan2(dy, horiz) };
-}
+/** Heading: nearly down the line at first, swinging to the mouth once inside. */
+const YAW_KEYS: { t: number; v: number[] }[] = [
+  { t: 0.0, v: [0.0] },
+  { t: 0.3, v: [-0.1] },
+  { t: 0.62, v: [MOUTH_YAW] },
+  { t: 1.0, v: [MOUTH_YAW] },
+];
 
 export function CameraRig({
   progress,
@@ -58,62 +46,35 @@ export function CameraRig({
   front: React.MutableRefObject<number>;
 }) {
   const { camera, size } = useThree();
-  const smoothed = useRef({ yaw: Math.PI, pitch: 0, fov: 44 });
-  const tmpCam = new THREE.Vector3();
-  const tmpTgt = new THREE.Vector3();
+  const smoothed = useRef({ fov: 50 });
 
   useFrame((_, dt) => {
     const t = progress.current;
-    const [kx, ky, kz, kfov] = keyframes(RIG, t);
+    const [dx, y, z, pitch, kfov] = keyframes(RIG, t);
+    const [yawIn] = keyframes(YAW_KEYS, t);
 
-    // Where the barrel is right now.
-    const f = front.current;
-    const barrelU = f + WAVE.breakWidth * 0.4;
+    const barrelU = front.current + WAVE.breakWidth * CAM_P;
     const barrelX = (barrelU - 0.5) * WAVE.length;
-    const prof = sampleProfile(0.58, 0.5);
 
-    const overTheTop = smootherstep(0.82, 0.97, t);
+    const camU = barrelU + dx / WAVE.length;
+    camera.position.set(barrelX + dx, y, z + bendZ(camU, barrelU, WAVE.length));
 
-    tmpCam.set(kx + barrelX * DRIFT * (1 - overTheTop), ky, kz);
-    camera.position.copy(tmpCam);
-
-    // Aim: barrel early, coastline late.
-    tmpTgt.set(barrelX * TRACK, prof.y * WAVE.height * 0.85, -prof.n * WAVE.height);
-    const near = yawPitchTo(tmpCam, tmpTgt);
-    const far = yawPitchTo(tmpCam, COAST);
-
-    // Unwrap so the swing always carries the eye across the horizon in one
-    // direction rather than taking a shortcut back through the wave.
-    let d = far.yaw - near.yaw;
-    while (d < 0) d += Math.PI * 2;
-    const yaw = near.yaw + d * overTheTop;
-    const pitch = lerp(near.pitch, far.pitch, overTheTop);
-
-    // A touch of damping keeps a fast scroll from feeling jittery without
-    // letting the camera lag behind the scrubber.
-    const s = smoothed.current;
-    const lambda = 14;
-    s.yaw = dampAngle(s.yaw, yaw, lambda, Math.min(dt, 0.05));
-    s.pitch = damp(s.pitch, pitch, lambda, Math.min(dt, 0.05));
-
-    // Damping is right for the ride, wrong for the arrival: a fraction of a
-    // radian of lag is invisible mid-wave but leaves the coastline framed off
-    // centre, which pushes the outer landmarks past the edge of the screen.
-    // Hand the last of the turn over to the exact target.
-    const settle = smootherstep(0.92, 1.0, t);
-    if (settle > 0) {
-      s.yaw = lerpAngle(s.yaw, yaw, settle);
-      s.pitch = lerp(s.pitch, pitch, settle);
-    }
-    s.fov = damp(s.fov, kfov, lambda, Math.min(dt, 0.05));
-
+    // Forward = -X, turned toward -Z (the beach) by yawIn.
+    const yaw = -Math.PI / 2 + yawIn;
     camera.rotation.order = 'YXZ';
-    camera.rotation.set(s.pitch, -s.yaw, 0);
+    camera.rotation.set(pitch, -yaw, 0);
+
+    // Dev: window.__eye = [x, y, z, yaw, pitch] parks the camera anywhere.
+    const eye = (window as unknown as { __eye?: number[] }).__eye;
+    if (import.meta.env.DEV && eye) {
+      camera.position.set(eye[0], eye[1], eye[2]);
+      camera.rotation.set(eye[4], -eye[3], 0);
+    }
+
+    const s = smoothed.current;
+    s.fov = damp(s.fov, kfov, 14, Math.min(dt, 0.05));
 
     const cam = camera as THREE.PerspectiveCamera;
-    // Keep the framing honest on narrow screens. A phone in portrait sees a
-    // fraction of the horizontal arc a laptop does, which would cut the outer
-    // landmarks off the coastline entirely — so widen as the frame narrows.
     const aspect = size.width / size.height;
     const fovAdjust = aspect < 1.5 ? 1 + (1.5 - aspect) * 0.42 : 1;
     const nextFov = s.fov * fovAdjust;
