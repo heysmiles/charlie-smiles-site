@@ -41,7 +41,10 @@ void main(){
   float taper = smoothstep(0.0, 0.10, u) * (1.0 - smoothstep(0.90, 1.0, u));
   w *= taper;
 
-  vec4 lip = texture2D(uProfile, vec2(cutAt(p), p));
+  // Hang from the crest, not the cut point: once the tube has rolled shut the
+  // cut is down at the tip, and a curtain from there leaves the tube's dark
+  // back exposed above it. The reference hides the tube behind the fall.
+  vec4 lip = texture2D(uProfile, vec2(min(cutAt(p), 0.64), p));
   float nTop = lip.r * uWaveHeight;
   float yTop = lip.g * uWaveHeight;
 
