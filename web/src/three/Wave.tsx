@@ -167,13 +167,13 @@ void main(){
   float lipFoam = smoothstep(0.88, 1.0, vS) * smoothstep(0.06, 0.40, vP);
   // The outside of the rolled tube is whitewater, not a dark dome: foam over
   // the top of the curl once the lip has thrown.
-  float roofFoam = smoothstep(0.58, 0.7, vP) * smoothstep(0.46, 0.6, vS) * (1.0 - smoothstep(0.78, 0.9, vS)) * (1.0 - inside) * 0.8;
+  float roofFoam = smoothstep(0.56, 0.66, vP) * smoothstep(0.44, 0.56, vS) * (1.0 - smoothstep(0.86, 0.96, vS)) * (1.0 - inside) * 1.3;
   float white = smoothstep(0.62, 0.92, vP);
   float streak = smoothstep(0.52, 0.88, fbm(vec2(vU * 60.0, vS * 260.0)))
                * smoothstep(0.28, 0.72, vP) * 0.6;
   // Lace of foam along the crest, just under the hanging lip.
   float lace = smoothstep(0.48, 0.66, fbm(vec2(vU * 300.0, vS * 70.0) + uTime * 0.1));
-  float f = clamp(lipFoam * 1.05 + white + streak + roofFoam * (0.5 + 0.7 * lace) + vEdge * (0.35 + 0.85 * lace), 0.0, 1.0);
+  float f = clamp(lipFoam * 1.05 + white + streak + roofFoam * (0.7 + 0.5 * lace) + vEdge * (0.35 + 0.85 * lace), 0.0, 1.0);
   f *= 0.40 + 0.75 * grain + 0.25 * fine;
   f = clamp(f * (0.75 + 0.45 * fine), 0.0, 1.0);
   // Foam facing the sun is lit cream; in the tube's shadow it goes dusky.
