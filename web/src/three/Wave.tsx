@@ -51,7 +51,7 @@ vec3 wavePoint(float u, float s, out float pOut, out float phiOut){
   float z = -pr.r * uWaveHeight * taper;
 
   // The wave peels away offshore ahead of the tube (see constants.ts BEND).
-  float ahead = max(0.0, uCamU - u - uBendLead) * uWaveLen;
+  float ahead = min(120.0, max(0.0, uCamU - u - uBendLead) * uWaveLen);
   z += uBendSlope * ahead + uBendK * ahead * ahead;
 
   // Long-period swell riding through the whole wave.
@@ -127,8 +127,9 @@ void main(){
   col = mix(col, uFace, smoothstep(0.4, 0.86, vS));
 
   // Fine surface texture, running with the face.
-  float ripple = fbm(vec2(vU * 320.0, vS * 74.0) + uTime * 0.30);
-  float ripple2 = fbm(vec2(vU * 90.0, vS * 220.0) - uTime * 0.22);
+  // Flow lines run *down* the face: dense along the wave, sparse up it.
+  float ripple = fbm(vec2(vU * 560.0, vS * 11.0) + vec2(0.0, uTime * 0.25));
+  float ripple2 = fbm(vec2(vU * 140.0, vS * 40.0) - uTime * 0.15);
   float inside = smoothstep(1.7, 3.1, vPhi);
   col *= 1.0 - (0.07 - 0.12 * ripple) * (1.0 - inside);
   col *= 0.96 + 0.08 * ripple2 * (1.0 - inside);
@@ -157,15 +158,22 @@ void main(){
   // is dark against the sky in the reference, but never black.
   float key = clamp(dot(N, uSunDir), 0.0, 1.0);
   col += uLit * key * 0.12 * (1.0 - inside);
+  // Sky fill so the face reads as deep blue, not black, from the shoreward side.
+  col += uSky * 0.07 * (1.0 - inside) * clamp(N.y * 0.5 + 0.5, 0.0, 1.0);
 
   // Foam.
   float grain = fbm(vec2(vU * 150.0, vS * 42.0) + uTime * 0.18);
   float fine = fbm(vec2(vU * 520.0, vS * 150.0) - uTime * 0.35);
   float lipFoam = smoothstep(0.88, 1.0, vS) * smoothstep(0.06, 0.40, vP);
+  // The outside of the rolled tube is whitewater, not a dark dome: foam over
+  // the top of the curl once the lip has thrown.
+  float roofFoam = smoothstep(0.58, 0.7, vP) * smoothstep(0.46, 0.6, vS) * (1.0 - smoothstep(0.78, 0.9, vS)) * (1.0 - inside) * 0.8;
   float white = smoothstep(0.62, 0.92, vP);
   float streak = smoothstep(0.52, 0.88, fbm(vec2(vU * 60.0, vS * 260.0)))
                * smoothstep(0.28, 0.72, vP) * 0.6;
-  float f = clamp(lipFoam * 1.05 + white + streak + vEdge * (0.5 + 0.6 * fine), 0.0, 1.0);
+  // Lace of foam along the crest, just under the hanging lip.
+  float lace = smoothstep(0.48, 0.66, fbm(vec2(vU * 300.0, vS * 70.0) + uTime * 0.1));
+  float f = clamp(lipFoam * 1.05 + white + streak + roofFoam * (0.5 + 0.7 * lace) + vEdge * (0.35 + 0.85 * lace), 0.0, 1.0);
   f *= 0.40 + 0.75 * grain + 0.25 * fine;
   f = clamp(f * (0.75 + 0.45 * fine), 0.0, 1.0);
   // Foam facing the sun is lit cream; in the tube's shadow it goes dusky.

@@ -153,7 +153,26 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
-## Status — 2026-09-01
+## Status — 2026-09-02
+
+Charlie's second round of references (four images): a rendered surf-game wave
+seen side-on with a *curtain* of falling white water for a lip; the tube
+interior at sunset; a rendered beach with houses and palms above the sand; and
+a real Venice Beach panorama. Verdict on the previous build: structure good,
+render not there. Direction now:
+
+- Side-on shot first (curtain left, surfer right, wave filling the frame),
+  barreling left to right; the camera dollies in toward the surfer as the lip
+  closes over, turns down the line, rides the tube, then pulls out to the beach.
+- Image 2's sunset palette everywhere.
+- The beach is a **generated painted plate** (`assets/coast/venice-sunset-plate.png`,
+  Nano Banana Pro, 21:9) standing at the end of the tube's mouth, with our sky
+  faded through above the rooftops. That replaced the canvas silhouettes.
+- New in the wave: a curtain mesh hanging from the cut lip (vertical strands,
+  frayed spray top that fades into the sky), lace foam along the crest,
+  vertical flow lines on the face, a wake trail behind the board.
+
+## Status — 2026-09-01 (superseded)
 
 Rebuilt the wave after Charlie's verdict ("completely unrealistic") and two new
 references. The shot is now **from inside the tube**: the wave stands up beside

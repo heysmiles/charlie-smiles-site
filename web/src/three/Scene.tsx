@@ -7,6 +7,8 @@ import { Ocean } from './Ocean';
 import { Sky } from './Sky';
 import { Spray } from './Spray';
 import { Surfer } from './Surfer';
+import { Curtain } from './Curtain';
+import { Trail } from './Trail';
 import { Coastline } from './Coastline';
 import { CameraRig } from './CameraRig';
 import { WAVE, CAM_P } from './constants';
@@ -30,7 +32,9 @@ function Driver({
 }) {
   useFrame(() => {
     const t = progress.current;
-    const f = remap(t, TL.breakStart, TL.breakEnd, 1.06, -0.06);
+    // Starts a little way into the wave so the side-on shot has a fully
+    // formed section to look at rather than the strip's tapered end.
+    const f = remap(t, TL.breakStart, TL.breakEnd, 0.88, -0.06);
     front.current = f;
     wave.current.front = f;
     wave.current.camU = f + WAVE.breakWidth * CAM_P;
@@ -56,6 +60,8 @@ export function Scene({ progress }: { progress: React.MutableRefObject<number> }
       <Coastline progress={progress} />
       <Ocean opacity={ocean} />
       <Wave handle={wave} />
+      <Curtain handle={wave} />
+      <Trail front={front} />
       <Spray front={front} opacity={ocean} />
       <Surfer front={front} />
       <CameraRig progress={progress} front={front} />

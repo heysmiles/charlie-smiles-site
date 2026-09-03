@@ -17,7 +17,7 @@ export function Surfer({ front }: { front: React.MutableRefObject<number> }) {
     // Sit a little way into the breaking side of the front.
     const p = 0.5;
     const u = f + WAVE.breakWidth * p;
-    const prof = sampleProfile(0.14, p);
+    const prof = sampleProfile(0.2, p);
 
     // The wave mesh tapers to nothing at both ends; the surfer has to ride the
     // tapered surface, not the height the profile would have had, or he hangs
@@ -32,7 +32,7 @@ export function Surfer({ front }: { front: React.MutableRefObject<number> }) {
 
     // Only present while there is actually a barrel to be in.
     g.current.visible = taper > 0.6 && f > 0.03;
-    g.current.scale.setScalar(0.85 + taper * 0.15);
+    g.current.scale.setScalar((0.85 + taper * 0.15) * 1.5);
   });
 
   return (

@@ -26,7 +26,7 @@ varying float vSeed;
 void main(){
   float age = (aU - uFront) / ${LIFE.toFixed(3)};
   vAlpha = 0.0;
-  float ahead = max(0.0, uCamU - aU - uBendLead) * uWaveLen;
+  float ahead = min(120.0, max(0.0, uCamU - aU - uBendLead) * uWaveLen);
   vec3 pos = vec3((aU - 0.5) * uWaveLen, uLipY, uLipZ + uBendSlope * ahead + uBendK * ahead * ahead);
 
   if (age > 0.0 && age < 1.0) {

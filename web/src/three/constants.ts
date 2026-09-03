@@ -9,7 +9,7 @@ export const WAVE = {
   /** Crest height at its tallest. Tall enough to put a camera inside. */
   height: 16,
   /** How much of the wave the break transition spans — this sets tube length. */
-  breakWidth: 0.38,
+  breakWidth: 0.46,
   segU: coarse ? 160 : 320,
   segS: coarse ? 60 : 110,
 } as const;
@@ -38,11 +38,11 @@ export const CAM_P = 0.62;
  * Mostly linear (the peel angle) with a little curve on top, in world units
  * of distance ahead of the camera.
  */
-export const BEND = { slope: Math.tan(0.28), k: 0.001, lead: 0.02 } as const;
+export const BEND = { slope: Math.tan(0.28), k: 0.001, lead: 0.02, max: 120 } as const;
 
 /** CPU twin of the vertex shader's bend. */
 export function bendZ(u: number, camU: number, waveLen: number) {
-  const ahead = Math.max(0, camU - u - BEND.lead) * waveLen;
+  const ahead = Math.min(BEND.max, Math.max(0, camU - u - BEND.lead) * waveLen);
   return BEND.slope * ahead + BEND.k * ahead * ahead;
 }
 

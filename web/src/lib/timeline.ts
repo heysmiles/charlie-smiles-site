@@ -8,7 +8,7 @@ export const TL = {
   /** Landing content fades as the water reaches it. */
   landingOut: [0.14, 0.36] as const,
   /** The break travels the wave between these. */
-  breakStart: 0.02,
+  breakStart: 0.0,
   breakEnd: 0.86,
   /** Out through the mouth. */
   exit: [0.84, 1.0] as const,

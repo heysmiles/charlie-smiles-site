@@ -72,7 +72,7 @@ const THROW_SPAN = [0.6, 1.0] as const;
  * the shoulder, not through a wall.
  */
 const heightAt = (p: number) =>
-  0.42 + 0.63 * smoothstep(0.4, 0.58, p) - 0.62 * smoothstep(0.66, 1.0, p);
+  0.42 + 0.63 * smoothstep(0.34, 0.5, p) - 0.62 * smoothstep(0.8, 1.0, p);
 
 export function buildProfileTexture() {
   const data = new Float32Array(PROFILE_P * PROFILE_S * 4);
@@ -109,7 +109,7 @@ export function buildProfileTexture() {
 
     // Once it has collapsed, the curve is a tight spiral, which reads as a bug
     // rather than as whitewater — blend toward a churning mound instead.
-    const collapse = smoothstep(0.8, 1.0, p) * 0.9;
+    const collapse = smoothstep(0.86, 1.0, p) * 0.9;
     for (let si = 0; si < PROFILE_S; si++) {
       const s = si / (PROFILE_S - 1);
       const moundN = s * 2.0 * H;

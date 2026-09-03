@@ -15,27 +15,34 @@ import { WAVE, MOUTH_YAW, CAM_P, bendZ } from './constants';
  */
 
 // [x offset from the barrel, y, z, pitch, fov]
-// dx is measured from the barrel and z from the wave line at the camera's
-// own position, so the camera rides the break rather than outrunning it. The
-// wave stands up beside it on the left and throws over from left to right.
+// dx is measured from the barrel and z from the wave line at the camera's own
+// position, so the camera rides the break. Three chapters: side-on from the
+// shoreward side (the reference wave shot), a dolly in toward the surfer as
+// the lip closes over, and the ride inside the tube — then out to the beach.
 const RIG: { t: number; v: number[] }[] = [
-  { t: 0.0, v: [-16, 4.0, -26, 0.44, 50] }, // low on the water, horizon at the foot of the screen
-  { t: 0.14, v: [-14, 5.2, -24, 0.2, 48] },
-  { t: 0.3, v: [-10, 7.0, -16, 0.08, 50] },
-  { t: 0.46, v: [-4, 9.0, -10, 0.03, 56] }, // the lip comes over
-  { t: 0.62, v: [2, 10.0, -8, 0.0, 62] }, // deep in the tube, eye up on the face
+  { t: 0.0, v: [-5, 8.0, -58, 0.42, 46] }, // horizon at the foot of the landing
+  { t: 0.12, v: [-5, 8.2, -56, 0.2, 46] },
+  { t: 0.26, v: [-5, 8.5, -52, -0.02, 46] }, // the side-on shot: curtain left, surfer right
+  { t: 0.4, v: [-4, 8.8, -34, -0.02, 48] }, // dolly in toward the surfer
+  { t: 0.52, v: [-5, 9.5, -20, 0.0, 55] }, // under the lip as it closes
+  { t: 0.64, v: [2, 10.0, -8, 0.0, 62] }, // inside the tube
   { t: 0.78, v: [-3, 10.0, -8.5, 0.0, 60] },
   { t: 0.86, v: [-36, 10.0, -14, -0.01, 56] }, // heading for the mouth
-  { t: 0.93, v: [-150, 16, -40, -0.035, 50] }, // out
-  { t: 1.0, v: [-260, 24, -70, -0.05, 50] },
+  { t: 0.93, v: [-150, 16, -40, -0.04, 50] }, // out
+  { t: 1.0, v: [-260, 22, -70, -0.06, 50] },
 ];
 
-/** Heading: nearly down the line at first, swinging to the mouth once inside. */
+/**
+ * Heading, absolute. pi faces the wave from the shoreward side; the tube is
+ * looked at down its axis. Keys are unwrapped so the turn is one clean sweep.
+ */
+const MOUTH_ABS = -Math.PI / 2 + MOUTH_YAW + Math.PI * 2;
 const YAW_KEYS: { t: number; v: number[] }[] = [
-  { t: 0.0, v: [0.0] },
-  { t: 0.3, v: [-0.1] },
-  { t: 0.62, v: [MOUTH_YAW] },
-  { t: 1.0, v: [MOUTH_YAW] },
+  { t: 0.0, v: [Math.PI] },
+  { t: 0.36, v: [Math.PI] },
+  { t: 0.52, v: [Math.PI + (MOUTH_ABS - Math.PI) * 0.55] },
+  { t: 0.64, v: [MOUTH_ABS] },
+  { t: 1.0, v: [MOUTH_ABS] },
 ];
 
 export function CameraRig({
@@ -51,7 +58,7 @@ export function CameraRig({
   useFrame((_, dt) => {
     const t = progress.current;
     const [dx, y, z, pitch, kfov] = keyframes(RIG, t);
-    const [yawIn] = keyframes(YAW_KEYS, t);
+    const [yawAbs] = keyframes(YAW_KEYS, t);
 
     const barrelU = front.current + WAVE.breakWidth * CAM_P;
     const barrelX = (barrelU - 0.5) * WAVE.length;
@@ -59,8 +66,7 @@ export function CameraRig({
     const camU = barrelU + dx / WAVE.length;
     camera.position.set(barrelX + dx, y, z + bendZ(camU, barrelU, WAVE.length));
 
-    // Forward = -X, turned toward -Z (the beach) by yawIn.
-    const yaw = -Math.PI / 2 + yawIn;
+    const yaw = yawAbs;
     camera.rotation.order = 'YXZ';
     camera.rotation.set(pitch, -yaw, 0);
 

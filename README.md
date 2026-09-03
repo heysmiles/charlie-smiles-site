@@ -58,14 +58,16 @@ sealing the tube into a hump.
 
 ## What is real and what is standing in
 
-Real: the wave, the ocean, the spray, the camera choreography, the brand
+Real: the wave (sheet, falling-lip curtain, crest lace, wake trail), the ocean, the spray, the camera choreography, the brand
 (colours and type are from Charlie's brand doc, and the signature wordmark is
 vector-extracted from that PDF so no licensed webfont has to ship).
 
-Standing in: **the entire coastline**. The mountains, pier, buildings, palms and
-skate bowl in `web/src/three/coastArt.ts` are drawn to canvas at runtime. They
-have the right silhouette and the right parallax, and that is all they are for.
-They are meant to be replaced with real art.
+The coastline is a **generated painted plate** — `assets/coast/venice-sunset-plate.png`,
+made with Nano Banana Pro to match the rendered-game look of Charlie's beach
+reference, served as `web/public/coast/venice.jpg`. It stands at the end of the
+tube's mouth (`web/src/three/Coastline.tsx`); our sky is faded through above
+the rooftops and its water sits under our ocean so the sand meets the sea.
+Landmarks are placed in the plate's own coordinates.
 
 Also provisional: which landmark leads where. Santa Monica Pier is currently
 pointed at the "how much time do you have?" bio, and the Skate Park at
