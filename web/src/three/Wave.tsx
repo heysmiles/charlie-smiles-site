@@ -130,13 +130,13 @@ void main(){
   // Flow lines run *down* the face: dense along the wave, sparse up it.
   float ripple = fbm(vec2(vU * 560.0, vS * 11.0) + vec2(0.0, uTime * 0.25));
   float ripple2 = fbm(vec2(vU * 140.0, vS * 40.0) - uTime * 0.15);
-  float inside = smoothstep(1.7, 3.1, vPhi);
-  col *= 1.0 - (0.07 - 0.12 * ripple) * (1.0 - inside);
-  col *= 0.96 + 0.08 * ripple2 * (1.0 - inside);
-
-  // Past horizontal the surface is the roof of the tube. From inside it is
-  // dark, but streaked along the wave — that streaking is what sells the
-  // sense of a surface rushing past overhead.
+  // Past horizontal the sheet is the roof of the tube — but the roof has two
+  // sides. Seen from underneath (the tube's interior) it is dark streaked
+  // water; seen from outside, the same surface is the whitewater on top of
+  // the wave. The angle alone cannot tell them apart; the facing can.
+  float curled = smoothstep(1.7, 3.1, vPhi);
+  float inside = curled * (flipped ? 0.0 : 1.0);
+  float outer = curled * (flipped ? 1.0 : 0.0);
   float roofStreak = fbm(vec2(vU * 9.0, vS * 26.0) + vec2(uTime * 0.25, 0.0));
   vec3 roof = mix(uDeep * 2.0, uMid * 1.25, 0.22 * smoothstep(0.4, 0.8, roofStreak));
   col = mix(col, roof, inside * 0.85);
@@ -167,7 +167,7 @@ void main(){
   float lipFoam = smoothstep(0.88, 1.0, vS) * smoothstep(0.06, 0.40, vP);
   // The outside of the rolled tube is whitewater, not a dark dome: foam over
   // the top of the curl once the lip has thrown.
-  float roofFoam = smoothstep(0.56, 0.66, vP) * smoothstep(0.44, 0.56, vS) * (1.0 - smoothstep(0.86, 0.96, vS)) * (1.0 - inside) * 1.3;
+  float roofFoam = outer * smoothstep(0.5, 0.62, vP) * 1.2 + smoothstep(0.56, 0.66, vP) * smoothstep(0.44, 0.56, vS) * (1.0 - smoothstep(0.86, 0.96, vS)) * (1.0 - inside) * 0.6;
   float white = smoothstep(0.62, 0.92, vP);
   float streak = smoothstep(0.52, 0.88, fbm(vec2(vU * 60.0, vS * 260.0)))
                * smoothstep(0.28, 0.72, vP) * 0.6;
