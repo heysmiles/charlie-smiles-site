@@ -21,26 +21,20 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* ---------------------------------------------------------------- stage -- */
+/* ---------------------------------------------------------------- wave -- */
 
-.stage {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  pointer-events: none;
-}
-.stage canvas { display: block; }
-.stage .landmark { pointer-events: auto; }
-
-/* The page's height lives here and nowhere else. */
-.track { height: 330vh; }
+/* A tall scroll track. The stage inside sticks once it fills the viewport. */
+.wave { position: relative; height: 560vh; }
+.wave__stage { position: sticky; top: 0; height: 100vh; overflow: hidden; background: var(--cream); }
+.wave__canvas { display: block; width: 100%; height: 100%; }
+.wave__labels { position: absolute; inset: 0; pointer-events: none; }
+.wave__labels .landmark { position: absolute; left: 0; top: 0; pointer-events: auto; transition: opacity 0.4s ease; }
 
 /* -------------------------------------------------------------- landing -- */
 
 .landing {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
+  position: relative;
+  height: 100vh;
   background: var(--cream);
   display: grid;
   place-items: center;
@@ -140,36 +134,6 @@ body {
 }
 
 .landmark:hover { color: #ffb36b; }
-
-/* -------------------------------------------------------------- scrubber -- */
-
-.scrubber {
-  position: fixed;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(20, 28, 30, 0.82);
-  color: #eaf2ef;
-  font-size: 11px;
-  backdrop-filter: blur(8px);
-}
-.scrubber input { width: 46vw; max-width: 520px; accent-color: var(--ember); }
-.scrubber button {
-  font: inherit;
-  font-family: var(--mono);
-  color: inherit;
-  background: transparent;
-  border: 1px solid rgba(234, 242, 239, 0.35);
-  border-radius: 999px;
-  padding: 2px 9px;
-  cursor: pointer;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .landing__arrow { animation: none; }

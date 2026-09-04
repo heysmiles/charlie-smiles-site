@@ -1,0 +1,19 @@
+/**
+ * The world's fixed geography, in world units (roughly metres).
+ *
+ *   +X ──── along the wave line (the break travels toward -X)
+ *   +Z ──── out to sea. The shore is at -Z.
+ *   +Y ──── up
+ *
+ * The wave crest line runs along X at Z = 0. The beach begins at SHORE_Z.
+ */
+export const L = {
+  waveLength: 320,
+  waveHeight: 14,
+  /** How much of the wave the break transition spans. */
+  breakLen: 92,
+  shoreZ: -120,
+  townZ: -178,
+  hillsZ: -280,
+  sunDir: [0.25, 0.09, 1.0] as const,
+} as const;

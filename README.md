@@ -1,11 +1,11 @@
 # Charlie Smiles — personal site
 
 A portfolio built as a place you enter rather than a page you scroll. Section
-one is the landing and the wave: a golden-hour ocean rises over the cream page,
-a wave stands up beside you and throws over, you ride inside the barrel looking
-out of its mouth at the sun and the Venice coastline, and then you're out
-through the mouth and onto the coast — where five landmarks are the doors to
-the rest of the site.
+one is the landing and the wave: below the landing a low-poly golden-hour
+world scrolls up and fills the frame, a wave crashes left to right with a
+surfer on its face, the camera dives through the barrel for a beat, and then
+rises and turns onto a low-poly Venice beach — where five landmarks are the
+doors to the rest of the site.
 
 ```bash
 npm run dev --prefix web
@@ -24,62 +24,50 @@ assets/         source material — brand PDF, star animation, the surf referenc
 web/            the site
 ```
 
-## How the wave works
+## How the world works
 
-The wave is **real-time 3D, driven entirely by scroll position** — not a
-pre-rendered frame sequence. The single rule everything obeys:
+Section one is a **low-poly game world in plain three.js** — the same
+architecture as kairui.dev: flat-shaded, vertex-coloured geometry, one warm
+directional sun plus a hemisphere, soft fog, a camera on a keyframed path.
+Nothing in it is an image. It lives in `web/src/world/`:
 
-> Every part of the wave is a pure function of scroll. No simulation, no stored
-> velocities, no particle state.
+- `World.ts` owns the scene and takes a scroll progress in [0,1].
+- `wave.ts` — **the wave is a solid.** Each cross-section is a closed polygon
+  of water (back, crest, lip outside, lip underside, face, trough, bed) lofted
+  along the wave line. Because the lip has two sides the tube has a roof with
+  thickness and a real open mouth. The polygon is keyed against the break
+  phase `p` (0 swell → 1 whitewater) and the break front sweeps `p` along the
+  wave; the mesh is rebuilt on the CPU whenever the front moves. Facets come
+  from per-vertex jitter and flat shading.
+- `foam.ts` — spray and whitewater as instanced faceted blobs, each a closed
+  form of the phase at its own x, so scrolling back gathers the spray home.
+- `surfer.ts` — a box-built figure riding the face ahead of the lip.
+- `ocean.ts` — summed sines, facet-shaded in the fragment shader, sun path,
+  foam rolling up the beach.
+- `shore.ts` — heightfield beach → town → hills, houses with gable roofs,
+  instanced palms, boardwalk, lifeguard tower, the pier and its wheel.
+- `camera.ts` — three chapters: side-on (the break crosses the frame), the
+  dive (straight in from the shore side, a beat down the line, out over the
+  shoulder), and the rise and turn onto the beach.
+- `sky.ts` — gradient dome with the sun, low-poly clouds.
 
-That is what lets you scroll back up and watch the wave un-break exactly, spray
-included. It is worth protecting; the moment something integrates over time, it
-stops scrubbing backwards.
+The page (`ui/WaveSection.tsx`) is a tall scroll track with a sticky,
+viewport-sized stage: it scrolls up under the landing like any block, pins
+when it fills the frame, and from there the scroll drives the world.
 
-The shape comes from `web/src/three/waveProfile.ts`. One cross-section of a wave
-is a curve whose surface angle turns twice — once tightly over the crest, then
-again as the lip throws forward over the trough. Feed it a single parameter `p`
-(0 = unbroken swell, 1 = collapsed whitewater) and you get every stage of a
-wave's life from one formula. Those curves are baked into a float texture once,
-so the vertex shader gets a position for a lookup instead of a simulation.
+**Everything that moves is a pure function of scroll** — no simulation state —
+so scrubbing back runs the wave backwards exactly.
 
-A wave *breaks along its length* rather than all at once, so `p` varies across
-the wave: `p = (u - front) / breakWidth`. Sliding `front` from one end to the
-other is the whole animation. Everything else — where the barrel is, where the
-surfer sits, where spray is born — is derived from `front`. The camera is keyed
-*relative to the barrel*, so it rides the break like a surfer.
-
-Three things make the view out of the mouth possible, and all three are needed
-(see `web/src/three/waveProfile.ts`, `constants.ts` and the `cutAt` function in
-`Wave.tsx`): the wave ahead is a low shoulder below eye level; the wave line
-angles away offshore ahead of the camera; and in the standing-face phase the
-sheet is cut short past the crest so the lip hangs in the air instead of
-sealing the tube into a hump.
-
-## What is real and what is standing in
-
-Real: the wave (sheet, falling-lip curtain, crest lace, wake trail), the ocean, the spray, the camera choreography, the brand
-(colours and type are from Charlie's brand doc, and the signature wordmark is
-vector-extracted from that PDF so no licensed webfont has to ship).
-
-The coastline is a **generated painted plate** — `assets/coast/venice-sunset-plate.png`,
-made with Nano Banana Pro to match the rendered-game look of Charlie's beach
-reference, served as `web/public/coast/venice.jpg`. It stands at the end of the
-tube's mouth (`web/src/three/Coastline.tsx`); our sky is faded through above
-the rooftops and its water sits under our ocean so the sand meets the sea.
-Landmarks are placed in the plate's own coordinates.
-
-Also provisional: which landmark leads where. Santa Monica Pier is currently
-pointed at the "how much time do you have?" bio, and the Skate Park at
-videography, but that mapping is Charlie's call — see `NOTES/concepts.md`.
+Dev: `window.__p(0.55)` jumps the timeline; `window.__world` is the World.
+`POST /__frame?name=x` with a data-URL writes a frame to `web/.frames/` (a
+dev-only Vite middleware) for inspecting the world when the preview pane
+cannot be screenshotted.
 
 ## Known rough edges
 
 - Fonts: Fira Code is open and self-hosted. **Revive 80 Signature and Biro
   Script Plus are commercial** and still need webfont licences before launch.
-  The wordmark sidesteps this by being an SVG path; live accent text does not.
-- The whitewater behind the tube and the spray off the hanging lip are the
-  softest parts of the picture.
-- Mobile runs at reduced mesh and particle counts (`web/src/three/constants.ts`)
-  but the choreography has not been tuned for a phone's field of view yet.
-- The JS bundle is ~310 kB gzipped, nearly all three.js.
+- The whitewater's outer wall is a large flat facet during the dive's entry.
+- Houses are one box each; the town wants more variety (balconies, stairs,
+  signs) and the pier wants its arcade.
+- Mobile has not been tuned.

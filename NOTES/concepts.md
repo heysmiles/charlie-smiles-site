@@ -153,7 +153,20 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
-## Status — 2026-09-02
+## Status — 2026-09-03 — rebuilt from zero as a game world
+
+Charlie: the sheet architecture was "the wrong base"; build it like
+kairui.dev — an actual rendered game world, no generated images. Wireframe:
+landing ends → wave section below, taking the frame → crashes left to right
+with the surfer → camera pans to shore → beach with houses and palms.
+Decisions (asked): low-poly flat-shaded (not voxel), golden hour, try the dive.
+
+Done: plain three.js world in `web/src/world/`, wave as a lofted closed
+polygon (a solid with a roofed tube), faceted foam/spray, box surfer, low-poly
+beach town, three-chapter camera. The dive came out clean — the mouth frames
+the pier and the town — so it stays. Old sheet-wave code deleted.
+
+## Status — 2026-09-02 (superseded)
 
 Charlie's second round of references (four images): a rendered surf-game wave
 seen side-on with a *curtain* of falling white water for a lip; the tube
