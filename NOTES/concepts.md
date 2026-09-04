@@ -153,6 +153,16 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-03, later — smoother, and lit like the clip
+
+Charlie, on the low-poly build: better start; now match the game clip's
+graphics — smoother, the lip above the horizon at the top of the frame, the
+wave part of the ocean not sitting on it, and mid-break from the first scroll.
+Done: smooth lofted wave riding the ocean's swell function, own water shader
+(near-black body, amber through the lip, sun path, flow lines, matte foam),
+sprite spray and clouds, sea with analytic normals and sky reflection, camera
+at water level, break front starting mid-frame. Next: the whitewater's surface.
+
 ## Status — 2026-09-03 — rebuilt from zero as a game world
 
 Charlie: the sheet architecture was "the wrong base"; build it like

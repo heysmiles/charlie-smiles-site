@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { P } from './palette';
 import { L } from './layout';
 import { hash } from './math';
+import { SpritePool, softDisc } from './sprites';
 
 const vert = /* glsl */ `
 varying vec3 vDir;
@@ -46,32 +47,29 @@ export function makeSky() {
   dome.frustumCulled = false;
   g.add(dome);
 
-  // Low-poly clouds: clusters of faceted blobs, lit like everything else.
-  const cloudMat = new THREE.MeshStandardMaterial({ color: P.cloud, flatShading: true, roughness: 1 });
-  const blob = new THREE.IcosahedronGeometry(1, 0);
-  const clouds = new THREE.InstancedMesh(blob, cloudMat, 220);
-  const m = new THREE.Matrix4();
-  const q = new THREE.Quaternion();
-  const s = new THREE.Vector3();
-  const pos = new THREE.Vector3();
+  // Soft clouds: clusters of sprites, cream over the sun, pinker away from it.
+  const pool = new SpritePool(260, softDisc(256, 0.05));
+  const cream = new THREE.Color(P.cloud), pink = new THREE.Color(P.cloudShade), c = new THREE.Color();
   let i = 0;
-  for (let c = 0; c < 26; c++) {
-    const cx = -700 + hash(c, 1) * 1400;
-    const cz = -500 + hash(c, 2) * 1300;
-    const cy = 70 + hash(c, 3) * 60;
-    const n = 5 + Math.floor(hash(c, 4) * 6);
-    const spread = 18 + hash(c, 5) * 30;
-    for (let k = 0; k < n && i < 220; k++) {
-      pos.set(cx + (hash(c, k, 1) - 0.5) * spread * 2, cy + (hash(c, k, 2) - 0.5) * 6, cz + (hash(c, k, 3) - 0.5) * spread * 0.8);
-      const r = 7 + hash(c, k, 4) * 12;
-      s.set(r * 1.6, r * 0.7, r);
-      q.setFromEuler(new THREE.Euler(hash(c, k, 5) * 3, hash(c, k, 6) * 3, 0));
-      m.compose(pos, q, s);
-      clouds.setMatrixAt(i++, m);
+  for (let k = 0; k < 24; k++) {
+    const cx = -900 + hash(k, 1) * 1800;
+    const cz = -300 + hash(k, 2) * 1200;
+    const cy = 60 + hash(k, 3) * 80;
+    const n = 6 + Math.floor(hash(k, 4) * 6);
+    const spread = 40 + hash(k, 5) * 70;
+    for (let m = 0; m < n && i < 260; m++) {
+      pool.pos[i * 3] = cx + (hash(k, m, 1) - 0.5) * spread * 2;
+      pool.pos[i * 3 + 1] = cy + (hash(k, m, 2) - 0.5) * 10;
+      pool.pos[i * 3 + 2] = cz + (hash(k, m, 3) - 0.5) * spread * 0.6;
+      pool.size[i] = 60 + hash(k, m, 4) * 90;
+      pool.alpha[i] = 0.35 + hash(k, m, 5) * 0.3;
+      c.copy(cream).lerp(pink, hash(k, 6));
+      pool.color[i * 3] = c.r; pool.color[i * 3 + 1] = c.g; pool.color[i * 3 + 2] = c.b;
+      i++;
     }
   }
-  clouds.count = i;
-  clouds.instanceMatrix.needsUpdate = true;
-  g.add(clouds);
+  pool.commit();
+  pool.points.renderOrder = -5;
+  g.add(pool.points);
   return g;
 }

@@ -12,13 +12,13 @@ import { L } from './layout';
  */
 // [x, y, z, lookX, lookY, lookZ, fov]
 const SIDE: { t: number; v: number[] }[] = [
-  { t: 0.0, v: [12, 20, -74, 2, 3, 2, 48] },
-  { t: 0.5, v: [-8, 19, -68, -14, 3, 2, 48] },
+  { t: 0.0, v: [4, 5, -48, -8, 9, 2, 50] }, // at the water, looking up at a crest above the horizon
+  { t: 0.5, v: [-10, 6.5, -52, -18, 8, 2, 50] },
 ];
 // Straight in from the shore side toward the barrel, then a beat looking
 // down the line, then out over the shoulder.
 const DIVE: { t: number; v: number[] }[] = [
-  { t: 0.5, v: [0, 19, -68, -6, 3, 2, 48] },
+  { t: 0.5, v: [-10, 6.5, -52, -18, 8, 2, 50] },
   { t: 0.57, v: [-6, 9, -30, -10, 7, -8, 52] },
   { t: 0.63, v: [-2, 7, -7, -40, 6.5, -7, 60] },
   { t: 0.68, v: [-16, 9, -12, -60, 7, -18, 56] },

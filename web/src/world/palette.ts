@@ -13,16 +13,16 @@ export const P = {
   cloudShade: 0xe8a98a,
   fog: 0xe9915a,
 
-  seaDeep: 0x12294a,
-  seaMid: 0x1b3d66,
-  seaLit: 0x2c5f8e,
+  seaDeep: 0x0b1d3a,
+  seaMid: 0x13315a,
+  seaLit: 0x1f4a7c,
   seaGlint: 0xffb25c,
   foam: 0xfff3e6,
 
-  waveBody: 0x163758,
-  waveFace: 0x1f4f80,
-  waveFaceLit: 0x3a78ad,
-  waveLip: 0xa9cfe6,
+  waveBody: 0x0f2a4c,
+  waveFace: 0x163d6a,
+  waveFaceLit: 0x25588f,
+  waveLip: 0x5f93c2,
 
   sand: 0xf0c98d,
   sandWet: 0xd9a86a,

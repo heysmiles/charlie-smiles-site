@@ -3,42 +3,61 @@ import { P } from './palette';
 import { L } from './layout';
 
 /**
- * The open sea: a plane of summed sines, shaded flat per facet in the fragment
- * shader so it reads as low-poly water, with a foam band rolling along the
- * shoreline and the sun's path shattered across it.
+ * The open sea: summed sines with analytic normals, so it shades smoothly,
+ * reflects the sky through the scene's environment, and the wave can ride the
+ * very same swell (see oceanH) and be one body of water with it.
  */
+export const SWELL = { a1: 0.42, f1: 0.045, s1: 0.9, a2: 0.28, f2: 0.062, s2: 1.25, a3: 0.22, f3: 0.028, s3: 0.55 };
+
+/** Sea surface height at world (x, z), time t. Mirrors the vertex shader exactly. */
+export function oceanH(x: number, z: number, t: number) {
+  const W = SWELL;
+  return (
+    Math.sin(x * W.f1 + t * W.s1) * W.a1 +
+    Math.sin(z * W.f2 - t * W.s2) * W.a2 +
+    Math.sin((x + z) * W.f3 + t * W.s3) * W.a3
+  );
+}
+
 const vert = /* glsl */ `
 uniform float uTime;
+uniform vec3 uA, uF, uS;
 varying vec3 vWorld;
+varying vec3 vNormal;
 void main(){
   vec3 p = position;
-  float x = p.x, z = -p.y; // plane lies flat after rotation; y here is world -z
-  float h = sin(x * 0.045 + uTime * 0.9) * 0.48
-          + sin(z * 0.062 - uTime * 1.25) * 0.32
-          + sin((x + z) * 0.028 + uTime * 0.55) * 0.24;
+  float x = p.x, z = -p.y; // the plane is rotated flat; local y is world -z
+  float h = sin(x * uF.x + uTime * uS.x) * uA.x
+          + sin(z * uF.y - uTime * uS.y) * uA.y
+          + sin((x + z) * uF.z + uTime * uS.z) * uA.z;
+  float dhx = cos(x * uF.x + uTime * uS.x) * uA.x * uF.x + cos((x + z) * uF.z + uTime * uS.z) * uA.z * uF.z;
+  float dhz = cos(z * uF.y - uTime * uS.y) * uA.y * uF.y + cos((x + z) * uF.z + uTime * uS.z) * uA.z * uF.z;
   p.z += h;
   vec4 wp = modelMatrix * vec4(p, 1.0);
   vWorld = wp.xyz;
+  vNormal = normalize(vec3(-dhx, 1.0, -dhz));
   gl_Position = projectionMatrix * viewMatrix * wp;
 }`;
 const frag = /* glsl */ `
 uniform float uTime, uShoreZ;
-uniform vec3 uDeep, uMid, uLit, uFoam, uGlint, uSunDir, uFog, uHor;
+uniform vec3 uDeep, uMid, uFoam, uGlint, uSunDir, uFog, uHor, uZenith;
 uniform float uFogNear, uFogFar;
 varying vec3 vWorld;
+varying vec3 vNormal;
 void main(){
-  vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
-  if (n.y < 0.0) n = -n;
+  vec3 n = normalize(vNormal);
   vec3 v = normalize(cameraPosition - vWorld);
-  float lift = clamp(dot(n, normalize(vec3(0.3, 1.0, 0.4))), 0.0, 1.0);
-  vec3 col = mix(uDeep, uMid, lift);
-  col = mix(col, uLit, smoothstep(0.85, 1.0, lift) * 0.5);
-
   vec3 r = reflect(-v, n);
+  // Reflected sky: amber at the horizon, warmer and brighter toward the sun.
+  float rh = clamp(r.y, 0.0, 1.0);
+  vec3 sky = mix(uHor, uZenith, smoothstep(0.0, 0.5, rh));
+  float toSun = pow(max(dot(normalize(vec3(r.x, 0.0, r.z)), normalize(vec3(uSunDir.x, 0.0, uSunDir.z))), 0.0), 4.0);
+  sky = mix(sky, uGlint, toSun * 0.5 * (1.0 - rh));
+  float fres = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
+  vec3 body = mix(uDeep, uMid, clamp(n.y * n.y, 0.0, 1.0) * 0.6);
+  vec3 col = mix(body, sky, fres * 0.85);
   float s = max(dot(r, uSunDir), 0.0);
-  col += uGlint * (pow(s, 90.0) * 1.4 + pow(s, 12.0) * 0.3);
-  float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
-  col = mix(col, uHor, fres * 0.35);
+  col += uGlint * (pow(s, 160.0) * 1.2 + pow(s, 14.0) * 0.25);
 
   // Foam rolling up the beach.
   float sd = vWorld.z - uShoreZ;
@@ -52,19 +71,22 @@ void main(){
 }`;
 
 export function makeOcean() {
-  const geo = new THREE.PlaneGeometry(2400, 1400, 300, 175);
+  const geo = new THREE.PlaneGeometry(2400, 1400, 320, 190);
   const mat = new THREE.ShaderMaterial({
     vertexShader: vert,
     fragmentShader: frag,
     uniforms: {
       uTime: { value: 0 },
+      uA: { value: new THREE.Vector3(SWELL.a1, SWELL.a2, SWELL.a3) },
+      uF: { value: new THREE.Vector3(SWELL.f1, SWELL.f2, SWELL.f3) },
+      uS: { value: new THREE.Vector3(SWELL.s1, SWELL.s2, SWELL.s3) },
       uShoreZ: { value: L.shoreZ },
       uDeep: { value: new THREE.Color(P.seaDeep) },
       uMid: { value: new THREE.Color(P.seaMid) },
-      uLit: { value: new THREE.Color(P.seaLit) },
       uFoam: { value: new THREE.Color(P.foam) },
       uGlint: { value: new THREE.Color(P.seaGlint) },
       uHor: { value: new THREE.Color(P.skyLow) },
+      uZenith: { value: new THREE.Color(P.skyMid) },
       uFog: { value: new THREE.Color(P.fog) },
       uFogNear: { value: 220 },
       uFogFar: { value: 900 },
@@ -73,7 +95,7 @@ export function makeOcean() {
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.rotation.x = -Math.PI / 2;
-  mesh.position.set(0, -0.3, 200);
+  mesh.position.set(0, 0, 200);
   mesh.frustumCulled = false;
   return { mesh, tick: (t: number) => { mat.uniforms.uTime.value = t; } };
 }

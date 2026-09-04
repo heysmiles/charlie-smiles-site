@@ -40,21 +40,29 @@ export class World {
     this.camera = new THREE.PerspectiveCamera(46, 1, 0.5, 4000);
     this.scene.fog = new THREE.Fog(P.fog, 240, 1000);
 
-    const sun = new THREE.DirectionalLight(0xffb679, 2.6);
+    const sun = new THREE.DirectionalLight(0xffb679, 1.3);
     sun.position.set(L.sunDir[0] * 400, L.sunDir[1] * 400, L.sunDir[2] * 400);
     this.scene.add(sun);
-    this.scene.add(new THREE.HemisphereLight(0xf7cfae, 0x1c2b46, 1.1));
+    this.scene.add(new THREE.HemisphereLight(0xf7cfae, 0x1c2b46, 0.75));
     // Fill from the shoreward side: the face of the wave points away from the
     // sun, and without this it is one flat navy slab.
-    const fill = new THREE.DirectionalLight(0xffc9a0, 0.9);
+    const fill = new THREE.DirectionalLight(0xffc9a0, 0.55);
     fill.position.set(-120, 160, -320);
     this.scene.add(fill);
-    this.scene.add(new THREE.AmbientLight(0xffe0c0, 0.25));
+    this.scene.add(new THREE.AmbientLight(0xffe0c0, 0.12));
 
-    this.scene.add(makeSky());
+    const sky = makeSky();
+    this.scene.add(sky);
+    // Bake the sky into an environment map so water and everything else
+    // reflects the sunset instead of a black void.
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    const envScene = new THREE.Scene();
+    envScene.add(sky.children[0].clone());
+    this.scene.environment = pmrem.fromScene(envScene, 0.02, 1, 5000).texture;
+    pmrem.dispose();
     this.scene.add(this.ocean.mesh);
     this.scene.add(this.wave.mesh);
-    this.scene.add(this.foam.mesh);
+    this.scene.add(this.foam.points);
     this.scene.add(this.surfer.group);
     this.scene.add(makeShore());
   }
@@ -67,16 +75,18 @@ export class World {
 
   /** Break front for a given progress: enters from +X, crosses, holds for the dive, dies on the pan. */
   static frontFor(t: number) {
-    if (t < 0.5) return remap(t, 0.04, 0.5, 74, -40);
-    if (t < 0.7) return -40;
-    return remap(t, 0.7, 1.0, -40, -150);
+    // Mid-break from the first pixel: the barrel is already on the left of
+    // frame when the section pins, and crosses to the right.
+    if (t < 0.5) return remap(t, 0.0, 0.5, -32, -70);
+    if (t < 0.7) return -70;
+    return remap(t, 0.7, 1.0, -70, -190);
   }
 
   update(progress: number, dt: number) {
     this.progress = progress;
     this.time += dt;
     const front = World.frontFor(progress);
-    this.wave.setFront(front);
+    this.wave.update(front, this.time);
     this.foam.update(this.wave);
     this.surfer.update(this.wave);
     this.ocean.tick(this.time);

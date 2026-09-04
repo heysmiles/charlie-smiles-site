@@ -32,24 +32,31 @@ directional sun plus a hemisphere, soft fog, a camera on a keyframed path.
 Nothing in it is an image. It lives in `web/src/world/`:
 
 - `World.ts` owns the scene and takes a scroll progress in [0,1].
-- `wave.ts` — **the wave is a solid.** Each cross-section is a closed polygon
-  of water (back, crest, lip outside, lip underside, face, trough, bed) lofted
-  along the wave line. Because the lip has two sides the tube has a roof with
-  thickness and a real open mouth. The polygon is keyed against the break
-  phase `p` (0 swell → 1 whitewater) and the break front sweeps `p` along the
-  wave; the mesh is rebuilt on the CPU whenever the front moves. Facets come
-  from per-vertex jitter and flat shading.
-- `foam.ts` — spray and whitewater as instanced faceted blobs, each a closed
-  form of the phase at its own x, so scrolling back gathers the spray home.
+- `wave.ts` — **the wave is a solid, and it is the sea.** Each cross-section
+  is a closed polygon of water (back, crest, lip outside, lip underside, face,
+  trough, bed) run through a closed spline and lofted along the wave line with
+  shared vertices, so it shades smoothly. Because the lip has two sides the
+  tube has a roof with thickness and a real open mouth. The polygon is keyed
+  against the break phase `p` (0 swell → 1 whitewater); the break front sweeps
+  `p` along the wave and the mesh is rebuilt on the CPU every frame. Its skirt
+  extends into the sea and every vertex rides the same swell function the
+  ocean shader uses (`oceanH`), so wave and sea are one body of water. It has
+  its own shader, lit the way the reference is: near-black body, the sky only
+  in glancing angles, the sun's path as a glint, amber where the low sun
+  shines through the thin lip (a per-vertex `aLip`), flow lines down the face,
+  and matte foam laid over the top (`aFoam`).
+- `foam.ts` — spray and froth as soft sprites, each a closed form of the
+  phase at its own x, so scrolling back gathers the spray home.
 - `surfer.ts` — a box-built figure riding the face ahead of the lip.
-- `ocean.ts` — summed sines, facet-shaded in the fragment shader, sun path,
-  foam rolling up the beach.
+- `ocean.ts` — summed sines with analytic normals (smooth), sky reflection,
+  sun path, foam rolling up the beach.
 - `shore.ts` — heightfield beach → town → hills, houses with gable roofs,
   instanced palms, boardwalk, lifeguard tower, the pier and its wheel.
 - `camera.ts` — three chapters: side-on (the break crosses the frame), the
   dive (straight in from the shore side, a beat down the line, out over the
   shoulder), and the rise and turn onto the beach.
-- `sky.ts` — gradient dome with the sun, low-poly clouds.
+- `sky.ts` — gradient dome with the sun, soft sprite clouds. The dome is also
+  baked into the scene's environment map for the shore's materials.
 
 The page (`ui/WaveSection.tsx`) is a tall scroll track with a sticky,
 viewport-sized stage: it scrolls up under the landing like any block, pins
@@ -67,7 +74,8 @@ cannot be screenshotted.
 
 - Fonts: Fira Code is open and self-hosted. **Revive 80 Signature and Biro
   Script Plus are commercial** and still need webfont licences before launch.
-- The whitewater's outer wall is a large flat facet during the dive's entry.
+- The whitewater is still too smooth a mass; it wants a churned surface and
+  more froth on top.
 - Houses are one box each; the town wants more variety (balconies, stairs,
   signs) and the pier wants its arcade.
 - Mobile has not been tuned.

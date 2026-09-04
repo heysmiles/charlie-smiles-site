@@ -37,9 +37,9 @@ export class Surfer {
   update(wave: Wave) {
     // On the face, just ahead of the throwing lip.
     const x = wave.frontX + L.breakLen * 0.36;
-    wave.pointAt(x, 11, this.v);
+    wave.pointAt(x, 27, this.v); // mid-face
     // The face looks toward the shore (-Z); stand just off it, not inside it.
-    this.group.position.set(x, this.v.y + 0.3, this.v.z - 1.6);
+    this.group.position.set(x, this.v.y - 1.6, this.v.z - 1.0);
     // Facing -X (down the line), board pitched up the face.
     this.group.rotation.set(0, Math.PI, 0.32);
     const on = x > -L.waveLength / 2 + 30 && x < L.waveLength / 2 - 30;

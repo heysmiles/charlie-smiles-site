@@ -15,5 +15,5 @@ export const L = {
   shoreZ: -120,
   townZ: -178,
   hillsZ: -280,
-  sunDir: [0.25, 0.09, 1.0] as const,
+  sunDir: [0.25, 0.06, 1.0] as const,
 } as const;
