@@ -23,6 +23,7 @@ export class World {
   foam = new Foam();
   surfer = new Surfer();
   ocean = makeOcean();
+  private sky!: ReturnType<typeof makeSky>;
   progress = 0;
   private time = 0;
   private look = new THREE.Vector3();
@@ -52,12 +53,13 @@ export class World {
     this.scene.add(new THREE.AmbientLight(0xffe0c0, 0.12));
 
     const sky = makeSky();
-    this.scene.add(sky);
+    this.sky = sky;
+    this.scene.add(sky.group);
     // Bake the sky into an environment map so water and everything else
     // reflects the sunset instead of a black void.
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     const envScene = new THREE.Scene();
-    envScene.add(sky.children[0].clone());
+    envScene.add(sky.dome.clone());
     this.scene.environment = pmrem.fromScene(envScene, 0.02, 1, 5000).texture;
     pmrem.dispose();
     this.scene.add(this.ocean.mesh);
@@ -69,17 +71,18 @@ export class World {
 
   resize(w: number, h: number) {
     this.renderer.setSize(w, h, false);
+    this.sky.uniforms.uRes.value.set(w * this.renderer.getPixelRatio(), h * this.renderer.getPixelRatio());
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
 
   /** Break front for a given progress: enters from +X, crosses, holds for the dive, dies on the pan. */
   static frontFor(t: number) {
-    // Mid-break from the first pixel: the barrel is already on the left of
-    // frame when the section pins, and crosses to the right.
-    if (t < 0.5) return remap(t, 0.0, 0.5, -32, -70);
-    if (t < 0.7) return -70;
-    return remap(t, 0.7, 1.0, -70, -190);
+    // Mid-break from the first scroll: the barrel is already on the left of
+    // frame as the section slides in, and crosses to the right.
+    if (t < 0.42) return remap(t, 0.0, 0.42, -32, -70);
+    if (t < 0.72) return -70;
+    return remap(t, 0.72, 1.0, -70, -190);
   }
 
   update(progress: number, dt: number) {
@@ -90,13 +93,16 @@ export class World {
     this.foam.update(this.wave);
     this.surfer.update(this.wave);
     this.ocean.tick(this.time);
+    // Cream haze over the sky, seamless with the landing above; lifted once
+    // the camera drops into the tube and the sky leaves the frame.
+    this.sky.uniforms.uVeil.value = 1 - smoothstep(0.36, 0.6, progress);
 
-    const cs = cameraAt(progress, front);
+    const cs = cameraAt(progress);
     const target = new THREE.Vector3(cs.pos[0], cs.pos[1], cs.pos[2]);
     this.look.set(cs.look[0], cs.look[1], cs.look[2]);
     // Terrain-safe: never sink below the sand when landing on the beach.
     if (this.first) { this.smoothPos.copy(target); this.smoothLook.copy(this.look); this.first = false; }
-    const k = 1 - Math.exp(-dt * 12);
+    const k = 1 - Math.exp(-dt * 10);
     this.smoothPos.lerp(target, k);
     this.smoothLook.lerp(this.look, k);
     this.camera.position.copy(this.smoothPos);

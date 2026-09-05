@@ -41,3 +41,29 @@ export function keyframes(keys: { t: number; v: number[] }[], t: number): number
   const k = smootherstep(a.t, b.t, t);
   return a.v.map((av, j) => lerp(av, b.v[j], k));
 }
+
+/**
+ * One continuous curve through the keys (Catmull-Rom on non-uniform knots,
+ * eased to rest at both ends). Unlike `keyframes`, the motion never stops at a
+ * stop: velocity is continuous across every key.
+ */
+export function spline(keys: { t: number; v: number[] }[], t: number): number[] {
+  const n = keys.length;
+  if (t <= keys[0].t) return keys[0].v.slice();
+  if (t >= keys[n - 1].t) return keys[n - 1].v.slice();
+  let i = 0;
+  while (i < n - 2 && t > keys[i + 1].t) i++;
+  const k1 = keys[i], k2 = keys[i + 1];
+  const k0 = keys[Math.max(0, i - 1)], k3 = keys[Math.min(n - 1, i + 2)];
+  const h = k2.t - k1.t;
+  const s = (t - k1.t) / h;
+  const s2 = s * s, s3 = s2 * s;
+  const h00 = 2 * s3 - 3 * s2 + 1, h10 = s3 - 2 * s2 + s, h01 = -2 * s3 + 3 * s2, h11 = s3 - s2;
+  return k1.v.map((p1, j) => {
+    const p2 = k2.v[j];
+    // Tangents in units per segment; zero at the ends so the path eases in and out.
+    const m1 = i === 0 ? 0 : ((p2 - k0.v[j]) / (k2.t - k0.t)) * h;
+    const m2 = i === n - 2 ? 0 : ((k3.v[j] - p1) / (k3.t - k1.t)) * h;
+    return h00 * p1 + h10 * m1 + h01 * p2 + h11 * m2;
+  });
+}

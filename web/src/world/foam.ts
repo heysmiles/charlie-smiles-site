@@ -40,11 +40,14 @@ export class Foam {
         const age = clamp01((p - 0.44) / 0.5);
         if (age > 0 && age < 1) {
           wave.pointAt(x, LIP_J, this.v);
-          this.v.x += (hash(k, 1) - 0.5) * 10 * age;
-          this.v.y += (6 + hash(k, 2) * 12) * age - 14 * age * age + 1.5;
-          this.v.z -= (2 + hash(k, 3) * 10) * age;
-          a = (1 - age) * (0.3 + hash(k, 5) * 0.4) * smoothstep(0, 0.12, age);
-          s = 3 + hash(k, 4) * 5 + age * 5;
+          this.v.x += (hash(k, 1) - 0.5) * 12 * age;
+          this.v.y += (6 + hash(k, 2) * 14) * age - 14 * age * age + 1.0;
+          this.v.z -= (2 + hash(k, 3) * 12) * age;
+          // A fine mist of droplets, with a few faint larger puffs behind it,
+          // so the dark roof of the tube shows through the spray.
+          const puff = k % 7 === 0;
+          a = (1 - age) * smoothstep(0, 0.1, age) * (puff ? 0.05 + hash(k, 5) * 0.05 : 0.35 + hash(k, 5) * 0.4);
+          s = puff ? 5 + hash(k, 4) * 5 : 0.6 + hash(k, 4) * 1.4 + age * 1.2;
         }
       } else {
         const w = smoothstep(0.82, 0.94, p);
@@ -53,8 +56,8 @@ export class Foam {
           this.v.x += (hash(k, 1) - 0.5) * 6;
           this.v.y += hash(k, 6) * 2.2 + 0.5;
           this.v.z += (hash(k, 3) - 0.5) * 4;
-          a = w * (0.4 + hash(k, 5) * 0.4);
-          s = 5 + hash(k, 4) * 7;
+          a = w * (0.25 + hash(k, 5) * 0.35);
+          s = 1.5 + hash(k, 4) * 3.5;
         }
       }
       pos[k * 3] = this.v.x; pos[k * 3 + 1] = a > 0 ? this.v.y : -50; pos[k * 3 + 2] = this.v.z;

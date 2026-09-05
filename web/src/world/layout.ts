@@ -16,4 +16,8 @@ export const L = {
   townZ: -178,
   hillsZ: -280,
   sunDir: [0.25, 0.06, 1.0] as const,
+  /** Height of the wave's scroll track, in viewport heights. */
+  trackVh: 560,
+  /** Progress at which the stage fills the frame and pins (one viewport of slide-in). */
+  pin: 100 / 560,
 } as const;

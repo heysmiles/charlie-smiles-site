@@ -153,6 +153,21 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-04 — starts on the first scroll, one camera move, a person
+
+Charlie: wave looks good; now (1) the wave should start breaking the second
+you scroll past the landing, sit higher with less sky, and fade naturally from
+the landing's cream into the sky; (2) one smooth continuous camera move from
+the first scroll to the beach — the pivots into the tube and to the shore
+were too fast; (3) a real human surfer, not blocks (still from the clip).
+Done: progress runs from the section's top edge entering the viewport; crest
+in the top fifth of the frame; cream haze in the sky shader; camera on a
+single Catmull-Rom spline that swings round to the mouth, in past the surfer,
+looks down the line, and exits down the line over the unbroken crest; surfer
+built from posed capsules with a shaped board. Also found and fixed why the
+roof of the tube read as a cream mass (the lip-glow and lip-foam masks
+covered the whole outer lip). Next: beach details / dynamic elements.
+
 ## Status — 2026-09-03, later — smoother, and lit like the clip
 
 Charlie, on the low-poly build: better start; now match the game clip's

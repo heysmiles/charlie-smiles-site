@@ -4,7 +4,7 @@
  */
 export const P = {
   cream: 0xfff9f5,
-  skyTop: 0xfff1e6,
+  skyTop: 0xfff7f0,
   skyMid: 0xf6c59a,
   skyLow: 0xf08a3c,
   horizon: 0xd8551c,
@@ -13,7 +13,7 @@ export const P = {
   cloudShade: 0xe8a98a,
   fog: 0xe9915a,
 
-  seaDeep: 0x0b1d3a,
+  seaDeep: 0x0f2648,
   seaMid: 0x13315a,
   seaLit: 0x1f4a7c,
   seaGlint: 0xffb25c,
@@ -40,7 +40,9 @@ export const P = {
   deck: 0xb08a63,
   post: 0x5c4634,
 
-  surferSkin: 0xe0a77e,
-  surferShorts: 0xe86a17,
+  surferSkin: 0xd9a179,
+  surferShirt: 0xf6f0e4,
+  surferShorts: 0x4a6a99,
+  surferHair: 0x4a3222,
   board: 0xfff6ea,
 } as const;

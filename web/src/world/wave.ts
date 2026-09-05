@@ -73,9 +73,9 @@ function ringColor(u: number, p: number, out: THREE.Color) {
   else if (u < 0.65) out.copy(cRoof).lerp(cFace, smoothstep(0.5, 0.55, u)).lerp(cFaceLit, smoothstep(0.55, 0.65, u) * 0.5);
   else if (u < 0.85) out.copy(cFaceLit).lerp(cSea, smoothstep(0.65, 0.75, u));
   else out.copy(cSea);
-  // Foam only on the very tip of the lip as it throws, and over the whole
-  // broken section once it is whitewater.
-  const tipFoam = smoothstep(0.29, 0.32, u) * (1 - smoothstep(0.36, 0.4, u)) * smoothstep(0.4, 0.62, p);
+  // Foam only on the very edge of the lip as it throws (the roof of the tube
+  // stays dark water), and over the whole broken section once it is whitewater.
+  const tipFoam = smoothstep(0.328, 0.345, u) * (1 - smoothstep(0.355, 0.372, u)) * smoothstep(0.45, 0.65, p);
   // Whitewater: foam over the top of the broken section, water below it.
   const white = smoothstep(0.86, 0.98, p) * smoothstep(0.08, 0.2, u) * (1 - smoothstep(0.5, 0.62, u));
   lastFoam = Math.max(tipFoam, white * foamGap);
@@ -123,16 +123,18 @@ void main(){
 
   float rh = clamp(r.y, 0.0, 1.0);
   vec3 sky = mix(uHor, uZenith, smoothstep(0.0, 0.5, rh));
-  float fres = 0.03 + 0.97 * pow(1.0 - max(dot(n, v), 0.0), 4.5);
-  vec3 col = mix(body, sky, fres * 0.7);
+  float fres = 0.09 + 0.91 * pow(1.0 - max(dot(n, v), 0.0), 4.5);
+  vec3 col = mix(body, sky, fres * 0.6);
 
   float s = max(dot(r, uSunDir), 0.0);
   col += uGlint * (pow(s, 140.0) * 1.0 + pow(s, 16.0) * 0.18);
 
-  // Sun through the lip.
-  float through = pow(clamp(dot(-v, uSunDir) * 0.5 + 0.5, 0.0, 1.0), 3.0);
-  col += uGlint * vLip * through * 0.9;
-  col += uGlint * vLip * pow(1.0 - max(dot(n, v), 0.0), 2.0) * 0.35;
+  // Sun through the thin lip: only where the sun is behind the surface and
+  // the viewer in front of it, so the roof of the tube stays dark.
+  float back = clamp(-dot(n, uSunDir), 0.0, 1.0);
+  float through = pow(clamp(dot(-v, uSunDir) * 0.5 + 0.5, 0.0, 1.0), 3.0) * back;
+  col += uGlint * vLip * through * 0.7;
+  col += uGlint * vLip * pow(1.0 - max(dot(n, v), 0.0), 3.0) * 0.3;
 
   // Flow lines running down the face: dense along the wave, sparse up it.
   float lines = vnoise2(vec2(vWorld.x * 2.6, vWorld.y * 0.35)) * vnoise2(vec2(vWorld.x * 0.7 + 3.0, vWorld.y * 0.12));
@@ -191,8 +193,10 @@ export class Wave {
         uLit: { value: new THREE.Color(P.waveFaceLit) },
         uFoam: { value: new THREE.Color(P.foam) },
         uGlint: { value: new THREE.Color(P.seaGlint) },
-        uHor: { value: new THREE.Color(P.skyLow) },
-        uZenith: { value: new THREE.Color(P.skyMid) },
+        // What the water reflects: the sky low over the sea, deep orange, so
+        // the roof of the tube stays dark rather than washing to peach.
+        uHor: { value: new THREE.Color(P.horizon) },
+        uZenith: { value: new THREE.Color(P.skyLow) },
         uFog: { value: new THREE.Color(P.fog) },
         uFogNear: { value: 220 },
         uFogFar: { value: 900 },
@@ -255,7 +259,7 @@ export class Wave {
         this.col[v] = this.tmpC.r; this.col[v + 1] = this.tmpC.g; this.col[v + 2] = this.tmpC.b;
         this.foamAttr[i * RING + j] = lastFoam;
         // Thin water: the crest and lip, where the low sun shines through.
-        this.lipAttr[i * RING + j] = smoothstep(0.16, 0.24, u(j)) * (1 - smoothstep(0.44, 0.52, u(j))) * smoothstep(0.25, 0.5, p);
+        this.lipAttr[i * RING + j] = smoothstep(0.3, 0.33, u(j)) * (1 - smoothstep(0.37, 0.4, u(j))) * smoothstep(0.3, 0.55, p);
         v += 3;
       }
     }

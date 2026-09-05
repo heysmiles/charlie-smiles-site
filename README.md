@@ -27,8 +27,9 @@ web/            the site
 ## How the world works
 
 Section one is a **low-poly game world in plain three.js** — the same
-architecture as kairui.dev: flat-shaded, vertex-coloured geometry, one warm
-directional sun plus a hemisphere, soft fog, a camera on a keyframed path.
+architecture as kairui.dev: vertex-coloured geometry (flat-shaded on land,
+smooth on the water), one warm directional sun plus a hemisphere, soft fog, a
+camera on one continuous spline.
 Nothing in it is an image. It lives in `web/src/world/`:
 
 - `World.ts` owns the scene and takes a scroll progress in [0,1].
@@ -47,20 +48,28 @@ Nothing in it is an image. It lives in `web/src/world/`:
   and matte foam laid over the top (`aFoam`).
 - `foam.ts` — spray and froth as soft sprites, each a closed form of the
   phase at its own x, so scrolling back gathers the spray home.
-- `surfer.ts` — a box-built figure riding the face ahead of the lip.
+- `surfer.ts` — a person, not boxes: joints placed by hand in a low
+  down-the-line crouch, smooth capsules stretched between them, a cap of hair,
+  a shaped board. Rides the face just ahead of the lip.
 - `ocean.ts` — summed sines with analytic normals (smooth), sky reflection,
   sun path, foam rolling up the beach.
 - `shore.ts` — heightfield beach → town → hills, houses with gable roofs,
   instanced palms, boardwalk, lifeguard tower, the pier and its wheel.
-- `camera.ts` — three chapters: side-on (the break crosses the frame), the
-  dive (straight in from the shore side, a beat down the line, out over the
-  shoulder), and the rise and turn onto the beach.
+- `camera.ts` — one Catmull-Rom path over the whole section (velocity never
+  stops at a key): side-on at the water with the crest high in frame, a swing
+  round to the mouth of the barrel and in past the surfer, a beat inside
+  looking down the line, then up out of the mouth and over to the beach.
 - `sky.ts` — gradient dome with the sun, soft sprite clouds. The dome is also
-  baked into the scene's environment map for the shore's materials.
+  baked into the scene's environment map for the shore's materials. It hazes
+  the top of the frame to the landing's cream (screen-space, sky only) so the
+  page above and the sky are one surface; the haze lifts once the camera is
+  in the tube.
 
-The page (`ui/WaveSection.tsx`) is a tall scroll track with a sticky,
-viewport-sized stage: it scrolls up under the landing like any block, pins
-when it fills the frame, and from there the scroll drives the world.
+The page (`ui/WaveSection.tsx`) is a tall scroll track (`L.trackVh`) with a
+sticky, viewport-sized stage. Progress starts the moment the section's top
+edge enters the viewport, so the wave is already breaking while the landing
+leaves; the stage pins at `L.pin` and the rest of the track drives the dive
+and the shore.
 
 **Everything that moves is a pure function of scroll** — no simulation state —
 so scrubbing back runs the wave backwards exactly.

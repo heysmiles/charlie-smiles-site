@@ -11,18 +11,24 @@ void main(){
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`;
 const frag = /* glsl */ `
-uniform vec3 uTop, uMid, uLow, uHorizon, uSun, uSunDir;
+uniform vec3 uTop, uMid, uLow, uHorizon, uSun, uSunDir, uCream;
+uniform float uVeil;
+uniform vec2 uRes;
 varying vec3 vDir;
 void main(){
   float h = vDir.y;
   vec3 col = uHorizon;
   col = mix(col, uLow, smoothstep(0.0, 0.08, h));
   col = mix(col, uMid, smoothstep(0.07, 0.26, h));
-  col = mix(col, uTop, smoothstep(0.24, 0.7, h));
+  col = mix(col, uTop, smoothstep(0.2, 0.55, h));
   col = mix(uHorizon * 0.6, col, smoothstep(-0.04, 0.0, h));
   float sd = max(dot(vDir, uSunDir), 0.0);
   col += uSun * (pow(sd, 36.0) * 0.9 + pow(sd, 6.0) * 0.3);
   col = mix(col, vec3(1.0, 0.97, 0.9), smoothstep(0.9993, 0.9997, sd));
+  // The landing's cream, hazing the top of the frame so the page above and
+  // the sky are one surface. Screen-space, sky only: the wave stays dark.
+  float sy = gl_FragCoord.y / uRes.y;
+  col = mix(col, uCream, uVeil * pow(smoothstep(0.42, 1.0, sy), 1.5));
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -40,6 +46,9 @@ export function makeSky() {
       uHorizon: { value: new THREE.Color(P.horizon) },
       uSun: { value: new THREE.Color(P.sun) },
       uSunDir: { value: new THREE.Vector3(...L.sunDir).normalize() },
+      uCream: { value: new THREE.Color(P.cream) },
+      uVeil: { value: 1 },
+      uRes: { value: new THREE.Vector2(1, 1) },
     },
   });
   const dome = new THREE.Mesh(new THREE.SphereGeometry(1800, 40, 20), mat);
@@ -71,5 +80,5 @@ export function makeSky() {
   pool.commit();
   pool.points.renderOrder = -5;
   g.add(pool.points);
-  return g;
+  return { group: g, dome, uniforms: mat.uniforms };
 }

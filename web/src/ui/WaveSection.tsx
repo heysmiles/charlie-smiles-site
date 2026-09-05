@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { World } from '../world/World';
 import { DOORS } from '../world/shore';
 import { clamp01 } from '../world/math';
+import { L } from '../world/layout';
 
 /**
  * The wave section: a tall scroll track with a viewport-sized sticky stage.
@@ -35,8 +36,9 @@ export function WaveSection() {
       // Layout can settle after mount (or the pane can be hidden); re-check.
       const cw = el.clientWidth, ch = window.innerHeight;
       if (cw > 0 && ch > 0 && (canvas.current!.width !== Math.round(cw * Math.min(devicePixelRatio, 2)) )) world.resize(cw, ch);
-      const range = el.offsetHeight - window.innerHeight;
-      const p = override ?? clamp01(-rect.top / Math.max(1, range));
+      // Progress runs from the moment the section's top edge enters the
+      // viewport, so the wave is already breaking while the landing leaves.
+      const p = override ?? clamp01((window.innerHeight - rect.top) / Math.max(1, el.offsetHeight));
       world.update(p, dt);
       labels.current.forEach((n, i) => {
         if (!n) return;
@@ -51,7 +53,7 @@ export function WaveSection() {
   }, []);
 
   return (
-    <section className="wave" ref={section}>
+    <section className="wave" ref={section} style={{ height: `${L.trackVh}vh` }}>
       <div className="wave__stage">
         <canvas ref={canvas} className="wave__canvas" />
         <div className="wave__labels">
