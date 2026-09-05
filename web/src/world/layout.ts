@@ -12,9 +12,12 @@ export const L = {
   waveHeight: 14,
   /** How much of the wave the break transition spans. */
   breakLen: 92,
-  shoreZ: -120,
-  townZ: -178,
-  hillsZ: -280,
+  shoreZ: -200,
+  townZ: -262,
+  hillsZ: -370,
+  /** Where the break front is at the first and last scroll; it never stops. */
+  frontStart: -32,
+  frontEnd: -190,
   sunDir: [0.25, 0.06, 1.0] as const,
   /** Height of the wave's scroll track, in viewport heights. */
   trackVh: 560,

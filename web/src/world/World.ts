@@ -7,8 +7,8 @@ import { Wave } from './wave';
 import { Foam } from './foam';
 import { Surfer } from './surfer';
 import { makeShore, DOORS } from './shore';
-import { cameraAt } from './camera';
-import { remap, smoothstep } from './math';
+import { cameraAt, frontAt } from './camera';
+import { smoothstep } from './math';
 
 /**
  * Owns the whole scene. Feed it a scroll progress; it does the rest.
@@ -76,14 +76,8 @@ export class World {
     this.camera.updateProjectionMatrix();
   }
 
-  /** Break front for a given progress: enters from +X, crosses, holds for the dive, dies on the pan. */
-  static frontFor(t: number) {
-    // Mid-break from the first scroll: the barrel is already on the left of
-    // frame as the section slides in, and crosses to the right.
-    if (t < 0.42) return remap(t, 0.0, 0.42, -32, -70);
-    if (t < 0.72) return -70;
-    return remap(t, 0.72, 1.0, -70, -190);
-  }
+  /** Break front for a given progress: mid-break from the first scroll, never still. */
+  static frontFor(t: number) { return frontAt(t); }
 
   update(progress: number, dt: number) {
     this.progress = progress;
@@ -96,6 +90,9 @@ export class World {
     // Cream haze over the sky, seamless with the landing above; lifted once
     // the camera drops into the tube and the sky leaves the frame.
     this.sky.uniforms.uVeil.value = 1 - smoothstep(0.36, 0.6, progress);
+    // The landing's cream over the whole frame at the top of the page, lifted
+    // as the landing scrolls away: the world fades in under it, no edge.
+    document.documentElement.style.setProperty('--veil', String(1 - smoothstep(0.015, 0.16, progress)));
 
     const cs = cameraAt(progress);
     const target = new THREE.Vector3(cs.pos[0], cs.pos[1], cs.pos[2]);

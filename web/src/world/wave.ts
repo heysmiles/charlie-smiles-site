@@ -3,6 +3,7 @@ import { P } from './palette';
 import { L } from './layout';
 import { clamp01, hash, lerp, smoothstep } from './math';
 import { oceanH } from './ocean';
+import { NOISE } from './glsl';
 
 /**
  * The wave as a solid, smooth.
@@ -106,15 +107,17 @@ void main(){
  */
 const waveFrag = /* glsl */ `
 uniform vec3 uDeep, uMid, uLit, uFoam, uGlint, uHor, uZenith, uFog, uSunDir, uFillDir;
-uniform float uFogNear, uFogFar;
+uniform float uFogNear, uFogFar, uTime;
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying float vFoam, vLip;
-float hash21(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
-float vnoise2(vec2 x){ vec2 i = floor(x), f = fract(x); float a = hash21(i), b = hash21(i + vec2(1,0)), c = hash21(i + vec2(0,1)), d = hash21(i + vec2(1,1)); vec2 u = f*f*(3.0-2.0*f); return mix(mix(a,b,u.x), mix(c,d,u.x), u.y); }
+${NOISE}
 void main(){
   vec3 n = normalize(vNormal);
   if (!gl_FrontFacing) n = -n;
+  // Fine texture over the whole surface: sampled along the wave and up it,
+  // so the face gets it too, not only the flat water.
+  n = ripple(n, vec2(vWorld.x, vWorld.y * 0.7 + vWorld.z), uTime, 0.22 * (1.0 - vFoam));
   vec3 v = normalize(cameraPosition - vWorld);
   vec3 r = reflect(-v, n);
 
@@ -123,11 +126,14 @@ void main(){
 
   float rh = clamp(r.y, 0.0, 1.0);
   vec3 sky = mix(uHor, uZenith, smoothstep(0.0, 0.5, rh));
+  // Under the roof of the tube the reflection points down into the water,
+  // not at the sky: keep the inside dark.
+  sky = mix(uDeep * 0.7, sky, smoothstep(-0.3, 0.05, r.y));
   float fres = 0.09 + 0.91 * pow(1.0 - max(dot(n, v), 0.0), 4.5);
   vec3 col = mix(body, sky, fres * 0.6);
 
   float s = max(dot(r, uSunDir), 0.0);
-  col += uGlint * (pow(s, 140.0) * 1.0 + pow(s, 16.0) * 0.18);
+  col += uGlint * (pow(s, 200.0) * 1.0 + pow(s, 40.0) * 0.14 + pow(s, 12.0) * 0.08);
 
   // Sun through the thin lip: only where the sun is behind the surface and
   // the viewer in front of it, so the roof of the tube stays dark.
@@ -137,8 +143,8 @@ void main(){
   col += uGlint * vLip * pow(1.0 - max(dot(n, v), 0.0), 3.0) * 0.3;
 
   // Flow lines running down the face: dense along the wave, sparse up it.
-  float lines = vnoise2(vec2(vWorld.x * 2.6, vWorld.y * 0.35)) * vnoise2(vec2(vWorld.x * 0.7 + 3.0, vWorld.y * 0.12));
-  col += uLit * smoothstep(0.32, 0.6, lines) * 0.22 * (1.0 - vFoam);
+  float lines = vnoise2(vec2(vWorld.x * 2.6 + vWorld.z * 0.3, vWorld.y * 0.35)) * vnoise2(vec2(vWorld.x * 0.7 + 3.0, vWorld.y * 0.12));
+  col += uLit * smoothstep(0.3, 0.65, lines) * 0.1 * (1.0 - vFoam);
 
   // Foam: matte, a touch shaded by facing.
   vec3 foam = uFoam * (0.72 + 0.28 * clamp(n.y * 0.5 + 0.5, 0.0, 1.0));
@@ -200,6 +206,7 @@ export class Wave {
         uFog: { value: new THREE.Color(P.fog) },
         uFogNear: { value: 220 },
         uFogFar: { value: 900 },
+        uTime: { value: 0 },
         uSunDir: { value: new THREE.Vector3(...L.sunDir).normalize() },
         uFillDir: { value: new THREE.Vector3(-0.3, 0.6, -0.75).normalize() },
       },
@@ -236,6 +243,7 @@ export class Wave {
   update(frontX: number, time: number) {
     this.frontX = frontX;
     this.time = time;
+    (this.mesh.material as THREE.ShaderMaterial).uniforms.uTime.value = time;
     this.build();
   }
 

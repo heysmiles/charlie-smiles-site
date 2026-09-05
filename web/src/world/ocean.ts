@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { P } from './palette';
 import { L } from './layout';
+import { NOISE } from './glsl';
 
 /**
  * The open sea: summed sines with analytic normals, so it shades smoothly,
@@ -44,9 +45,12 @@ uniform vec3 uDeep, uMid, uFoam, uGlint, uSunDir, uFog, uHor, uZenith;
 uniform float uFogNear, uFogFar;
 varying vec3 vWorld;
 varying vec3 vNormal;
+${NOISE}
 void main(){
-  vec3 n = normalize(vNormal);
   vec3 v = normalize(cameraPosition - vWorld);
+  float d = length(cameraPosition - vWorld);
+  // Ripples fade with distance so the far sea does not shimmer with aliasing.
+  vec3 n = ripple(normalize(vNormal), vWorld.xz, uTime, 0.5 * (1.0 - smoothstep(120.0, 400.0, d)));
   vec3 r = reflect(-v, n);
   // Reflected sky: amber at the horizon, warmer and brighter toward the sun.
   float rh = clamp(r.y, 0.0, 1.0);
@@ -57,7 +61,7 @@ void main(){
   vec3 body = mix(uDeep, uMid, clamp(n.y * n.y, 0.0, 1.0) * 0.6);
   vec3 col = mix(body, sky, fres * 0.85);
   float s = max(dot(r, uSunDir), 0.0);
-  col += uGlint * (pow(s, 160.0) * 1.2 + pow(s, 14.0) * 0.25);
+  col += uGlint * (pow(s, 200.0) * 1.1 + pow(s, 40.0) * 0.22 + pow(s, 10.0) * 0.06);
 
   // Foam rolling up the beach.
   float sd = vWorld.z - uShoreZ;
@@ -65,7 +69,6 @@ void main(){
   float roll = 0.5 + 0.5 * sin(sd * 0.9 - uTime * 1.2 + sin(vWorld.x * 0.13) * 1.5);
   col = mix(col, uFoam, band * smoothstep(0.55, 0.95, roll) * 0.55);
 
-  float d = length(cameraPosition - vWorld);
   col = mix(col, uFog, smoothstep(uFogNear, uFogFar, d));
   gl_FragColor = vec4(col, 1.0);
 }`;

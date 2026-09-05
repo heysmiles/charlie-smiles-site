@@ -58,18 +58,23 @@ Nothing in it is an image. It lives in `web/src/world/`:
 - `camera.ts` — one Catmull-Rom path over the whole section (velocity never
   stops at a key): side-on at the water with the crest high in frame, a swing
   round to the mouth of the barrel and in past the surfer, a beat inside
-  looking down the line, then up out of the mouth and over to the beach.
+  looking down the line, then up out of the mouth and over to the beach. The
+  break front never stops (`frontAt`), and until the exit the camera's x is
+  relative to it, so the wave keeps crashing while the camera keeps moving;
+  the frame then eases onto fixed keys for the town.
 - `sky.ts` — gradient dome with the sun, soft sprite clouds. The dome is also
   baked into the scene's environment map for the shore's materials. It hazes
   the top of the frame to the landing's cream (screen-space, sky only) so the
   page above and the sky are one surface; the haze lifts once the camera is
   in the tube.
 
-The page (`ui/WaveSection.tsx`) is a tall scroll track (`L.trackVh`) with a
-sticky, viewport-sized stage. Progress starts the moment the section's top
-edge enters the viewport, so the wave is already breaking while the landing
-leaves; the stage pins at `L.pin` and the rest of the track drives the dive
-and the shore.
+The world is the **fixed backdrop of the whole page**: the stage in
+`ui/WaveSection.tsx` is `position: fixed` under everything, and the landing
+sits on top with a full-viewport cream veil in its own stacking context
+(`--veil`, driven by the world) that fades as the landing scrolls away, so the
+wave fades in beneath the name — there is no edge between "pages". The tall
+`.wave` track only provides scroll length; progress runs from the moment its
+top edge enters the viewport.
 
 **Everything that moves is a pure function of scroll** — no simulation state —
 so scrubbing back runs the wave backwards exactly.

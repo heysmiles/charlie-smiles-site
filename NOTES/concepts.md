@@ -153,6 +153,17 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-04, later — one page, one motion
+
+Charlie: still a seam (the stage's top edge against the landing, spray
+clipped); the camera stalls while the wave crashes and vice versa; the beach
+is too close; the water is too geometric, wants glistening. Done: the world
+is now the fixed backdrop of the whole page with the landing on top and a
+cream veil that fades as it scrolls away (nothing to see an edge of); the
+break front runs the whole section and the camera path is relative to it
+until the exit; shore moved out to z=-200; animated wind ripples on sea and
+wave so the sun path breaks into glitter; tube roof reflection kept dark.
+
 ## Status — 2026-09-04 — starts on the first scroll, one camera move, a person
 
 Charlie: wave looks good; now (1) the wave should start breaking the second
