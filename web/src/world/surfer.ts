@@ -113,7 +113,7 @@ export class Surfer {
     const x = wave.frontX + L.breakLen * 0.3;
     wave.pointAt(x, 27, this.v); // mid-face
     // The face looks toward the shore (-Z); ride just off it, not inside it.
-    this.group.position.set(x, this.v.y - 2.6, this.v.z - 0.2);
+    this.group.position.set(x, this.v.y - 2.1, this.v.z - 0.35);
     // Facing -X (down the line), board pitched up the face.
     this.group.rotation.set(0, Math.PI, 0.3);
     const on = x > -L.waveLength / 2 + 30 && x < L.waveLength / 2 - 30;
