@@ -153,6 +153,22 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-04, evening — reveal in the shaders, the tube like the clip
+
+Charlie: the seam is gone but the transition is opaque — the wave should be
+revealed by scrolling, fading in, with the top of the sunset the same off-white
+as the landing; the camera should not look back at the wave — pan from the
+side-on straight to inside the barrel, hold there a couple of seconds of
+scroll with the surfer, and pan to the beach as he rides out; the camera's
+final rest farther back. He attached the inside-the-barrel clip (saved as
+`assets/reference/barrel-reference.mov`): camera behind the surfer looking at
+the sunlit exit, roof streaked and misted, the surfer rides out at the end.
+Done: cream haze moved into every shader (bottom-up reveal, crest last, sky
+band kept throughout), camera goes straight in under the lip and turns once,
+a long inside-the-tube beat with mouth light and roof mist, the surfer outruns
+the break to the mouth, and the rest position is 120 units off the beach.
+Watch for: the brief bright wedge as the camera passes under the lip (~0.54).
+
 ## Status — 2026-09-04, later — one page, one motion
 
 Charlie: still a seam (the stage's top edge against the landing, spray

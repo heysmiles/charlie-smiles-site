@@ -3,7 +3,7 @@ import { P } from './palette';
 import { L } from './layout';
 import { clamp01, hash, lerp, smoothstep } from './math';
 import { oceanH } from './ocean';
-import { NOISE } from './glsl';
+import { NOISE, HAZE } from './glsl';
 
 /**
  * The wave as a solid, smooth.
@@ -89,11 +89,12 @@ const u = (j: number) => j / RING;
 const waveVert = /* glsl */ `
 attribute float aFoam;
 attribute float aLip;
+attribute float aMouth;
 varying vec3 vWorld;
 varying vec3 vNormal;
-varying float vFoam, vLip;
+varying float vFoam, vLip, vMouth;
 void main(){
-  vFoam = aFoam; vLip = aLip;
+  vFoam = aFoam; vLip = aLip; vMouth = aMouth;
   vec4 wp = modelMatrix * vec4(position, 1.0);
   vWorld = wp.xyz;
   vNormal = normalize(mat3(modelMatrix) * normal);
@@ -110,8 +111,9 @@ uniform vec3 uDeep, uMid, uLit, uFoam, uGlint, uHor, uZenith, uFog, uSunDir, uFi
 uniform float uFogNear, uFogFar, uTime;
 varying vec3 vWorld;
 varying vec3 vNormal;
-varying float vFoam, vLip;
+varying float vFoam, vLip, vMouth;
 ${NOISE}
+${HAZE}
 void main(){
   vec3 n = normalize(vNormal);
   if (!gl_FrontFacing) n = -n;
@@ -146,13 +148,17 @@ void main(){
   float lines = vnoise2(vec2(vWorld.x * 2.6 + vWorld.z * 0.3, vWorld.y * 0.35)) * vnoise2(vec2(vWorld.x * 0.7 + 3.0, vWorld.y * 0.12));
   col += uLit * smoothstep(0.3, 0.65, lines) * 0.1 * (1.0 - vFoam);
 
+  // Light spilling in through the mouth of the tube: the inside walls near
+  // the exit glow amber and it fades to dark deeper in.
+  col = mix(col, uGlint * 0.9, vMouth * 0.24 * (1.0 - vFoam));
+
   // Foam: matte, a touch shaded by facing.
   vec3 foam = uFoam * (0.72 + 0.28 * clamp(n.y * 0.5 + 0.5, 0.0, 1.0));
   col = mix(col, foam, vFoam);
 
   float d = length(cameraPosition - vWorld);
   col = mix(col, uFog, smoothstep(uFogNear, uFogFar, d));
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(hazeTop(col), 1.0);
 }`;
 
 export class Wave {
@@ -161,6 +167,7 @@ export class Wave {
   private col: Float32Array;
   private foamAttr: Float32Array;
   private lipAttr: Float32Array;
+  private mouthAttr: Float32Array;
   private geo: THREE.BufferGeometry;
   private sections: number;
   private ring = new Float32Array(RING * 2);
@@ -175,6 +182,7 @@ export class Wave {
     this.col = new Float32Array(nv * 3);
     this.foamAttr = new Float32Array(nv);
     this.lipAttr = new Float32Array(nv);
+    this.mouthAttr = new Float32Array(nv);
     const idx: number[] = [];
     for (let i = 0; i < this.sections - 1; i++) {
       for (let j = 0; j < RING; j++) {
@@ -188,6 +196,7 @@ export class Wave {
     this.geo.setAttribute('color', new THREE.BufferAttribute(this.col, 3));
     this.geo.setAttribute('aFoam', new THREE.BufferAttribute(this.foamAttr, 1));
     this.geo.setAttribute('aLip', new THREE.BufferAttribute(this.lipAttr, 1));
+    this.geo.setAttribute('aMouth', new THREE.BufferAttribute(this.mouthAttr, 1));
     this.geo.setIndex(idx);
     const mat = new THREE.ShaderMaterial({
       vertexShader: waveVert,
@@ -209,6 +218,10 @@ export class Wave {
         uTime: { value: 0 },
         uSunDir: { value: new THREE.Vector3(...L.sunDir).normalize() },
         uFillDir: { value: new THREE.Vector3(-0.3, 0.6, -0.75).normalize() },
+        uCream: { value: new THREE.Color(P.cream) },
+        uRes: { value: new THREE.Vector2(1, 1) },
+        uHazeLo: { value: 1.5 },
+        uHazeFull: { value: 1 },
       },
     });
     this.mesh = new THREE.Mesh(this.geo, mat);
@@ -268,6 +281,8 @@ export class Wave {
         this.foamAttr[i * RING + j] = lastFoam;
         // Thin water: the crest and lip, where the low sun shines through.
         this.lipAttr[i * RING + j] = smoothstep(0.3, 0.33, u(j)) * (1 - smoothstep(0.37, 0.4, u(j))) * smoothstep(0.3, 0.55, p);
+        // Inside walls of the tube (underside and upper face) near its mouth.
+        this.mouthAttr[i * RING + j] = smoothstep(0.34, 0.38, u(j)) * (1 - smoothstep(0.48, 0.54, u(j))) * smoothstep(0.4, 0.5, p) * (1 - smoothstep(0.55, 0.8, p));
         v += 3;
       }
     }
@@ -275,6 +290,7 @@ export class Wave {
     this.geo.attributes.color.needsUpdate = true;
     this.geo.attributes.aFoam.needsUpdate = true;
     this.geo.attributes.aLip.needsUpdate = true;
+    this.geo.attributes.aMouth.needsUpdate = true;
     this.geo.computeVertexNormals();
     this.geo.computeBoundingSphere();
   }

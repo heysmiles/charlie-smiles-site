@@ -27,7 +27,7 @@ body {
 /* A tall scroll track that only provides length; the stage is the fixed
    backdrop of the whole page, under the landing, so there is never an edge. */
 .wave { position: relative; }
-.wave__stage { position: fixed; inset: 0; height: 100vh; overflow: hidden; background: var(--cream); z-index: 0; }
+.wave__stage { position: fixed; inset: 0; height: 100vh; overflow: hidden; background: var(--cream); z-index: -1; }
 .wave__canvas { display: block; width: 100%; height: 100%; }
 .wave__labels { position: absolute; inset: 0; pointer-events: none; }
 .wave__labels .landmark { position: absolute; left: 0; top: 0; pointer-events: auto; transition: opacity 0.4s ease; }
@@ -36,22 +36,9 @@ body {
 
 .landing {
   position: relative;
-  z-index: 1;
   height: 100vh;
   display: grid;
   place-items: center;
-}
-
-/* The page's cream, over the whole viewport, fading as the landing scrolls
-   away. It lives inside the landing's stacking context so the star's
-   multiply blend still has something to multiply against. */
-.landing__veil {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: var(--cream);
-  opacity: var(--veil);
-  pointer-events: none;
 }
 
 .landing__inner {

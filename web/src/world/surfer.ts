@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { P } from './palette';
 import { L } from './layout';
+import { lerp, smoothstep } from './math';
 import type { Wave } from './wave';
 
 type V = [number, number, number];
@@ -108,9 +109,11 @@ export class Surfer {
     this.group.scale.setScalar(3.3);
   }
 
-  update(wave: Wave) {
-    // On the face, just ahead of the throwing lip.
-    const x = wave.frontX + L.breakLen * 0.3;
+  update(wave: Wave, progress: number) {
+    // On the face just ahead of the throwing lip; late in the tube chapter he
+    // outruns the break and rides out through the mouth onto the shoulder.
+    const ahead = lerp(0.3, 0.14, smoothstep(0.66, 0.9, progress));
+    const x = wave.frontX + L.breakLen * ahead;
     wave.pointAt(x, 27, this.v); // mid-face
     // The face looks toward the shore (-Z); ride just off it, not inside it.
     this.group.position.set(x, this.v.y - 2.1, this.v.z - 0.35);

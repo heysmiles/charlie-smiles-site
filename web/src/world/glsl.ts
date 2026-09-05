@@ -13,3 +13,20 @@ vec3 ripple(vec3 n, vec2 p, float t, float amp){
   float hz = vnoise2(q + vec2(0.0, e) + d1) + 0.5 * vnoise2((q + vec2(0.0, e)) * 2.7 + d2);
   return normalize(n + vec3(-(hx - h0), 0.0, -(hz - h0)) * amp);
 }`;
+
+/**
+ * The landing's cream over the frame, screen-space: a band from uHazeLo (screen
+ * fraction, 0 bottom) up to the top, plus a uniform amount. Every surface uses
+ * the same function so the page above and the world read as one scene.
+ */
+export const HAZE = /* glsl */ `
+uniform vec3 uCream;
+uniform vec2 uRes;
+uniform float uHazeLo, uHazeFull;
+vec3 hazeTop(vec3 col){
+  float sy = gl_FragCoord.y / uRes.y;
+  // smoothstep with edge0 >= edge1 is undefined in GLSL: a band whose lower
+  // edge has risen out of the frame is simply gone.
+  float band = uHazeLo >= 0.999 ? 0.0 : pow(smoothstep(uHazeLo, 1.0, sy), 1.5);
+  return mix(col, uCream, max(band, uHazeFull));
+}`;

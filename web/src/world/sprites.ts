@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { HAZE } from './glsl';
 
 /** A soft radial disc, for spray, froth and clouds. */
 export function softDisc(size = 128, inner = 0.15) {
@@ -33,15 +34,17 @@ const frag = /* glsl */ `
 uniform sampler2D uMap;
 varying float vAlpha;
 varying vec3 vColor;
+${HAZE}
 void main(){
   if (vAlpha < 0.01) discard;
   vec4 t = texture2D(uMap, gl_PointCoord);
-  gl_FragColor = vec4(vColor, t.a * vAlpha);
+  gl_FragColor = vec4(hazeTop(vColor), t.a * vAlpha);
 }`;
 
 /** A pool of soft sprites with per-point size, alpha and colour. */
 export class SpritePool {
   points: THREE.Points;
+  uniforms: Record<string, THREE.IUniform>;
   pos: Float32Array;
   size: Float32Array;
   alpha: Float32Array;
@@ -61,10 +64,18 @@ export class SpritePool {
     const mat = new THREE.ShaderMaterial({
       vertexShader: vert,
       fragmentShader: frag,
-      uniforms: { uMap: { value: tex }, uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) } },
+      uniforms: {
+        uMap: { value: tex },
+        uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+        uCream: { value: new THREE.Color(0xfff9f5) },
+        uRes: { value: new THREE.Vector2(1, 1) },
+        uHazeLo: { value: 1.5 },
+        uHazeFull: { value: 1 },
+      },
       transparent: true,
       depthWrite,
     });
+    this.uniforms = mat.uniforms;
     this.points = new THREE.Points(this.geo, mat);
     this.points.frustumCulled = false;
   }

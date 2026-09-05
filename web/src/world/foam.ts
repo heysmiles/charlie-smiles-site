@@ -13,6 +13,7 @@ import type { Wave } from './wave';
 const COUNT = 1600;
 const LIP_J = 15; // ring index near the lip's tip
 const CREST_J = 11; // ring index on top of the crest
+const ROOF_J = 20; // ring index under the roof of the tube
 
 export class Foam {
   pool: SpritePool;
@@ -32,9 +33,20 @@ export class Foam {
     for (let k = 0; k < COUNT; k++) {
       const x = -L.waveLength / 2 + hash(k, 7) * L.waveLength;
       const p = wave.phaseAt(x);
-      const spray = k % 3 !== 0;
+      const kind = k % 6; // 0 froth, 5 mist under the roof, else spray
       let a = 0, s = 0;
-      if (spray) {
+      if (kind === 5) {
+        // Droplets hanging in the tube, lit by the mouth.
+        const w = smoothstep(0.48, 0.56, p) * (1 - smoothstep(0.7, 0.8, p));
+        if (w > 0) {
+          wave.pointAt(x, ROOF_J, this.v);
+          this.v.x += (hash(k, 1) - 0.5) * 4;
+          this.v.y -= hash(k, 2) * 4.5 + 0.3;
+          this.v.z += (hash(k, 3) - 0.5) * 5;
+          a = w * (0.2 + hash(k, 5) * 0.4);
+          s = 0.35 + hash(k, 4) * 0.7;
+        }
+      } else if (kind !== 0) {
         // Thrown up and shoreward off the lip, then down; the plume that
         // stands over a breaking wave from a distance.
         const age = clamp01((p - 0.44) / 0.5);
@@ -62,7 +74,7 @@ export class Foam {
       }
       pos[k * 3] = this.v.x; pos[k * 3 + 1] = a > 0 ? this.v.y : -50; pos[k * 3 + 2] = this.v.z;
       alpha[k] = a; size[k] = s;
-      this.c.copy(this.cFoam).lerp(this.cWarm, hash(k, 9) * 0.25);
+      this.c.copy(this.cFoam).lerp(this.cWarm, kind === 5 ? 0.55 : hash(k, 9) * 0.25);
       color[k * 3] = this.c.r; color[k * 3 + 1] = this.c.g; color[k * 3 + 2] = this.c.b;
     }
     this.pool.commit();

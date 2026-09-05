@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { P } from './palette';
 import { L } from './layout';
-import { NOISE } from './glsl';
+import { NOISE, HAZE } from './glsl';
 
 /**
  * The open sea: summed sines with analytic normals, so it shades smoothly,
@@ -46,6 +46,7 @@ uniform float uFogNear, uFogFar;
 varying vec3 vWorld;
 varying vec3 vNormal;
 ${NOISE}
+${HAZE}
 void main(){
   vec3 v = normalize(cameraPosition - vWorld);
   float d = length(cameraPosition - vWorld);
@@ -70,7 +71,7 @@ void main(){
   col = mix(col, uFoam, band * smoothstep(0.55, 0.95, roll) * 0.55);
 
   col = mix(col, uFog, smoothstep(uFogNear, uFogFar, d));
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(hazeTop(col), 1.0);
 }`;
 
 export function makeOcean() {
@@ -94,6 +95,10 @@ export function makeOcean() {
       uFogNear: { value: 220 },
       uFogFar: { value: 900 },
       uSunDir: { value: new THREE.Vector3(...L.sunDir).normalize() },
+      uCream: { value: new THREE.Color(P.cream) },
+      uRes: { value: new THREE.Vector2(1, 1) },
+      uHazeLo: { value: 1.5 },
+      uHazeFull: { value: 1 },
     },
   });
   const mesh = new THREE.Mesh(geo, mat);

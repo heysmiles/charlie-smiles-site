@@ -5,7 +5,6 @@
 export function Landing() {
   return (
     <div className="landing">
-      <div className="landing__veil" aria-hidden="true" />
       <div className="landing__inner">
         <video className="landing__star" src="/brand/star.webm" poster="/brand/star.png" autoPlay muted loop playsInline />
         <h1 className="landing__name" aria-label="Charlie Smiles" />
