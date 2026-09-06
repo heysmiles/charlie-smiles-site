@@ -153,6 +153,18 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-04, night — no surfer, no fade, the ride
+
+Charlie: take the surfer out completely; no fade-in reveal — the wave is a
+scene *below* the landing that you scroll down to, and once you see it, it
+starts breaking; once you're inside the barrel the page auto-scrolls through
+it and out to the beach in one or two seconds. Done: surfer deleted; back to
+the sticky stage under the landing (the stage's top rows are the landing's
+cream via the shared haze, so still no edge; the water haze lifts once the
+stage is pinned so the tube's roof stays dark); a locked Lenis ride from 0.6
+to the end (and back to the mouth if you scroll up from the beach). Not yet
+seen live: the ride, because the preview pane pauses when hidden.
+
 ## Status — 2026-09-04, evening — reveal in the shaders, the tube like the clip
 
 Charlie: the seam is gone but the transition is opaque — the wave should be

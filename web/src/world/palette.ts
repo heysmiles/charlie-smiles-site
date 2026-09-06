@@ -40,9 +40,4 @@ export const P = {
   deck: 0xb08a63,
   post: 0x5c4634,
 
-  surferSkin: 0xd9a179,
-  surferShirt: 0xf6f0e4,
-  surferShorts: 0x4a6a99,
-  surferHair: 0x4a3222,
-  board: 0xfff6ea,
 } as const;

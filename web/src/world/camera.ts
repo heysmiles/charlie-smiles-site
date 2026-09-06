@@ -14,7 +14,7 @@ export function frontAt(t: number) {
  *
  *   0.00-0.40  side-on at the water, closing in on the breaking wave
  *   0.40-0.62  straight in under the lip, the look turning once, down the line
- *   0.62-0.84  inside the tube behind the surfer, the exit ahead; he rides out
+ *   0.62-0.84  inside the tube, the exit ahead (the page rides this part for you)
  *   0.84-1.00  up out of the mouth and back to rest well off the beach
  *
  * Until the exit, x is relative to the break front — the camera travels with

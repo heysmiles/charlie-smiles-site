@@ -5,7 +5,6 @@ import { makeSky } from './sky';
 import { makeOcean } from './ocean';
 import { Wave } from './wave';
 import { Foam } from './foam';
-import { Surfer } from './surfer';
 import { makeShore, DOORS } from './shore';
 import { cameraAt, frontAt } from './camera';
 import { smoothstep, lerp } from './math';
@@ -21,7 +20,6 @@ export class World {
   camera: THREE.PerspectiveCamera;
   wave = new Wave();
   foam = new Foam();
-  surfer = new Surfer();
   ocean = makeOcean();
   private sky!: ReturnType<typeof makeSky>;
   /** Every material that takes the cream haze. */
@@ -68,7 +66,6 @@ export class World {
     this.scene.add(this.wave.mesh);
     this.hazed = [sky.uniforms, (this.ocean.mesh.material as THREE.ShaderMaterial).uniforms, (this.wave.mesh.material as THREE.ShaderMaterial).uniforms, sky.clouds, this.foam.pool.uniforms] as typeof this.hazed;
     this.scene.add(this.foam.points);
-    this.scene.add(this.surfer.group);
     this.scene.add(makeShore());
   }
 
@@ -88,25 +85,21 @@ export class World {
     const front = World.frontFor(progress);
     this.wave.update(front, this.time);
     this.foam.update(this.wave);
-    this.surfer.update(this.wave, progress);
     this.ocean.tick(this.time);
     // Cream haze over the sky, seamless with the landing above; lifted once
     // the camera drops into the tube and the sky leaves the frame.
-    // The reveal. At the top of the page the whole frame is the landing's
-    // cream. As you scroll, the water clears from the bottom up (the crest
-    // last), while the sky keeps a cream band across the top of the frame for
-    // the whole section, so the page above and the sunset are one scene.
-    const full = 1 - smoothstep(0.0, 0.11, progress);
-    const water = lerp(-0.6, 1.3, smoothstep(0.03, 0.3, progress));
-    const skyLo = lerp(-0.6, 0.42, smoothstep(0.03, 0.3, progress));
-    for (const u of this.hazed) u.uHazeFull.value = full;
-    this.hazed[0].uHazeLo.value = skyLo;
+    // The top of the frame is the landing's cream: the sky (and clouds) haze
+    // to it from mid-frame up for the whole section, so the sunset reads as the
+    // same page as the landing. The water and spray haze only in the top
+    // quarter and only while the stage is arriving under the landing, so the
+    // stage's top edge is invisible but the roof of the tube stays dark.
+    const water = lerp(0.75, 1.5, smoothstep(0.3, 0.45, progress));
+    for (const u of this.hazed) u.uHazeFull.value = 0;
+    this.hazed[0].uHazeLo.value = 0.42;
     this.hazed[1].uHazeLo.value = water;
     this.hazed[2].uHazeLo.value = water;
-    this.hazed[3].uHazeLo.value = skyLo; // clouds live in the sky
-    this.hazed[4].uHazeLo.value = water; // spray lives on the water
-    // The star on the landing fades with the reveal.
-    document.documentElement.style.setProperty('--veil', String(full));
+    this.hazed[3].uHazeLo.value = 0.42;
+    this.hazed[4].uHazeLo.value = water;
 
     const cs = cameraAt(progress);
     const target = new THREE.Vector3(cs.pos[0], cs.pos[1], cs.pos[2]);

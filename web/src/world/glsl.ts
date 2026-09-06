@@ -27,6 +27,8 @@ vec3 hazeTop(vec3 col){
   float sy = gl_FragCoord.y / uRes.y;
   // smoothstep with edge0 >= edge1 is undefined in GLSL: a band whose lower
   // edge has risen out of the frame is simply gone.
-  float band = uHazeLo >= 0.999 ? 0.0 : pow(smoothstep(uHazeLo, 1.0, sy), 1.5);
+  // Fully cream a little before the top edge, so the stage's first rows match
+  // the landing above exactly.
+  float band = uHazeLo >= 0.93 ? 0.0 : pow(smoothstep(uHazeLo, 0.93, sy), 1.5);
   return mix(col, uCream, max(band, uHazeFull));
 }`;
