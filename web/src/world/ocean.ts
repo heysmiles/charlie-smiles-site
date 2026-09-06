@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { P } from './palette';
 import { L } from './layout';
-import { NOISE, HAZE } from './glsl';
+import { NOISE, HAZE, creamRaw } from './glsl';
 
 /**
  * The open sea: summed sines with analytic normals, so it shades smoothly,
@@ -95,7 +95,7 @@ export function makeOcean() {
       uFogNear: { value: 220 },
       uFogFar: { value: 900 },
       uSunDir: { value: new THREE.Vector3(...L.sunDir).normalize() },
-      uCream: { value: new THREE.Color(P.cream) },
+      uCream: { value: creamRaw() },
       uRes: { value: new THREE.Vector2(1, 1) },
       uHazeLo: { value: 1.5 },
       uHazeFull: { value: 1 },

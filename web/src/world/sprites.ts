@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { HAZE } from './glsl';
+import { HAZE, creamRaw } from './glsl';
 
 /** A soft radial disc, for spray, froth and clouds. */
 export function softDisc(size = 128, inner = 0.15) {
@@ -67,7 +67,7 @@ export class SpritePool {
       uniforms: {
         uMap: { value: tex },
         uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
-        uCream: { value: new THREE.Color(0xfff9f5) },
+        uCream: { value: creamRaw() },
         uRes: { value: new THREE.Vector2(1, 1) },
         uHazeLo: { value: 1.5 },
         uHazeFull: { value: 1 },

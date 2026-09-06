@@ -41,7 +41,9 @@ export function WaveSection() {
       const rect = el.getBoundingClientRect();
       const y = window.scrollY + rect.top - (window.innerHeight - target * el.offsetHeight);
       riding = true;
-      lenis.scrollTo(y, { duration: 1.9, lock: true, easing: (t: number) => 1 - Math.pow(1 - t, 3), onComplete: () => { riding = false; } });
+      // Three seconds, easing in and out: most of it is the tube itself.
+      const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+      lenis.scrollTo(y, { duration: 3.0, lock: true, easing: ease, onComplete: () => { riding = false; } });
     };
 
     let raf = 0, last = performance.now();

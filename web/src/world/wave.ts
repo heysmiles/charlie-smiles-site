@@ -3,7 +3,7 @@ import { P } from './palette';
 import { L } from './layout';
 import { clamp01, hash, lerp, smoothstep } from './math';
 import { oceanH } from './ocean';
-import { NOISE, HAZE } from './glsl';
+import { NOISE, HAZE, creamRaw } from './glsl';
 
 /**
  * The wave as a solid, smooth.
@@ -218,7 +218,7 @@ export class Wave {
         uTime: { value: 0 },
         uSunDir: { value: new THREE.Vector3(...L.sunDir).normalize() },
         uFillDir: { value: new THREE.Vector3(-0.3, 0.6, -0.75).normalize() },
-        uCream: { value: new THREE.Color(P.cream) },
+        uCream: { value: creamRaw() },
         uRes: { value: new THREE.Vector2(1, 1) },
         uHazeLo: { value: 1.5 },
         uHazeFull: { value: 1 },

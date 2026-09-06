@@ -3,7 +3,7 @@ import { P } from './palette';
 import { L } from './layout';
 import { hash } from './math';
 import { SpritePool, softDisc } from './sprites';
-import { HAZE } from './glsl';
+import { HAZE, creamRaw } from './glsl';
 
 const vert = /* glsl */ `
 varying vec3 vDir;
@@ -42,7 +42,7 @@ export function makeSky() {
       uHorizon: { value: new THREE.Color(P.horizon) },
       uSun: { value: new THREE.Color(P.sun) },
       uSunDir: { value: new THREE.Vector3(...L.sunDir).normalize() },
-      uCream: { value: new THREE.Color(P.cream) },
+      uCream: { value: creamRaw() },
       uRes: { value: new THREE.Vector2(1, 1) },
       uHazeLo: { value: 0.42 },
       uHazeFull: { value: 1 },

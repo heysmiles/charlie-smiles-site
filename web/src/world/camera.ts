@@ -14,15 +14,15 @@ export function frontAt(t: number) {
  *
  *   0.00-0.40  side-on at the water, closing in on the breaking wave
  *   0.40-0.62  straight in under the lip, the look turning once, down the line
- *   0.62-0.84  inside the tube, the exit ahead (the page rides this part for you)
- *   0.84-1.00  up out of the mouth and back to rest well off the beach
+ *   0.62-0.86  inside the tube, the exit ahead (the page rides this part for you)
+ *   0.86-1.00  up out of the mouth and back to rest well off the beach
  *
  * Until the exit, x is relative to the break front — the camera travels with
  * the wave, so the tube holds its place in the frame while the wave keeps
  * crashing. After the exit the frame lets go of the front (blended, so the
  * motion stays continuous) and the last keys are fixed on the town.
  */
-const RELEASE = 0.84;
+const RELEASE = 0.86;
 const F_HOLD = lerp(-32, -190, RELEASE); // frontAt(RELEASE), the fixed frame's origin
 const wx = (worldX: number) => worldX - F_HOLD;
 
@@ -32,10 +32,10 @@ const PATH: { t: number; v: number[] }[] = [
   { t: L.pin, v: [41, 5.3, -44, 29, 4.8, 3, 43] },
   { t: 0.4, v: [44, 6.5, -32, 40, 6, -2, 46] },
   { t: 0.52, v: [50, 7.5, -18, 34, 7, -6, 52] },
-  { t: 0.62, v: [56, 6.5, -9, 18, 6, -8, 60] },
-  { t: 0.74, v: [52, 6.5, -8, 10, 6, -8, 62] },
-  { t: 0.84, v: [42, 8.5, -9, -8, 6, -16, 58] },
-  { t: 0.92, v: [wx(-120), 18, -30, wx(-130), 8, -110, 54] },
+  { t: 0.62, v: [57, 6.5, -9, 18, 6, -8, 60] },
+  { t: 0.74, v: [54, 6.5, -8, 12, 6, -8, 62] },
+  { t: 0.86, v: [43, 8.5, -9, -8, 6, -16, 58] },
+  { t: 0.93, v: [wx(-125), 18, -30, wx(-135), 8, -110, 54] },
   { t: 1.0, v: [wx(-40), 22, L.shoreZ + 120, wx(-40), 6, L.townZ, 50] },
 ];
 
@@ -45,6 +45,6 @@ export function cameraAt(t: number): CamState {
   const v = spline(PATH, t);
   const f = frontAt(t);
   // Ride with the front, then ease onto the fixed frame for the shore.
-  const fx = f - (f - F_HOLD) * smootherstep(RELEASE, 0.96, t);
+  const fx = f - (f - F_HOLD) * smootherstep(RELEASE, 0.97, t);
   return { pos: [v[0] + fx, v[1], v[2]], look: [v[3] + fx, v[4], v[5]], fov: v[6] };
 }
