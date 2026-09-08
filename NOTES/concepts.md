@@ -153,6 +153,20 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-08, late — Venice Beach from the water
+
+Charlie: the wave and the range are good; go back to panning over the wave to
+the beach and build Venice Beach for real, from the ocean, in our style —
+pier, beachfront, buildings, trees, from actual knowledge of the place.
+Built `venice.ts`: wide flat beach, bike path, blue LA County towers, Ocean
+Front Walk with a dense loud front row (murals, awnings, windows), the Erwin
+and Venice V at Windward, fan palms along the walk, the Rec Center (skate
+bowls, Muscle Beach, handball walls, courts), the breakwater, the Venice
+Fishing Pier at Washington, Santa Monica Pier and wheel far north, Marina del
+Rey towers far south, a faint Baldwin Hills ridge inland. Distances
+compressed to fit one frame. End camera rests off Windward; door clouds hang
+in the sky above the town. Shore foam back in the ocean shader.
+
 ## Status — 2026-09-08, night — layered range meets the coast, sun moved, real clouds
 
 Charlie: the range more detailed and multi-layered, just barely connected to

@@ -21,7 +21,7 @@ export function oceanH(x: number, z: number, t: number) {
 }
 
 const vert = /* glsl */ `
-uniform float uTime;
+uniform float uTime, uShoreZ;
 uniform vec3 uA, uF, uS;
 varying vec3 vWorld;
 varying vec3 vNormal;
@@ -42,7 +42,7 @@ void main(){
   gl_Position = projectionMatrix * viewMatrix * wp;
 }`;
 const frag = /* glsl */ `
-uniform float uTime;
+uniform float uTime, uShoreZ;
 uniform vec3 uDeep, uMid, uFoam, uGlint, uSunDir, uFog, uHor, uZenith;
 uniform float uFogNear, uFogFar;
 varying vec3 vWorld;
@@ -66,6 +66,12 @@ void main(){
   float s = max(dot(r, uSunDir), 0.0);
   col += uGlint * (pow(s, 200.0) * 1.1 + pow(s, 40.0) * 0.22 + pow(s, 10.0) * 0.06);
 
+  // Foam rolling up the beach.
+  float sd = vWorld.z - uShoreZ;
+  float band = smoothstep(-1.0, 1.0, sd) * (1.0 - smoothstep(3.0, 9.0, sd));
+  float roll = 0.5 + 0.5 * sin(sd * 0.9 - uTime * 1.2 + sin(vWorld.x * 0.13) * 1.5);
+  col = mix(col, uFoam, band * smoothstep(0.55, 0.95, roll) * 0.55);
+
   col = mix(col, uFog, smoothstep(uFogNear, uFogFar, d));
   gl_FragColor = vec4(hazeTop(col), 1.0);
 }`;
@@ -77,6 +83,7 @@ export function makeOcean() {
     fragmentShader: frag,
     uniforms: {
       uTime: { value: 0 },
+      uShoreZ: { value: L.shoreZ },
       uA: { value: new THREE.Vector3(SWELL.a1, SWELL.a2, SWELL.a3) },
       uF: { value: new THREE.Vector3(SWELL.f1, SWELL.f2, SWELL.f3) },
       uS: { value: new THREE.Vector3(SWELL.s1, SWELL.s2, SWELL.s3) },

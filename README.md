@@ -50,10 +50,21 @@ Nothing in it is an image. It lives in `web/src/world/`:
   phase at its own x, so scrolling back gathers the spray home.
 - `ocean.ts` — summed sines with analytic normals (smooth), sky reflection,
   sun path, foam rolling up the beach.
-- `mountains.ts` — a range down the line in three ridges at different depths,
-  the near one running off to the right into a low coast (you can just tell
-  it is land), the far one dissolving into haze; ridged noise for crests and
-  gullies. Unlit dark mauve. There is no beach, town or pier any more.
+- `mountains.ts` — the Malibu range down the line in three ridges at different
+  depths, the near one running off into a low coast, the far one dissolving
+  into haze; ridged noise for crests and gullies. Unlit dark mauve.
+- `venice.ts` — **Venice Beach from the water**, built from what the place is:
+  the very wide flat beach with the bike path snaking through it and the blue
+  LA County lifeguard towers along the waterline; Ocean Front Walk with its
+  dense row of low, loud buildings (murals, awnings, shopfronts, windows),
+  the Erwin and the Venice V rising at Windward, tall skinny fan palms along
+  the walk; the Rec Center on the sand — skate park bowls, Muscle Beach's
+  blue-and-white gym, handball walls, basketball and paddle-tennis courts;
+  the breakwater's rocks off Windward; the Venice Fishing Pier at Washington
+  to the south (long, straight, pilings, round end, lamps, bait shack); and
+  far off, the Santa Monica Pier with its wheel to the north and the Marina
+  del Rey towers to the south, unlit and fogged. Distances along the beach are
+  compressed so it all fits one frame from the water; Windward is `L.veniceX`.
 - `doorclouds.ts` — the five doors as cumulus: clusters of soft sprites lit
   from below by the low sun (peach undersides, cream tops), hanging in the
   sky of the final view and drifting slowly left to right across it. They
@@ -63,9 +74,9 @@ Nothing in it is an image. It lives in `web/src/world/`:
   stops at a key): side-on at the water closing in, straight in under the lip
   with the look turning once to face down the line, a beat inside the tube
   with the exit ahead (the reference clip in
-  `assets/reference/barrel-reference.mov`), then up over the crest to the
-  seaward side, resting facing the open ocean and the sun with the horizon
-  low in frame and the wave behind.
+  `assets/reference/barrel-reference.mov`), then up out of the mouth and over
+  the shoulder to rest off the beach, facing Venice with Windward straight
+  ahead (`L.endCam`).
   The break front never stops (`frontAt`), and until the exit the camera's x
   is relative to it, so the wave keeps crashing while the camera keeps
   moving; the frame then eases onto fixed keys facing the sea. There is no
@@ -94,8 +105,8 @@ label in `ui/WaveSection.tsx` is a link placed over its cloud's projected
 centre, fading in with the end state and out at the edges of the drift.
 
 **The sun** sets down the line (`L.sunDir`), over the seaward end of the
-range as seen through the mouth of the tube, and to the right of frame in the
-final view, which looks seaward and a little down the line (`L.endCam`).
+range as seen through the mouth of the tube; in the final view it is behind
+the camera, lighting Venice gold against the eastern sky.
 
 **One sea.** The ocean shader evaluates its swell in world coordinates, the
 same function the wave's skirt rides (`oceanH`), and the skirt sits a little

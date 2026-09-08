@@ -11,7 +11,7 @@ import { SpritePool, softDisc } from './sprites';
  * exist only in the end state. The labels are DOM, placed over each cloud's
  * projected centre (World.doorScreen).
  */
-const PER = 22;
+const PER = 32;
 const DRIFT = 2.4; // world units per second along the screen's right
 const SPAN = 470; // wrap width along the screen's right
 
@@ -24,8 +24,8 @@ export class DoorClouds {
   private right = new THREE.Vector3();
   private up = new THREE.Vector3(0, 1, 0);
   private local: Float32Array;
-  private cTop = new THREE.Color(0xfff1e8);
-  private cBottom = new THREE.Color(0xf0a070);
+  private cTop = new THREE.Color(0xfff7f0);
+  private cBottom = new THREE.Color(0xf4c6a6);
   private c = new THREE.Color();
 
   constructor() {
@@ -70,7 +70,7 @@ export class DoorClouds {
         p.copy(center).addScaledVector(this.right, this.local[o]).addScaledVector(this.up, this.local[o + 1]).addScaledVector(dir, this.local[o + 2]);
         pos[j * 3] = p.x; pos[j * 3 + 1] = p.y; pos[j * 3 + 2] = p.z;
         size[j] = this.local[o + 3];
-        alpha[j] = this.fade[i] * (0.42 + hash(i, k, 5) * 0.3);
+        alpha[j] = this.fade[i] * (0.4 + hash(i, k, 5) * 0.3);
         // Lit from below by the low sun: peach undersides, cream tops.
         const t = clamp01((this.local[o + 1] + 5) / 24);
         this.c.copy(this.cBottom).lerp(this.cTop, t);

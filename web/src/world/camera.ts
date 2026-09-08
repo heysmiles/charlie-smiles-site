@@ -15,8 +15,8 @@ export function frontAt(t: number) {
  *   0.00-0.40  side-on at the water, closing in on the breaking wave
  *   0.40-0.62  straight in under the lip, the look turning once, down the line
  *   0.62-0.86  inside the tube, the exit ahead
- *   0.86-1.00  up out of the mouth, over the crest to the seaward side, and
- *              resting facing the open ocean and the sun, the wave behind
+ *   0.86-1.00  up out of the mouth and over the shoulder to rest off the
+ *              beach, facing Venice — Windward straight ahead
  *
  * Until the exit, x is relative to the break front — the camera travels with
  * the wave, so the tube holds its place in the frame while the wave keeps
@@ -36,8 +36,8 @@ const PATH: { t: number; v: number[] }[] = [
   { t: 0.62, v: [57, 6.5, -9, 18, 6, -8, 60] },
   { t: 0.74, v: [54, 6.5, -8, 12, 6, -8, 62] },
   { t: 0.86, v: [43, 8.5, -9, -8, 6, -16, 58] },
-  { t: 0.9, v: [wx(-125), 20, -4, wx(-160), 22, 60, 56] },
-  { t: 0.93, v: [wx(-124), 24, 10, wx(-220), 40, 260, 54] },
+  { t: 0.9, v: [wx(-124), 18, -22, wx(-130), 10, -120, 56] },
+  { t: 0.95, v: [wx(-118), 20, -66, wx(-116), 8, -260, 52] },
   { t: 1.0, v: [wx(L.endCam.pos[0]), L.endCam.pos[1], L.endCam.pos[2], wx(L.endCam.look[0]), L.endCam.look[1], L.endCam.look[2], 50] },
 ];
 
