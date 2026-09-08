@@ -50,9 +50,15 @@ Nothing in it is an image. It lives in `web/src/world/`:
   phase at its own x, so scrolling back gathers the spray home.
 - `ocean.ts` — summed sines with analytic normals (smooth), sky reflection,
   sun path, foam rolling up the beach.
-- `mountains.ts` — a low range down the line, about where the pier used to
-  stand: a few gentle peaks stepping down out to sea, unlit dark mauve with a
-  touch of haze. There is no beach, town or pier any more.
+- `mountains.ts` — a range down the line in three ridges at different depths,
+  the near one running off to the right into a low coast (you can just tell
+  it is land), the far one dissolving into haze; ridged noise for crests and
+  gullies. Unlit dark mauve. There is no beach, town or pier any more.
+- `doorclouds.ts` — the five doors as cumulus: clusters of soft sprites lit
+  from below by the low sun (peach undersides, cream tops), hanging in the
+  sky of the final view and drifting slowly left to right across it. They
+  exist only in the end state; `World.doorScreen` projects each cloud's
+  centre so the section can place its label over it.
 - `camera.ts` — one Catmull-Rom path over the whole section (velocity never
   stops at a key): side-on at the water closing in, straight in under the lip
   with the look turning once to face down the line, a beat inside the tube
@@ -83,10 +89,13 @@ reads as the same page.
 
 All of the scroll is yours; nothing auto-scrolls.
 
-**The doors** (`world/doors.ts`, rendered in `ui/WaveSection.tsx`) ride soft
-clouds that drift slowly left to right along the top of the page — each one a
-link. They show while the sky is at the top of the frame (the side-on chapter
-and the rest at the end), not inside the tube.
+**The doors** (`world/doors.ts`) are the clouds of the final view: each
+label in `ui/WaveSection.tsx` is a link placed over its cloud's projected
+centre, fading in with the end state and out at the edges of the drift.
+
+**The sun** sets down the line (`L.sunDir`), over the seaward end of the
+range as seen through the mouth of the tube, and to the right of frame in the
+final view, which looks seaward and a little down the line (`L.endCam`).
 
 **One sea.** The ocean shader evaluates its swell in world coordinates, the
 same function the wave's skirt rides (`oceanH`), and the skirt sits a little

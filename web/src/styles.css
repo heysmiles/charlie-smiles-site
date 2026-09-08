@@ -29,7 +29,7 @@ body {
 .wave { position: relative; }
 .wave__stage { position: sticky; top: 0; height: 100vh; overflow: hidden; background: var(--cream); }
 .wave__canvas { display: block; width: 100%; height: 100%; }
-.wave__clouds { position: absolute; inset: 0; pointer-events: none; overflow: hidden; transition: opacity 0.3s ease; }
+.wave__doors { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 
 /* -------------------------------------------------------------- landing -- */
 
@@ -96,49 +96,28 @@ body {
   45%      { transform: rotate(45deg) translate(4px, 4px); opacity: 0.85; }
 }
 
-/* --------------------------------------------------------- door clouds -- */
+/* -------------------------------------------------------------- doors -- */
 
-/* The doors ride soft clouds that drift slowly left to right along the top
-   of the page. Each one is a link. */
-.cloud {
+/* Each door's label sits over its cloud (a sprite cluster in the world); the
+   world projects the cloud's centre and the section places the label there. */
+.door {
   position: absolute;
   left: 0;
-  width: clamp(180px, 18vw, 280px);
-  pointer-events: auto;
-  text-decoration: none;
-  color: var(--ink);
-  animation-name: drift;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: transform;
-}
-
-.cloud__puff { display: block; width: 100%; height: auto; fill: #fff7f0; opacity: 0.92; transition: opacity 0.3s ease; }
-
-.cloud__text {
-  position: absolute;
-  inset: 0;
+  top: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding-top: 12%;
-  gap: 0.25rem;
+  gap: 0.3rem;
   white-space: nowrap;
+  text-decoration: none;
+  color: var(--ink);
+  opacity: 0;
+  text-shadow: 0 0 14px rgba(255, 247, 240, 0.9), 0 0 3px rgba(255, 247, 240, 0.9);
 }
-
-.cloud__label { font-size: 0.62rem; letter-spacing: 0.13em; text-transform: uppercase; }
-.cloud__leads { font-size: 0.56rem; letter-spacing: 0.1em; opacity: 0.6; }
-
-.cloud:hover .cloud__puff { opacity: 1; }
-.cloud:hover .cloud__label { color: var(--ember); }
-
-@keyframes drift {
-  from { transform: translateX(-40vw); }
-  to   { transform: translateX(110vw); }
-}
+.door__label { font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; }
+.door__leads { font-size: 0.56rem; letter-spacing: 0.1em; opacity: 0.65; }
+.door:hover .door__label { color: var(--ember); }
 
 @media (prefers-reduced-motion: reduce) {
   .landing__arrow { animation: none; }
-  .cloud { animation: none; left: calc(10vw + var(--i, 0) * 16vw); }
 }

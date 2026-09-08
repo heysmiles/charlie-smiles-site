@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
-import type React from 'react';
 import { World } from '../world/World';
 import { DOORS } from '../world/doors';
-import { clamp01, smoothstep } from '../world/math';
+import { clamp01 } from '../world/math';
 import { L } from '../world/layout';
 
 /**
@@ -13,7 +12,7 @@ import { L } from '../world/layout';
 export function WaveSection() {
   const section = useRef<HTMLElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const clouds = useRef<HTMLDivElement>(null);
+  const doorEls = useRef<(HTMLAnchorElement | null)[]>([]);
 
   useEffect(() => {
     const el = section.current!;
@@ -41,9 +40,14 @@ export function WaveSection() {
       // viewport, so the wave is already breaking while the landing leaves.
       const p = override ?? clamp01((window.innerHeight - rect.top) / Math.max(1, el.offsetHeight));
       world.update(p, dt);
-      // The door clouds live where the sky is at the top of the frame: the
-      // side-on chapter and the rest at the end, not inside the tube.
-      if (clouds.current) clouds.current.style.opacity = String(Math.min(1, 1 - smoothstep(0.4, 0.5, p) + smoothstep(0.88, 0.95, p)));
+      // Labels ride their clouds: placed over each cloud's projected centre.
+      doorEls.current.forEach((n, i) => {
+        if (!n) return;
+        const d = world.doorScreen[i];
+        n.style.opacity = String(d.alpha);
+        n.style.pointerEvents = d.alpha > 0.3 ? 'auto' : 'none';
+        n.style.transform = `translate(-50%, -50%) translate(${d.x * el.clientWidth}px, ${d.y * window.innerHeight}px)`;
+      });
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -54,27 +58,11 @@ export function WaveSection() {
     <section className="wave" ref={section} style={{ height: `${L.trackVh}vh` }}>
       <div className="wave__stage">
         <canvas ref={canvas} className="wave__canvas" />
-        <div className="wave__clouds" ref={clouds}>
+        <div className="wave__doors">
           {DOORS.map((d, i) => (
-            <a
-              key={d.id}
-              className="cloud"
-              href={`#${d.id}`}
-              style={{ ...({ '--i': i } as React.CSSProperties), top: `${5 + (i % 3) * 6}vh`, animationDuration: `${170 + i * 29}s`, animationDelay: `-${i * 41 + 10}s` }}
-            >
-              <svg className="cloud__puff" viewBox="0 0 220 96" aria-hidden="true">
-                <defs><filter id={`soft-${d.id}`} x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="5" /></filter></defs>
-                <g filter={`url(#soft-${d.id})`}>
-                  <ellipse cx="72" cy="60" rx="62" ry="24" />
-                  <ellipse cx="128" cy="52" rx="58" ry="30" />
-                  <ellipse cx="100" cy="40" rx="42" ry="26" />
-                  <ellipse cx="160" cy="64" rx="42" ry="20" />
-                </g>
-              </svg>
-              <span className="cloud__text">
-                <span className="cloud__label">{d.label}</span>
-                <span className="cloud__leads">{d.leads}</span>
-              </span>
+            <a key={d.id} className="door" href={`#${d.id}`} ref={(n) => { doorEls.current[i] = n; }}>
+              <span className="door__label">{d.label}</span>
+              <span className="door__leads">{d.leads}</span>
             </a>
           ))}
         </div>

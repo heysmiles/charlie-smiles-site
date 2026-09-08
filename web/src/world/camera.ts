@@ -36,9 +36,9 @@ const PATH: { t: number; v: number[] }[] = [
   { t: 0.62, v: [57, 6.5, -9, 18, 6, -8, 60] },
   { t: 0.74, v: [54, 6.5, -8, 12, 6, -8, 62] },
   { t: 0.86, v: [43, 8.5, -9, -8, 6, -16, 58] },
-  { t: 0.9, v: [wx(-125), 20, -4, wx(-140), 22, 60, 56] },
-  { t: 0.93, v: [wx(-124), 24, 10, wx(-110), 40, 300, 54] },
-  { t: 1.0, v: [wx(-120), 14, 70, wx(-80), 60, 400, 50] },
+  { t: 0.9, v: [wx(-125), 20, -4, wx(-160), 22, 60, 56] },
+  { t: 0.93, v: [wx(-124), 24, 10, wx(-220), 40, 260, 54] },
+  { t: 1.0, v: [wx(L.endCam.pos[0]), L.endCam.pos[1], L.endCam.pos[2], wx(L.endCam.look[0]), L.endCam.look[1], L.endCam.look[2], 50] },
 ];
 
 export type CamState = { pos: number[]; look: number[]; fov: number };

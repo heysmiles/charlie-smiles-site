@@ -153,6 +153,18 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-08, night — layered range meets the coast, sun moved, real clouds
+
+Charlie: the range more detailed and multi-layered, just barely connected to
+land on the right; the sun setting over the left of the range (through the
+mouth) and to the right in the final ocean view; the door clouds only in the
+end state, far more realistic and three-dimensional, floating left to right.
+Done: three ridges with folded-noise crests and a low coast running right;
+sun direction moved down the line; end camera looks seaward and a little down
+the line so the sun is right of frame; door clouds rebuilt as sprite cumulus
+in the world (lit from below), drifting along the screen's right, labels
+projected onto them; the flat CSS clouds are gone.
+
 ## Status — 2026-09-08, evening — no shore, low range, one sea, door clouds
 
 Charlie: take out the beach and pier; bring back low mountains cascading out
