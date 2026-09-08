@@ -153,6 +153,14 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-08 — back to Saturday's build, plus the Malibu range
+
+Charlie rolled the day back: `main` is Saturday evening's build (0315f1c) plus
+only the Malibu range from today (`web/src/world/mountains.ts`, the mauve,
+unfogged version). Everything else tried today — deep long tube, world-space
+camera, glassy lip, no-surfer/manual-scroll variants — is parked on the
+`today-sep-8` branch for parts.
+
 ## Status — 2026-09-04, night — no surfer, no fade, the ride
 
 Charlie: take the surfer out completely; no fade-in reveal — the wave is a

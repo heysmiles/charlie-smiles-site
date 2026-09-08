@@ -6,6 +6,7 @@ import { makeOcean } from './ocean';
 import { Wave } from './wave';
 import { Foam } from './foam';
 import { makeShore, DOORS } from './shore';
+import { makeMountains } from './mountains';
 import { cameraAt, frontAt } from './camera';
 import { smoothstep, lerp } from './math';
 
@@ -67,6 +68,7 @@ export class World {
     this.hazed = [sky.uniforms, (this.ocean.mesh.material as THREE.ShaderMaterial).uniforms, (this.wave.mesh.material as THREE.ShaderMaterial).uniforms, sky.clouds, this.foam.pool.uniforms] as typeof this.hazed;
     this.scene.add(this.foam.points);
     this.scene.add(makeShore());
+    this.scene.add(makeMountains());
   }
 
   resize(w: number, h: number) {

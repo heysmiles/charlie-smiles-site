@@ -52,6 +52,8 @@ Nothing in it is an image. It lives in `web/src/world/`:
   sun path, foam rolling up the beach.
 - `shore.ts` — heightfield beach → town → hills, houses with gable roofs,
   instanced palms, boardwalk, lifeguard tower, the pier and its wheel.
+- `mountains.ts` — the Malibu range down the line: a low-poly headland that
+  runs from behind the town out to sea, seen through the mouth of the tube.
 - `camera.ts` — one Catmull-Rom path over the whole section (velocity never
   stops at a key): side-on at the water closing in, straight in under the lip
   with the look turning once to face down the line, a beat inside the tube
