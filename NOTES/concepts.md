@@ -153,6 +153,17 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-08, evening — no shore, low range, one sea, door clouds
+
+Charlie: take out the beach and pier; bring back low mountains cascading out
+to about where the pier was; merge the wave's water with the sea; end facing
+the ocean and sun with the ocean in the bottom third and the wave out of
+frame; clouds drifting slowly left→right along the top carry the labels and
+are the links. Done. Found and fixed the real cause of the sea/wave seam: the
+ocean shader evaluated its swell in local plane coordinates (offset 200 in z
+from world), so it never matched the wave's `oceanH`; plus the skirt's spline
+corner overshot above the surface — the skirt now sits under the sea.
+
 ## Status — 2026-09-08, later — manual scroll, no mountains, ending on the sea
 
 Charlie: take the mountains and the auto-ride out; all scrolling manual; after

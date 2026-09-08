@@ -50,20 +50,22 @@ Nothing in it is an image. It lives in `web/src/world/`:
   phase at its own x, so scrolling back gathers the spray home.
 - `ocean.ts` — summed sines with analytic normals (smooth), sky reflection,
   sun path, foam rolling up the beach.
-- `shore.ts` — heightfield beach → town → hills, houses with gable roofs,
-  instanced palms, boardwalk, lifeguard tower, the pier and its wheel.
+- `mountains.ts` — a low range down the line, about where the pier used to
+  stand: a few gentle peaks stepping down out to sea, unlit dark mauve with a
+  touch of haze. There is no beach, town or pier any more.
 - `camera.ts` — one Catmull-Rom path over the whole section (velocity never
   stops at a key): side-on at the water closing in, straight in under the lip
   with the look turning once to face down the line, a beat inside the tube
   with the exit ahead (the reference clip in
-  `assets/reference/barrel-reference.mov`), then up out of the mouth, turning
-  away from the shore to face the open ocean and the sun, and resting there.
+  `assets/reference/barrel-reference.mov`), then up over the crest to the
+  seaward side, resting facing the open ocean and the sun with the horizon
+  low in frame and the wave behind.
   The break front never stops (`frontAt`), and until the exit the camera's x
   is relative to it, so the wave keeps crashing while the camera keeps
   moving; the frame then eases onto fixed keys facing the sea. There is no
   surfer: the viewer is the one in the tube.
 - `sky.ts` — gradient dome with the sun, soft sprite clouds. The dome is also
-  baked into the scene's environment map for the shore's materials. It hazes
+  baked into the scene's environment map. It hazes
   the top of the frame to the landing's cream (screen-space, sky only) so the
   page above and the sky are one surface; the haze lifts once the camera is
   in the tube.
@@ -80,6 +82,16 @@ arriving — so the edge between landing and world is invisible and the sunset
 reads as the same page.
 
 All of the scroll is yours; nothing auto-scrolls.
+
+**The doors** (`world/doors.ts`, rendered in `ui/WaveSection.tsx`) ride soft
+clouds that drift slowly left to right along the top of the page — each one a
+link. They show while the sky is at the top of the frame (the side-on chapter
+and the rest at the end), not inside the tube.
+
+**One sea.** The ocean shader evaluates its swell in world coordinates, the
+same function the wave's skirt rides (`oceanH`), and the skirt sits a little
+under the sea surface, so the water you see around the wave is the ocean and
+the two meet in one clean line at the wave's foot.
 
 **Everything that moves is a pure function of scroll** — no simulation state —
 so scrubbing back runs the wave backwards exactly.
