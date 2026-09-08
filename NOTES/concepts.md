@@ -153,6 +153,14 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-08, later — manual scroll, no mountains, ending on the sea
+
+Charlie: take the mountains and the auto-ride out; all scrolling manual; after
+the barrel the camera should turn to face the ocean and end there instead of
+the beach. Done. The end shot is the sun on the horizon with its path on the
+water and the wave's back in the foreground. The door labels (on the shore)
+are therefore off-screen at the end — to be rethought.
+
 ## Status — 2026-09-08 — back to Saturday's build, plus the Malibu range
 
 Charlie rolled the day back: `main` is Saturday evening's build (0315f1c) plus

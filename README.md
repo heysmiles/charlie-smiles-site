@@ -52,16 +52,15 @@ Nothing in it is an image. It lives in `web/src/world/`:
   sun path, foam rolling up the beach.
 - `shore.ts` — heightfield beach → town → hills, houses with gable roofs,
   instanced palms, boardwalk, lifeguard tower, the pier and its wheel.
-- `mountains.ts` — the Malibu range down the line: a low-poly headland that
-  runs from behind the town out to sea, seen through the mouth of the tube.
 - `camera.ts` — one Catmull-Rom path over the whole section (velocity never
   stops at a key): side-on at the water closing in, straight in under the lip
   with the look turning once to face down the line, a beat inside the tube
   with the exit ahead (the reference clip in
-  `assets/reference/barrel-reference.mov`), then up and back to rest well off
-  the beach. The break front never stops (`frontAt`), and until the exit the
-  camera's x is relative to it, so the wave keeps crashing while the camera
-  keeps moving; the frame then eases onto fixed keys for the town. There is no
+  `assets/reference/barrel-reference.mov`), then up out of the mouth, turning
+  away from the shore to face the open ocean and the sun, and resting there.
+  The break front never stops (`frontAt`), and until the exit the camera's x
+  is relative to it, so the wave keeps crashing while the camera keeps
+  moving; the frame then eases onto fixed keys facing the sea. There is no
   surfer: the viewer is the one in the tube.
 - `sky.ts` — gradient dome with the sun, soft sprite clouds. The dome is also
   baked into the scene's environment map for the shore's materials. It hazes
@@ -80,10 +79,7 @@ mid-frame up for the whole section, the water only while the stage is
 arriving — so the edge between landing and world is invisible and the sunset
 reads as the same page.
 
-**The ride.** You scroll yourself in until the camera is inside the barrel
-(progress 0.6). From there the page carries you: a locked, eased Lenis scroll
-through the tube and out to the beach in under two seconds, like kairui.dev's
-hyper-zoom. Scrolling up from the beach rides you back out to the mouth.
+All of the scroll is yours; nothing auto-scrolls.
 
 **Everything that moves is a pure function of scroll** — no simulation state —
 so scrubbing back runs the wave backwards exactly.
