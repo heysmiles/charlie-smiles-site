@@ -3,7 +3,6 @@ import { World } from '../world/World';
 import { DOORS } from '../world/shore';
 import { clamp01 } from '../world/math';
 import { L } from '../world/layout';
-import { getLenis } from '../lib/useScrollProgress';
 
 /**
  * The wave section: a tall scroll track with a viewport-sized sticky stage.
@@ -29,23 +28,6 @@ export function WaveSection() {
     resize();
     window.addEventListener('resize', resize);
 
-    // The ride. You scroll yourself into the barrel; from there the page
-    // carries you through it and out to the beach in one fast, eased sweep
-    // (and back out again if you scroll up from the beach).
-    const ENTER = 0.6, END = 1.0;
-    let zone: 'before' | 'after' = 'before';
-    let riding = false;
-    const rideTo = (target: number) => {
-      const lenis = getLenis();
-      if (!lenis) return;
-      const rect = el.getBoundingClientRect();
-      const y = window.scrollY + rect.top - (window.innerHeight - target * el.offsetHeight);
-      riding = true;
-      // Three seconds, easing in and out: most of it is the tube itself.
-      const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-      lenis.scrollTo(y, { duration: 3.0, lock: true, easing: ease, onComplete: () => { riding = false; } });
-    };
-
     let raf = 0, last = performance.now();
     const loop = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
@@ -57,11 +39,6 @@ export function WaveSection() {
       // Progress runs from the moment the section's top edge enters the
       // viewport, so the wave is already breaking while the landing leaves.
       const p = override ?? clamp01((window.innerHeight - rect.top) / Math.max(1, el.offsetHeight));
-      if (!riding && override == null) {
-        if (zone === 'before' && p >= ENTER) { zone = 'after'; rideTo(END); }
-        else if (zone === 'after' && p <= ENTER) zone = 'before';
-        else if (zone === 'after' && p < END - 0.02) { zone = 'before'; rideTo(ENTER - 0.03); }
-      }
       world.update(p, dt);
       labels.current.forEach((n, i) => {
         if (!n) return;

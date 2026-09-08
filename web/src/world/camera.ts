@@ -14,13 +14,14 @@ export function frontAt(t: number) {
  *
  *   0.00-0.40  side-on at the water, closing in on the breaking wave
  *   0.40-0.62  straight in under the lip, the look turning once, down the line
- *   0.62-0.86  inside the tube, the exit ahead (the page rides this part for you)
- *   0.86-1.00  up out of the mouth and back to rest well off the beach
+ *   0.62-0.86  inside the tube, the exit ahead
+ *   0.86-1.00  up out of the mouth, turning away from the shore to face the
+ *              open ocean and the sun, and resting there
  *
  * Until the exit, x is relative to the break front — the camera travels with
  * the wave, so the tube holds its place in the frame while the wave keeps
  * crashing. After the exit the frame lets go of the front (blended, so the
- * motion stays continuous) and the last keys are fixed on the town.
+ * motion stays continuous) and the last keys are fixed, facing the sea.
  */
 const RELEASE = 0.86;
 const F_HOLD = lerp(-32, -190, RELEASE); // frontAt(RELEASE), the fixed frame's origin
@@ -35,8 +36,8 @@ const PATH: { t: number; v: number[] }[] = [
   { t: 0.62, v: [57, 6.5, -9, 18, 6, -8, 60] },
   { t: 0.74, v: [54, 6.5, -8, 12, 6, -8, 62] },
   { t: 0.86, v: [43, 8.5, -9, -8, 6, -16, 58] },
-  { t: 0.93, v: [wx(-125), 18, -30, wx(-135), 8, -110, 54] },
-  { t: 1.0, v: [wx(-40), 22, L.shoreZ + 120, wx(-40), 6, L.townZ, 50] },
+  { t: 0.93, v: [wx(-124), 16, -22, wx(-112), 10, 40, 54] },
+  { t: 1.0, v: [wx(-120), 20, -30, wx(-100), 8, 220, 50] },
 ];
 
 export type CamState = { pos: number[]; look: number[]; fov: number };

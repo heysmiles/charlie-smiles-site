@@ -18,8 +18,6 @@ export const L = {
   /** Where the break front is at the first and last scroll; it never stops. */
   frontStart: -32,
   frontEnd: -190,
-  /** The Malibu range, down the line: a headland running out to sea, close enough to read through the mouth. */
-  rangeX: -700,
   sunDir: [0.25, 0.06, 1.0] as const,
   /** Height of the wave's scroll track, in viewport heights. */
   trackVh: 560,
