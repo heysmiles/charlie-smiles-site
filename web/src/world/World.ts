@@ -5,7 +5,7 @@ import { makeSky } from './sky';
 import { makeOcean } from './ocean';
 import { Wave } from './wave';
 import { Foam } from './foam';
-import { makeShore, DOORS } from './shore';
+import { makeMountains } from './mountains';
 import { cameraAt, frontAt } from './camera';
 import { smoothstep, lerp } from './math';
 
@@ -30,7 +30,6 @@ export class World {
   private smoothPos = new THREE.Vector3();
   private smoothLook = new THREE.Vector3();
   private first = true;
-  doorScreen: { id: string; x: number; y: number; visible: boolean }[] = DOORS.map((d) => ({ id: d.id, x: 0, y: 0, visible: false }));
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -66,7 +65,7 @@ export class World {
     this.scene.add(this.wave.mesh);
     this.hazed = [sky.uniforms, (this.ocean.mesh.material as THREE.ShaderMaterial).uniforms, (this.wave.mesh.material as THREE.ShaderMaterial).uniforms, sky.clouds, this.foam.pool.uniforms] as typeof this.hazed;
     this.scene.add(this.foam.points);
-    this.scene.add(makeShore());
+    this.scene.add(makeMountains());
   }
 
   resize(w: number, h: number) {
@@ -115,16 +114,6 @@ export class World {
     const fov = cs.fov * (aspect < 1.5 ? 1 + (1.5 - aspect) * 0.4 : 1);
     if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
 
-    // Project the doors for the label layer.
-    const reveal = smoothstep(0.88, 0.99, progress);
-    const v = new THREE.Vector3();
-    for (let i = 0; i < DOORS.length; i++) {
-      v.copy(DOORS[i].pos).project(this.camera);
-      const ds = this.doorScreen[i];
-      ds.x = (v.x * 0.5 + 0.5);
-      ds.y = (1 - (v.y * 0.5 + 0.5));
-      ds.visible = reveal > 0.01 && v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05;
-    }
     this.renderer.render(this.scene, this.camera);
   }
 

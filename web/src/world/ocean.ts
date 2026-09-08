@@ -26,21 +26,23 @@ uniform vec3 uA, uF, uS;
 varying vec3 vWorld;
 varying vec3 vNormal;
 void main(){
-  vec3 p = position;
-  float x = p.x, z = -p.y; // the plane is rotated flat; local y is world -z
+  // Evaluate the swell in WORLD x/z — the same coordinates the wave's oceanH
+  // uses — so the wave's skirt and the sea are one surface (the plane is
+  // translated, so local coordinates would be offset from the wave's).
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  float x = wp.x, z = wp.z;
   float h = sin(x * uF.x + uTime * uS.x) * uA.x
           + sin(z * uF.y - uTime * uS.y) * uA.y
           + sin((x + z) * uF.z + uTime * uS.z) * uA.z;
   float dhx = cos(x * uF.x + uTime * uS.x) * uA.x * uF.x + cos((x + z) * uF.z + uTime * uS.z) * uA.z * uF.z;
   float dhz = cos(z * uF.y - uTime * uS.y) * uA.y * uF.y + cos((x + z) * uF.z + uTime * uS.z) * uA.z * uF.z;
-  p.z += h;
-  vec4 wp = modelMatrix * vec4(p, 1.0);
+  wp.y += h;
   vWorld = wp.xyz;
   vNormal = normalize(vec3(-dhx, 1.0, -dhz));
   gl_Position = projectionMatrix * viewMatrix * wp;
 }`;
 const frag = /* glsl */ `
-uniform float uTime, uShoreZ;
+uniform float uTime;
 uniform vec3 uDeep, uMid, uFoam, uGlint, uSunDir, uFog, uHor, uZenith;
 uniform float uFogNear, uFogFar;
 varying vec3 vWorld;
@@ -64,12 +66,6 @@ void main(){
   float s = max(dot(r, uSunDir), 0.0);
   col += uGlint * (pow(s, 200.0) * 1.1 + pow(s, 40.0) * 0.22 + pow(s, 10.0) * 0.06);
 
-  // Foam rolling up the beach.
-  float sd = vWorld.z - uShoreZ;
-  float band = smoothstep(-1.0, 1.0, sd) * (1.0 - smoothstep(3.0, 9.0, sd));
-  float roll = 0.5 + 0.5 * sin(sd * 0.9 - uTime * 1.2 + sin(vWorld.x * 0.13) * 1.5);
-  col = mix(col, uFoam, band * smoothstep(0.55, 0.95, roll) * 0.55);
-
   col = mix(col, uFog, smoothstep(uFogNear, uFogFar, d));
   gl_FragColor = vec4(hazeTop(col), 1.0);
 }`;
@@ -84,7 +80,6 @@ export function makeOcean() {
       uA: { value: new THREE.Vector3(SWELL.a1, SWELL.a2, SWELL.a3) },
       uF: { value: new THREE.Vector3(SWELL.f1, SWELL.f2, SWELL.f3) },
       uS: { value: new THREE.Vector3(SWELL.s1, SWELL.s2, SWELL.s3) },
-      uShoreZ: { value: L.shoreZ },
       uDeep: { value: new THREE.Color(P.seaDeep) },
       uMid: { value: new THREE.Color(P.seaMid) },
       uFoam: { value: new THREE.Color(P.foam) },

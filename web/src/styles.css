@@ -29,8 +29,7 @@ body {
 .wave { position: relative; }
 .wave__stage { position: sticky; top: 0; height: 100vh; overflow: hidden; background: var(--cream); }
 .wave__canvas { display: block; width: 100%; height: 100%; }
-.wave__labels { position: absolute; inset: 0; pointer-events: none; }
-.wave__labels .landmark { position: absolute; left: 0; top: 0; pointer-events: auto; transition: opacity 0.4s ease; }
+.wave__clouds { position: absolute; inset: 0; pointer-events: none; overflow: hidden; transition: opacity 0.3s ease; }
 
 /* -------------------------------------------------------------- landing -- */
 
@@ -97,46 +96,49 @@ body {
   45%      { transform: rotate(45deg) translate(4px, 4px); opacity: 0.85; }
 }
 
-/* ------------------------------------------------------------ landmarks -- */
+/* --------------------------------------------------------- door clouds -- */
 
-.landmark {
+/* The doors ride soft clouds that drift slowly left to right along the top
+   of the page. Each one is a link. */
+.cloud {
+  position: absolute;
+  left: 0;
+  width: clamp(180px, 18vw, 280px);
+  pointer-events: auto;
+  text-decoration: none;
+  color: var(--ink);
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.cloud__puff { display: block; width: 100%; height: auto; fill: #fff7f0; opacity: 0.92; transition: opacity 0.3s ease; }
+
+.cloud__text {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
+  justify-content: center;
+  padding-top: 12%;
+  gap: 0.25rem;
   white-space: nowrap;
-  cursor: pointer;
-  opacity: 0;
-  user-select: none;
-  transition: color 0.25s ease;
-  color: var(--cream);
 }
 
-.landmark__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 0 4px rgba(255, 249, 245, 0.16);
-  margin-bottom: 0.35rem;
-}
+.cloud__label { font-size: 0.62rem; letter-spacing: 0.13em; text-transform: uppercase; }
+.cloud__leads { font-size: 0.56rem; letter-spacing: 0.1em; opacity: 0.6; }
 
-.landmark__label {
-  font-size: 0.72rem;
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 12px rgba(20, 30, 32, 0.65);
-}
+.cloud:hover .cloud__puff { opacity: 1; }
+.cloud:hover .cloud__label { color: var(--ember); }
 
-.landmark__leads {
-  font-size: 0.6rem;
-  letter-spacing: 0.11em;
-  opacity: 0.66;
-  text-shadow: 0 1px 10px rgba(20, 30, 32, 0.7);
+@keyframes drift {
+  from { transform: translateX(-40vw); }
+  to   { transform: translateX(110vw); }
 }
-
-.landmark:hover { color: #ffb36b; }
 
 @media (prefers-reduced-motion: reduce) {
   .landing__arrow { animation: none; }
+  .cloud { animation: none; left: calc(10vw + var(--i, 0) * 16vw); }
 }

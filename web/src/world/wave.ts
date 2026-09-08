@@ -20,11 +20,11 @@ import { NOISE, HAZE, creamRaw } from './glsl';
  */
 const RING = 48;
 const KEYS: { p: number; r: number[][] }[] = [
-  { p: 0.0, r: [[-2.4,0],[-1.1,0.16],[-0.7,0.3],[-0.35,0.38],[0,0.4],[0.2,0.39],[0.4,0.36],[0.55,0.31],[0.62,0.28],[0.7,0.25],[0.78,0.21],[0.9,0.14],[1.05,0.07],[1.2,0.02],[1.5,0],[2.0,0],[2.5,0],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
-  { p: 0.4, r: [[-2.4,0],[-1.1,0.3],[-0.7,0.62],[-0.35,0.9],[0,1.0],[0.18,1.02],[0.34,0.98],[0.42,0.9],[0.4,0.84],[0.36,0.78],[0.34,0.7],[0.36,0.45],[0.45,0.2],[0.6,0.05],[1.0,0],[1.6,0],[2.5,0],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
-  { p: 0.6, r: [[-2.4,0],[-1.1,0.3],[-0.7,0.62],[-0.35,0.9],[0,1.0],[0.4,1.06],[0.85,0.96],[1.25,0.58],[1.16,0.42],[0.85,0.78],[0.42,0.84],[0.3,0.5],[0.35,0.22],[0.55,0.06],[1.0,0],[1.7,0],[2.5,0],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
-  { p: 0.82, r: [[-2.4,0],[-1.1,0.3],[-0.7,0.6],[-0.35,0.86],[0,0.95],[0.42,1.0],[0.9,0.84],[1.32,0.28],[1.2,0.1],[0.88,0.62],[0.44,0.76],[0.3,0.45],[0.35,0.2],[0.55,0.06],[1.0,0],[1.7,0],[2.5,0],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
-  { p: 1.0, r: [[-2.4,0],[-1.1,0.1],[-0.7,0.2],[-0.35,0.28],[0,0.32],[0.3,0.34],[0.6,0.32],[0.9,0.27],[1.0,0.22],[0.9,0.19],[0.75,0.16],[0.7,0.11],[0.8,0.07],[1.0,0.04],[1.3,0.02],[1.8,0],[2.5,0],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
+  { p: 0.0, r: [[-2.4,-0.14],[-1.1,0.16],[-0.7,0.3],[-0.35,0.38],[0,0.4],[0.2,0.39],[0.4,0.36],[0.55,0.31],[0.62,0.28],[0.7,0.25],[0.78,0.21],[0.9,0.14],[1.05,0.07],[1.2,0.02],[1.5,-0.14],[2.0,-0.14],[2.5,-0.14],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
+  { p: 0.4, r: [[-2.4,-0.14],[-1.1,0.3],[-0.7,0.62],[-0.35,0.9],[0,1.0],[0.18,1.02],[0.34,0.98],[0.42,0.9],[0.4,0.84],[0.36,0.78],[0.34,0.7],[0.36,0.45],[0.45,0.2],[0.6,0.05],[1.0,-0.06],[1.6,-0.14],[2.5,-0.14],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
+  { p: 0.6, r: [[-2.4,-0.14],[-1.1,0.3],[-0.7,0.62],[-0.35,0.9],[0,1.0],[0.4,1.06],[0.85,0.96],[1.25,0.58],[1.16,0.42],[0.85,0.78],[0.42,0.84],[0.3,0.5],[0.35,0.22],[0.55,0.06],[1.0,-0.06],[1.7,-0.14],[2.5,-0.14],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
+  { p: 0.82, r: [[-2.4,-0.14],[-1.1,0.3],[-0.7,0.6],[-0.35,0.86],[0,0.95],[0.42,1.0],[0.9,0.84],[1.32,0.28],[1.2,0.1],[0.88,0.62],[0.44,0.76],[0.3,0.45],[0.35,0.2],[0.55,0.06],[1.0,-0.06],[1.7,-0.14],[2.5,-0.14],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
+  { p: 1.0, r: [[-2.4,-0.14],[-1.1,0.1],[-0.7,0.2],[-0.35,0.28],[0,0.32],[0.3,0.34],[0.6,0.32],[0.9,0.27],[1.0,0.22],[0.9,0.19],[0.75,0.16],[0.7,0.11],[0.8,0.07],[1.0,0.04],[1.3,0.02],[1.8,-0.14],[2.5,-0.14],[2.5,-1.2],[0,-1.2],[-2.4,-1.2]] },
 ];
 
 /** Each key polygon resampled through a closed spline to RING points. */
@@ -107,7 +107,7 @@ void main(){
  * shines through the thin lip, and matte white foam laid over the top.
  */
 const waveFrag = /* glsl */ `
-uniform vec3 uDeep, uMid, uLit, uFoam, uGlint, uHor, uZenith, uFog, uSunDir, uFillDir;
+uniform vec3 uDeep, uMid, uLit, uFoam, uGlint, uHor, uZenith, uHorSea, uZenithSea, uSeaDeep, uSeaMid, uFog, uSunDir, uFillDir;
 uniform float uFogNear, uFogFar, uTime;
 varying vec3 vWorld;
 varying vec3 vNormal;
@@ -119,20 +119,26 @@ void main(){
   if (!gl_FrontFacing) n = -n;
   // Fine texture over the whole surface: sampled along the wave and up it,
   // so the face gets it too, not only the flat water.
-  n = ripple(n, vec2(vWorld.x, vWorld.y * 0.7 + vWorld.z), uTime, 0.22 * (1.0 - vFoam));
+  // Flat water (the skirt that runs out into the sea) must shade exactly like
+  // the ocean shader so the two read as one surface; walls keep the wave look.
+  float flat_ = smoothstep(0.7, 0.95, n.y) * (1.0 - vLip);
+  n = ripple(n, vec2(vWorld.x, vWorld.y * 0.7 + vWorld.z), uTime, mix(0.22, 0.5, flat_) * (1.0 - vFoam));
   vec3 v = normalize(cameraPosition - vWorld);
   vec3 r = reflect(-v, n);
 
   vec3 body = mix(uDeep, uMid, clamp(n.y, 0.0, 1.0) * 0.7);
   body += uLit * clamp(dot(n, uFillDir), 0.0, 1.0) * 0.35;
+  body = mix(body, mix(uSeaDeep, uSeaMid, clamp(n.y * n.y, 0.0, 1.0) * 0.6), flat_);
 
   float rh = clamp(r.y, 0.0, 1.0);
-  vec3 sky = mix(uHor, uZenith, smoothstep(0.0, 0.5, rh));
+  vec3 sky = mix(mix(uHor, uZenith, smoothstep(0.0, 0.5, rh)), mix(uHorSea, uZenithSea, smoothstep(0.0, 0.5, rh)), flat_);
+  float toSun = pow(max(dot(normalize(vec3(r.x, 0.0, r.z)), normalize(vec3(uSunDir.x, 0.0, uSunDir.z))), 0.0), 4.0);
+  sky = mix(sky, uGlint, toSun * 0.5 * (1.0 - rh) * flat_);
   // Under the roof of the tube the reflection points down into the water,
   // not at the sky: keep the inside dark.
   sky = mix(uDeep * 0.7, sky, smoothstep(-0.3, 0.05, r.y));
   float fres = 0.09 + 0.91 * pow(1.0 - max(dot(n, v), 0.0), 4.5);
-  vec3 col = mix(body, sky, fres * 0.6);
+  vec3 col = mix(body, sky, fres * mix(0.6, 0.85, flat_));
 
   float s = max(dot(r, uSunDir), 0.0);
   col += uGlint * (pow(s, 200.0) * 1.0 + pow(s, 40.0) * 0.14 + pow(s, 12.0) * 0.08);
@@ -212,6 +218,10 @@ export class Wave {
         // the roof of the tube stays dark rather than washing to peach.
         uHor: { value: new THREE.Color(P.horizon) },
         uZenith: { value: new THREE.Color(P.skyLow) },
+        uHorSea: { value: new THREE.Color(P.skyLow) },
+        uZenithSea: { value: new THREE.Color(P.skyMid) },
+        uSeaDeep: { value: new THREE.Color(P.seaDeep) },
+        uSeaMid: { value: new THREE.Color(P.seaMid) },
         uFog: { value: new THREE.Color(P.fog) },
         uFogNear: { value: 220 },
         uFogFar: { value: 900 },
