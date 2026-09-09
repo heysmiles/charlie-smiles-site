@@ -66,13 +66,30 @@ void main(){
   float s = max(dot(r, uSunDir), 0.0);
   col += uGlint * (pow(s, 200.0) * 1.1 + pow(s, 40.0) * 0.22 + pow(s, 10.0) * 0.06);
 
-  // Foam rolling up the beach.
-  // The bay bends seaward north of Venice (see venice.ts shoreAt).
+  // The shore break. The beach slopes up under the water (see venice.ts
+  // groundH), so the water thins over wet sand toward the line where the
+  // sand rises through the surface; foam fronts roll up that slope one after
+  // another and spread into a lacy sheet behind each crest.
   float shoreZ = uShoreZ + 95.0 * smoothstep(250.0, 1000.0, -(vWorld.x - uVeniceX));
-  float sd = vWorld.z - shoreZ;
-  float band = smoothstep(-1.0, 1.0, sd) * (1.0 - smoothstep(3.0, 9.0, sd));
-  float roll = 0.5 + 0.5 * sin(sd * 0.9 - uTime * 1.2 + sin(vWorld.x * 0.13) * 1.5);
-  col = mix(col, uFoam, band * smoothstep(0.55, 0.95, roll) * 0.55);
+  float sd = vWorld.z - shoreZ; // seaward distance from the nominal waterline
+  float sandH = -2.4 + 3.65 * smoothstep(-34.0, 14.0, -sd) - max(0.0, sd - 34.0) * 0.1;
+  float depth = max(0.0, vWorld.y - sandH);
+  float near = 1.0 - smoothstep(10.0, 26.0, sd); // only the last stretch to the sand
+  float shallow = (1.0 - smoothstep(0.0, 2.6, depth)) * near;
+  // Wet sand seen through thin water.
+  col = mix(col, vec3(0.62, 0.45, 0.28), shallow * 0.75 * smoothstep(-2.0, 10.0, sd));
+  // Fronts: successive crests marching shoreward, each a bright edge with a
+  // ragged foam sheet trailing behind, only where the water is shallow.
+  float jag = vnoise2(vec2(vWorld.x * 0.11, uTime * 0.05)) * 3.5 + vnoise2(vec2(vWorld.x * 0.4, 7.0)) * 1.2;
+  float ph = (sd + jag) * 0.16 + uTime * 0.28;
+  float f = fract(ph);
+  float edge = smoothstep(0.0, 0.05, f) * (1.0 - smoothstep(0.05, 0.16, f));
+  float sheet = (1.0 - smoothstep(0.05, 0.6, f)) * smoothstep(0.35, 0.7, vnoise2(vec2(vWorld.x * 0.9, sd * 0.9 + uTime * 0.6)) * 0.6 + vnoise2(vec2(vWorld.x * 2.4, sd * 2.4)) * 0.4);
+  float zone = smoothstep(-3.0, 3.0, sd) * (1.0 - smoothstep(12.0, 30.0, sd));
+  float foamAmt = clamp(edge * 0.9 + sheet * 0.55, 0.0, 1.0) * zone * (0.35 + 0.65 * shallow);
+  // The swash: a bright lace where the water meets the sand.
+  foamAmt += near * smoothstep(0.0, 1.2, depth) * (1.0 - smoothstep(1.2, 2.6, depth)) * 0.5 * smoothstep(0.4, 0.75, vnoise2(vec2(vWorld.x * 1.6, uTime * 0.7 + sd)));
+  col = mix(col, uFoam, clamp(foamAmt, 0.0, 0.92));
 
   col = mix(col, uFog, smoothstep(uFogNear, uFogFar, d));
   gl_FragColor = vec4(hazeTop(col), 1.0);

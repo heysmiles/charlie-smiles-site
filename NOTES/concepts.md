@@ -153,6 +153,17 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-09 — shore break, and facades that hold still
+
+Charlie: the waves on the beach should be more realistic and well rendered;
+the houses' windows shake on scroll. Done: the beach now slopes into the
+water (there was a 2.5-unit cliff at the waterline) and the ocean shader
+knows the slope — thin water shows the wet sand, foam fronts march up it with
+lacy sheets behind, a swash line at the sand, all confined to the last
+stretch before the beach. Facades are drawn canvas textures (mipmapped) on
+the buildings' seaward faces instead of thin window boxes, so nothing
+shimmers as the camera moves.
+
 ## Status — 2026-09-09 — shadows, and the beach cleared
 
 Charlie: take the skate park and other block elements off the beach; add

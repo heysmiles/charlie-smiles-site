@@ -74,10 +74,17 @@ Nothing in it is an image. It lives in `web/src/world/`:
   sitting just under the palm line. Lifeguard towers are the Venice tower as
   photographed: pale aqua, flat overhanging roof, a railed deck across the
   seaward front, a long railed ramp down the north side, X-braced legs, the
-  big observation window, number, flag and rescue can. Facades carry
-  cornices, belt courses, windows, sign boards, doors, awnings and murals —
-  no thin stray lines. Palms have compact rounded fan-palm heads in three
-  tiers (standing, reaching, hanging) over a shag of dead fronds.
+  big observation window, number, flag and rescue can. Facades are **drawn
+  to canvas textures** (`facadeTexture`): windows with frames, mullions and
+  sills, belt courses, shopfront glass, sign boards, doors, murals with
+  shapes, cornices, the odd lit window — mapped onto each building's seaward
+  face, so the detail minifies through mipmaps and holds still at distance
+  where thin geometry shimmered on scroll. Awnings stay geometry. Palms have
+  compact rounded fan-palm heads in three tiers over a shag of dead fronds.
+  The beach slopes under the water (no cliff at the waterline), and the
+  ocean shader's shore break rides that slope: water thinning over wet sand,
+  successive foam fronts rolling up with a ragged sheet behind each, and a
+  bright swash lace where the water meets the sand.
   The bay curves: north of Venice the shore bends seaward (`shoreAt`) and
   the town runs on through Santa Monica — taller, paler hotels on the bluff,
   the pier — thinning and fogging toward the foot of the range, so the coast

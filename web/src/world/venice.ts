@@ -61,9 +61,14 @@ const box = (g: THREE.Object3D, w: number, h: number, d: number, c: number, x: n
 };
 
 /** Ground height: the beach is nearly flat, with a soft berm up to the walk, then the flat city. */
+/** The beach's profile through the waterline: seabed at -2.4, up a gentle slope to the berm. Mirrored in the ocean shader. */
+export const SLOPE_FROM = -34, SLOPE_TO = 14, SEABED = -2.4, BERM0 = 1.25;
 export const groundH = (x: number, z: number) => {
   const d = shoreAt(x) - z; // inland distance
-  if (d < 0) return -1.5 - Math.min(-d, 60) * 0.12; // seabed
+  if (d < SLOPE_TO) {
+    const t = smoothstep(SLOPE_FROM, SLOPE_TO, d);
+    return SEABED + (BERM0 - SEABED) * t - Math.max(0, -d - 34) * 0.1;
+  }
   const berm = Math.min(d, 100) * 0.018 + (fbm2(x * 0.05, z * 0.05) - 0.5) * 0.35;
   return 1.0 + berm + smoothstep(100, 118, d) * 0.4;
 };
@@ -82,8 +87,8 @@ function terrain() {
     const x = pos.getX(i), z = pos.getZ(i);
     pos.setY(i, groundH(x, z));
     const d = shoreAt(x) - z;
-    if (d < 0) c.copy(sea);
-    else if (d < 6) c.copy(wet).lerp(sand, d / 6);
+    if (d < -6) c.copy(sea).lerp(wet, 0.3);
+    else if (d < 12) c.copy(wet).lerp(sand, smoothstep(2, 12, d)).lerp(sea, (1 - smoothstep(-6, 0, d)) * 0.5);
     else if (d < 100) {
       c.copy(sand).lerp(wet, (fbm2(x * 0.03, z * 0.03) - 0.5) * 0.25);
       // The bike path: a pale ribbon snaking through the sand.
@@ -104,6 +109,69 @@ function terrain() {
 const FRONT = [0xfaf3ea, 0xf6e7c8, 0xe8c9a0, 0xd9e6ee, 0xf2b8a2, 0xbfd8c8, 0xf0d060, 0xe9e2d6, 0xc86c4a, 0xf7c9d2, 0x9fc3d6, 0xfff7ee];
 const MURAL = [0x3f7fb8, 0xe0553a, 0xf0b13c, 0x4e9c72, 0xb04f8a, 0x2c3e6b];
 const AWNING = [0xd9533a, 0x3c6fae, 0xf1c232, 0x4a8b5c, 0xe8e8e8];
+const css = (c: number) => '#' + c.toString(16).padStart(6, '0');
+
+type FacadeSpec = { w: number; h: number; floors: number; color: number; upper?: number; mural?: { color: number; x: number; y: number; w: number; h: number }; sign?: number; band?: number; shop: boolean; doorX: number; seed: number };
+
+/**
+ * A facade drawn to a canvas and mapped onto the building's seaward face:
+ * windows, sills, belt courses, shopfront, door, sign, mural, cornice. Drawn
+ * detail minifies through mipmaps, so it holds still at distance where thin
+ * geometry would shimmer.
+ */
+function facadeTexture(f: FacadeSpec) {
+  const S = 28; // pixels per world unit
+  const cw = Math.max(8, Math.round(f.w * S)), ch = Math.max(8, Math.round(f.h * S));
+  const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+  const g = cv.getContext('2d')!;
+  const Y = (y: number) => ch - y * S; // world y (0 at ground) → canvas y
+  const rect = (x: number, y: number, w: number, h: number, c: string) => { g.fillStyle = c; g.fillRect(x * S, Y(y + h), w * S, h * S); };
+  rect(0, 0, f.w, f.h, css(f.color));
+  if (f.upper) rect(0, f.h * 0.5, f.w, f.h * 0.5, css(f.upper));
+  if (f.band) rect(0, f.h - 3.0, f.w, 1.2, css(f.band));
+  // Floors: belt course, windows with frame and sill.
+  for (let fl = 1; fl < f.floors; fl++) {
+    const fy = fl * 3.6;
+    rect(0, fy - 0.15, f.w, 0.22, '#eae2d6');
+    const n = Math.max(1, Math.floor((f.w - 1.6) / 2.8));
+    const pitch = (f.w - 1.2) / n;
+    for (let i = 0; i < n; i++) {
+      const wx = 0.6 + pitch * i + pitch / 2 - 0.7;
+      rect(wx - 0.08, fy + 0.85, 1.56, 1.7, '#e8e0d4'); // frame
+      rect(wx, fy + 0.95, 1.4, 1.5, '#2f3a4a');
+      rect(wx + 0.66, fy + 0.95, 0.08, 1.5, '#cfd6dc'); // mullion
+      rect(wx, fy + 1.66, 1.4, 0.06, '#cfd6dc');
+      rect(wx - 0.14, fy + 0.82, 1.68, 0.14, '#f2ece2'); // sill
+      // a lit window here and there
+      if (hash(f.seed, fl, i) < 0.18) rect(wx + 0.05, fy + 1.0, 1.3, 1.4, '#f7c86a');
+    }
+  }
+  // Ground floor.
+  if (f.shop) {
+    rect(0.4, 0.9, f.w - 0.8, 2.4, '#3a332f');
+    rect(0.6, 1.0, f.w - 1.2, 2.0, '#4a5866'); // glass
+    for (let x = 0.6; x < f.w - 1.2; x += 1.6) rect(x, 1.0, 0.08, 2.0, '#2a2420');
+    rect(0.2, 3.35, f.w - 0.4, 0.85, f.sign ? css(f.sign) : '#e8e8e8'); // sign board
+    const tw = Math.min(f.w - 1.6, 3 + hash(f.seed, 3) * 3);
+    rect(f.w / 2 - tw / 2, 3.6, tw, 0.35, '#2a2420'); // lettering
+  } else {
+    rect(0, 3.45, f.w, 0.2, '#eae2d6');
+  }
+  rect(f.doorX, 0, 1.2, 2.5, '#2a2420');
+  rect(f.doorX + 0.15, 1.3, 0.9, 0.9, '#5a6672'); // door glass
+  if (f.mural) rect(f.mural.x, f.mural.y, f.mural.w, f.mural.h, css(f.mural.color));
+  if (f.mural) { // a few shapes on the mural so it reads as a painting
+    for (let k = 0; k < 5; k++) { const c = MURAL[Math.floor(hash(f.seed, k, 9) * MURAL.length)]; rect(f.mural.x + hash(f.seed, k, 1) * f.mural.w * 0.8, f.mural.y + hash(f.seed, k, 2) * f.mural.h * 0.8, f.mural.w * 0.2, f.mural.h * 0.2, css(c)); }
+  }
+  // Cornice.
+  rect(0, f.h - 0.5, f.w, 0.5, '#eae2d6');
+  rect(0, f.h - 0.12, f.w, 0.12, '#7a6d63');
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter;
+  return tex;
+}
 
 function frontRow(g: THREE.Group) {
   let x = X - 900;
@@ -117,9 +185,6 @@ function frontRow(g: THREE.Group) {
     let c = santaMonica ? [0xf4efe6, 0xe9dccb, 0xf2d9cf, 0xdad3c9, 0xf7f1ea][Math.floor(hash(k, 5) * 5)] : FRONT[Math.floor(hash(k, 5) * FRONT.length)];
     const cx = x + w / 2;
     const dx = cx - X;
-    // The landmarks at Windward: Hotel Erwin (terracotta, six floors, the
-    // rooftop bar) and the Venice V (white with a blue band); a mid-rise
-    // condo further south.
     let erwin = false, veniceV = false;
     if (Math.abs(dx + 42) < 9) { h = 21.6; nFloors = 6; c = 0xb9694a; erwin = true; }
     else if (Math.abs(dx + 60) < 7) { h = 16.2; nFloors = 4; c = 0xf4efe6; veniceV = true; }
@@ -128,34 +193,32 @@ function frontRow(g: THREE.Group) {
     const gy = groundH(cx, row1);
     const zc = row1 - depth / 2;
     box(g, w - 0.8, h, depth, c, cx, groundH(cx, zc), zc);
-    // Two-tone facades on some: the upper floors a second colour.
-    if (!santaMonica && !erwin && !veniceV && hash(k, 13) < 0.35) box(g, w - 0.7, h * 0.5, 0.25, FRONT[Math.floor(hash(k, 14) * FRONT.length)], cx, gy + h * 0.5, row1 + 0.1);
-    if (veniceV) box(g, w - 0.7, 1.2, 0.3, 0x2f6fa3, cx, gy + h - 3.0, row1 + 0.15);
-    // Cornice and parapet, and a rooftop box on the taller ones.
-    box(g, w - 0.4, 0.5, depth + 0.4, 0xeae2d6, cx, gy + h - 0.5, zc);
-    box(g, w - 0.6, 0.5, depth, 0x7a6d63, cx, gy + h, zc);
-    if (h > 12) box(g, w * 0.45, 2.2, 6, 0x6a5a54, cx, gy + h + 0.5, zc - 2);
+    // The facade, drawn.
+    const fw = w - 0.8;
+    const spec: FacadeSpec = {
+      w: fw, h, floors: nFloors, color: c, seed: k,
+      upper: !santaMonica && !erwin && !veniceV && hash(k, 13) < 0.35 ? FRONT[Math.floor(hash(k, 14) * FRONT.length)] : undefined,
+      band: veniceV ? 0x2f6fa3 : undefined,
+      mural: !santaMonica && hash(k, 6) < 0.45 ? { color: MURAL[Math.floor(hash(k, 8) * MURAL.length)], x: fw * (0.15 + hash(k, 9) * 0.25), y: 4.4 + hash(k, 10) * 1.2, w: fw * (0.4 + hash(k, 7) * 0.3), h: Math.min(h - 6, 3 + hash(k, 16) * 4) } : undefined,
+      sign: !santaMonica && hash(k, 24) < 0.5 ? 0xf1c232 : undefined,
+      shop: !santaMonica, doorX: 0.8 + hash(k, 23) * Math.max(0.1, fw - 2.8),
+    };
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(fw, h), new THREE.MeshStandardMaterial({ map: facadeTexture(spec), roughness: 0.95, metalness: 0, flatShading: true }));
+    face.position.set(cx, gy + h / 2, row1 + 0.06);
+    face.receiveShadow = true;
+    g.add(face);
+    // The parapet's lip and a rooftop box on the taller ones; the Erwin's tank and sign.
+    box(g, w - 0.4, 0.4, depth + 0.4, 0xeae2d6, cx, gy + h - 0.4, zc);
+    if (h > 12) box(g, w * 0.45, 2.2, 6, 0x6a5a54, cx, gy + h, zc - 2);
     if (erwin) {
       const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 2.2, 10), mat(0x8a8078));
-      tank.position.set(cx + w * 0.3, gy + h + 1.6, zc + 3); g.add(tank);
-      box(g, 0.9, 6.5, 0.4, 0xe0553a, cx - w / 2 + 0.2, gy + h - 7.5, row1 + 0.3); // the vertical ERWIN sign
+      tank.position.set(cx + w * 0.3, gy + h + 1.1, zc + 3); tank.castShadow = true; g.add(tank);
+      box(g, 0.9, 6.5, 0.5, 0xe0553a, cx - w / 2 + 0.3, gy + h - 7.5, row1 + 0.3);
     }
-    // Murals: a big colour panel on many Venice facades.
-    if (!santaMonica && hash(k, 6) < 0.45) box(g, w * (0.5 + hash(k, 7) * 0.4), h * 0.5, 0.3, MURAL[Math.floor(hash(k, 8) * MURAL.length)], cx + (hash(k, 9) - 0.5) * w * 0.3, gy + 1.4 + hash(k, 10) * 1.5, row1 + 0.15);
-    // Ground floor: the shopfront band, a door, a sign board, an awning.
-    box(g, w - 1.2, 1.8, 0.4, 0x3a332f, cx, gy + 1.7, row1 + 0.2);
-    box(g, 1.2, 2.4, 0.3, 0x2a2420, cx + (hash(k, 23) - 0.5) * (w - 4), gy, row1 + 0.25);
-    if (!santaMonica) box(g, w * 0.6, 0.7, 0.2, hash(k, 24) < 0.5 ? 0xf1c232 : 0xe8e8e8, cx, gy + 3.55, row1 + 0.3);
-    if (hash(k, 11) < 0.7) {
-      const a = box(g, w - 2, 0.3, 2.6, AWNING[Math.floor(hash(k, 12) * AWNING.length)], cx, gy + 3.4, row1 + 1.4);
+    // The awning: geometry, since it stands off the wall.
+    if (!santaMonica && hash(k, 11) < 0.7) {
+      const a = box(g, w - 2, 0.3, 2.6, AWNING[Math.floor(hash(k, 12) * AWNING.length)], cx, gy + 3.35, row1 + 1.4);
       a.rotation.x = 0.25;
-    }
-    // Upper floors: windows, a belt course between floors.
-    for (let f = 1; f < nFloors; f++) {
-      const fy = gy + f * 3.6;
-      box(g, w - 0.6, 0.22, 0.25, 0xeae2d6, cx, fy - 0.1, row1 + 0.12);
-      const n = Math.max(1, Math.floor((w - 2) / 3));
-      for (let i = 0; i < n; i++) box(g, 1.4, 1.5, 0.2, 0x2f3a4a, cx - (n - 1) * 1.5 + i * 3, fy + 1.0, row1 + 0.12);
     }
     x += w; k++;
   }
