@@ -1,5 +1,7 @@
 # Charlie Smiles — personal site
 
+**Live demo:** https://heysmiles.github.io/charlie-smiles-site/ — built from `main` by the Pages workflow on every push.
+
 A portfolio built as a place you enter rather than a page you scroll. Section
 one is the landing and the wave: below the landing a low-poly golden-hour
 world scrolls up and fills the frame, a wave crashes left to right with a
