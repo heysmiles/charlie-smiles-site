@@ -37,20 +37,34 @@ export class World {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.NoToneMapping;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.camera = new THREE.PerspectiveCamera(46, 1, 0.5, 4000);
     this.scene.fog = new THREE.Fog(P.fog, 240, 1000);
 
-    const sun = new THREE.DirectionalLight(0xffb679, 1.3);
-    sun.position.set(L.sunDir[0] * 400, L.sunDir[1] * 400, L.sunDir[2] * 400);
-    this.scene.add(sun);
-    this.scene.add(new THREE.HemisphereLight(0xf7cfae, 0x1c2b46, 0.75));
+    // The sun as a light. It sits a little higher than the sun in the sky so
+    // the shadows it casts across Venice are long but not endless, and soft.
+    const sun = new THREE.DirectionalLight(0xffb679, 3.0);
+    const sd = new THREE.Vector3(L.sunDir[0], 0.3, L.sunDir[2]).normalize();
+    sun.target.position.set(L.veniceX - 120, 0, L.shoreZ - 90);
+    sun.position.copy(sun.target.position).addScaledVector(sd, 700);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(4096, 4096);
+    sun.shadow.camera.near = 50; sun.shadow.camera.far = 1500;
+    sun.shadow.camera.left = -700; sun.shadow.camera.right = 700;
+    sun.shadow.camera.top = 320; sun.shadow.camera.bottom = -320;
+    sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.6;
+    sun.shadow.radius = 4;
+    sun.shadow.camera.updateProjectionMatrix();
+    this.scene.add(sun); this.scene.add(sun.target);
+    this.scene.add(new THREE.HemisphereLight(0xf7cfae, 0x1c2b46, 0.9));
     // Fill from the shoreward side: the face of the wave points away from the
     // sun, and without this it is one flat navy slab.
-    const fill = new THREE.DirectionalLight(0xffc9a0, 0.55);
+    const fill = new THREE.DirectionalLight(0xffc9a0, 0.7);
     fill.position.set(-120, 160, -320);
     this.scene.add(fill);
-    this.scene.add(new THREE.AmbientLight(0xffe0c0, 0.12));
+    this.scene.add(new THREE.AmbientLight(0xffe0c0, 0.2));
 
     const sky = makeSky();
     this.sky = sky;
@@ -61,6 +75,10 @@ export class World {
     const envScene = new THREE.Scene();
     envScene.add(sky.dome.clone());
     this.scene.environment = pmrem.fromScene(envScene, 0.02, 1, 5000).texture;
+    // The sky is bright and the environment is what lit materials mostly see;
+    // kept low so the sun and its shadows carry the town (this scene-level
+    // intensity is the control for scene.environment, not the material's).
+    this.scene.environmentIntensity = 0.22;
     pmrem.dispose();
     this.scene.add(this.ocean.mesh);
     this.scene.add(this.wave.mesh);

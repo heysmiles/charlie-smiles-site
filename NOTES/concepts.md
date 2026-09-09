@@ -153,6 +153,17 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-09 — shadows, and the beach cleared
+
+Charlie: take the skate park and other block elements off the beach; add
+realistic, not overbearing shadows to buildings and palms. Done: Rec Center
+removed entirely; shadow maps on (PCF soft, 4096, the sun's shadow camera
+sized to the town). The shadows were invisible at first: the sky environment
+was lighting every lit material to full brightness regardless of the
+material's envMapIntensity — in three r185 the control is
+`scene.environmentIntensity`. Set to 0.22, sun 3.0, hemisphere 0.9, fill 0.7,
+ambient 0.2: golden sand, soft long palm shadows, towers grounded.
+
 ## Status — 2026-09-08, night — the coast recedes, cleaner Venice, real towers
 
 Charlie: the strip met the mountain with a hard drop — make it a perspective

@@ -43,7 +43,7 @@ const ROW1 = row1At(X);
 const mats = new Map<number, THREE.MeshStandardMaterial>();
 const mat = (c: number) => {
   let m = mats.get(c);
-  if (!m) { m = new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.95, metalness: 0, envMapIntensity: 0.25 }); mats.set(c, m); }
+  if (!m) { m = new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.95, metalness: 0, envMapIntensity: 0.08 }); mats.set(c, m); }
   return m;
 };
 const farMats = new Map<number, THREE.MeshBasicMaterial>();
@@ -55,7 +55,9 @@ const farMat = (c: number) => {
 
 const box = (g: THREE.Object3D, w: number, h: number, d: number, c: number, x: number, y: number, z: number, ry = 0, far = false) => {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), far ? farMat(c) : mat(c));
-  m.position.set(x, y + h / 2, z); m.rotation.y = ry; g.add(m); return m;
+  m.position.set(x, y + h / 2, z); m.rotation.y = ry;
+  if (!far) { m.castShadow = true; m.receiveShadow = true; }
+  g.add(m); return m;
 };
 
 /** Ground height: the beach is nearly flat, with a soft berm up to the walk, then the flat city. */
@@ -93,7 +95,9 @@ function terrain() {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
-  return new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1, envMapIntensity: 0.2 }));
+  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1, envMapIntensity: 0.06 }));
+  mesh.receiveShadow = true;
+  return mesh;
 }
 
 // ------------------------------------------------------------ the front row
@@ -182,12 +186,13 @@ function palms(g: THREE.Group) {
   stem.translate(0.4, 0, 0);
   const tm = mat(0x7d6a55), tl = mat(0x8f7c66);
   const greens = [mat(0x3f6e38), mat(0x4f7a3c), mat(0x5f8e44), mat(0x7aa64e)];
+  for (const m of greens) m.side = THREE.DoubleSide;
   const dead = mat(0x8a6f45);
   const plant = (x: number, z: number, hgt: number, seed: number) => {
     const y = groundH(x, z);
     const lean = (hash(seed, 1) - 0.5) * 0.14, leanX = (hash(seed, 2) - 0.5) * 0.1;
     const t = new THREE.Mesh(trunk, hash(seed, 9) < 0.3 ? tl : tm);
-    t.scale.set(1, hgt, 1); t.position.set(x, y + hgt / 2, z); t.rotation.set(leanX, 0, lean); g.add(t);
+    t.scale.set(1, hgt, 1); t.position.set(x, y + hgt / 2, z); t.rotation.set(leanX, 0, lean); t.castShadow = true; g.add(t);
     const top = new THREE.Vector3(x - Math.sin(lean) * hgt, y + Math.cos(lean) * hgt, z + Math.sin(leanX) * hgt);
     const crown = new THREE.Group(); crown.position.copy(top); crown.rotation.y = hash(seed, 3) * 6.28; g.add(crown);
     // Three tiers: the top fronds stand up, the middle reach out, the lower hang.
@@ -200,6 +205,7 @@ function palms(g: THREE.Group) {
         const isDead = ti === 2 && hash(seed, i, 6) < 0.3;
         f.rotation.z = isDead ? -1.85 : elev + (hash(seed, ti, i, 5) - 0.5) * spread;
         const blade = new THREE.Mesh(fan, isDead ? dead : greens[Math.floor(hash(seed, ti, i, 7) * greens.length)]);
+        blade.castShadow = true;
         blade.rotation.x = Math.PI / 2 + (hash(seed, ti, i, 8) - 0.5) * 0.7; // the fan plane, twisted a little to catch light
         blade.rotation.z = 0.15; // fans tip up at their ends
         blade.scale.setScalar(0.85 + hash(seed, ti, i, 10) * 0.35);
@@ -209,7 +215,7 @@ function palms(g: THREE.Group) {
     }
     // The shag of dead fronds under the head, and the head's heart.
     const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.6, 8), dead);
-    skirt.position.copy(top).y -= 1.3; g.add(skirt);
+    skirt.position.copy(top).y -= 1.3; skirt.castShadow = true; g.add(skirt);
     const heart = new THREE.Mesh(new THREE.SphereGeometry(0.5, 7, 5), greens[0]);
     heart.position.copy(top).y += 0.2; g.add(heart);
   };
@@ -269,27 +275,6 @@ function towers(g: THREE.Group) {
     box(g, 0.9, 0.5, 0.05, n % 4 === 0 ? 0xb03030 : 0xf1c232, x + 2.1, deckY + 5.5, z - 2.2);
     box(g, 0.3, 0.8, 0.3, 0xe0402a, x + 1.6, deckY + 0.2, z + 2.35);
   }
-}
-
-// ---------------------------------------------------- the Rec Center at Windward
-function recCenter(g: THREE.Group) {
-  // Skate park: a concrete slab with bowls sunk into it and a snake run.
-  const sx = X - 24, sz = SHORE - 74, gy = groundH(sx, sz);
-  box(g, 40, 0.6, 24, 0xb9b3ab, sx, gy - 0.1, sz);
-  for (const [bx, bz, r] of [[-11, -3, 6], [4, 4, 5], [13, -5, 4.2]] as const) {
-    const bowl = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.7, 1.6, 14), mat(0x8f8a84));
-    bowl.position.set(sx + bx, gy - 0.3, sz + bz); g.add(bowl);
-    const lip = new THREE.Mesh(new THREE.TorusGeometry(r, 0.35, 6, 18), mat(0xcfc9c0));
-    lip.rotation.x = Math.PI / 2; lip.position.set(sx + bx, gy + 0.55, sz + bz); g.add(lip);
-  }
-  for (let i = 0; i < 12; i++) box(g, 0.12, 1.4, 0.12, 0x4d4d4d, sx - 20 + i * 3.6, gy + 0.5, sz - 12.3); // fence posts
-  // Handball walls: tall concrete slabs, and the courts' green floors.
-  for (let i = 0; i < 3; i++) box(g, 8, 5.2, 0.6, 0xc8c0b4, X + 52 + i * 10, groundH(X + 52, SHORE - 88), SHORE - 88);
-  for (let i = 0; i < 2; i++) box(g, 15, 0.15, 26, 0x6f8a6a, X + 76 + i * 16, groundH(X + 76, SHORE - 80) - 0.05, SHORE - 80);
-  for (let i = 0; i < 4; i++) box(g, 0.2, 3.4, 0.2, 0x4d4d4d, X + 70 + i * 8, groundH(X + 70, SHORE - 92), SHORE - 92); // hoops posts
-  // Paddle-tennis courts with fences.
-  for (let i = 0; i < 3; i++) box(g, 10, 0.12, 20, 0x5f7f60, X + 112 + i * 11, groundH(X + 112, SHORE - 80) - 0.05, SHORE - 80);
-  for (let i = 0; i < 10; i++) box(g, 0.1, 2.8, 0.1, 0x4d4d4d, X + 106 + i * 3.6, groundH(X + 106, SHORE - 70), SHORE - 70);
 }
 
 // ----------------------------------------------------------- Venice Pier
@@ -384,7 +369,6 @@ export function makeVenice() {
   backRows(g);
   palms(g);
   towers(g);
-  recCenter(g);
   venicePier(g);
   farEnds(g);
   void lerp;

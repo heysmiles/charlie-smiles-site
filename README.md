@@ -32,7 +32,14 @@ smooth on the water), one warm directional sun plus a hemisphere, soft fog, a
 camera on one continuous spline.
 Nothing in it is an image. It lives in `web/src/world/`:
 
-- `World.ts` owns the scene and takes a scroll progress in [0,1].
+- `World.ts` owns the scene and takes a scroll progress in [0,1]. Lighting:
+  the sun as a directional light that casts soft shadows across Venice (its
+  shadow camera covers the town; it sits a little higher than the sun in the
+  sky so shadows are long but not endless), a hemisphere, an ambient, a fill
+  from the shore side, and the sky baked into `scene.environment` at a low
+  `scene.environmentIntensity` — that scene-level intensity is the control
+  for the environment in this three.js, and left at 1 the bright sky lights
+  everything so evenly that no shadow can show.
 - `wave.ts` — **the wave is a solid, and it is the sea.** Each cross-section
   is a closed polygon of water (back, crest, lip outside, lip underside, face,
   trough, bed) run through a closed spline and lofted along the wave line with
