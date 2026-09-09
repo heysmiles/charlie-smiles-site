@@ -153,6 +153,17 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-08, later still — detail pass on Venice
+
+Charlie: clouds out (labels return later, pinned to buildings he'll pick);
+small mountains in the far background just under the palm line; more detail
+on towers, buildings, background; more and better palms; breakwater out; the
+sky a real sunset with the sun in the west. Done: LA County towers in full,
+richer facades, fan-palm crowns and three lines of palms, three low pink
+ridges far inland, breakwater removed, sky shader with a cool east (red →
+pink belt → lavender → cream) and a warm west (yellow → orange → peach →
+cream) blended by azimuth toward the sun.
+
 ## Status — 2026-09-08, late — Venice Beach from the water
 
 Charlie: the wave and the range are good; go back to panning over the wave to

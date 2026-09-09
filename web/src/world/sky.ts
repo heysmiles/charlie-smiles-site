@@ -12,15 +12,26 @@ void main(){
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`;
 const frag = /* glsl */ `
-uniform vec3 uTop, uMid, uLow, uHorizon, uSun, uSunDir;
+uniform vec3 uTop, uMid, uLow, uHorizon, uSun, uSunDir, uPink, uLavender, uWarmLow, uWarmMid;
 varying vec3 vDir;
 ${HAZE}
 void main(){
   float h = vDir.y;
-  vec3 col = uHorizon;
-  col = mix(col, uLow, smoothstep(0.0, 0.08, h));
-  col = mix(col, uMid, smoothstep(0.07, 0.26, h));
-  col = mix(col, uTop, smoothstep(0.2, 0.55, h));
+  // Away from the sun (the east, over Venice): a red horizon, the pink belt,
+  // lavender above it, then the cream the page is made of.
+  vec3 cool = uHorizon;
+  cool = mix(cool, uLow, smoothstep(0.0, 0.045, h));
+  cool = mix(cool, uPink, smoothstep(0.04, 0.15, h));
+  cool = mix(cool, uLavender, smoothstep(0.14, 0.34, h));
+  cool = mix(cool, uTop, smoothstep(0.32, 0.7, h));
+  // Toward the sun (the west, over the sea): yellow, orange, peach, cream.
+  vec3 warm = mix(uHorizon, uWarmLow, 0.6);
+  warm = mix(warm, uWarmLow, smoothstep(0.0, 0.05, h));
+  warm = mix(warm, uLow, smoothstep(0.04, 0.12, h));
+  warm = mix(warm, uWarmMid, smoothstep(0.1, 0.26, h));
+  warm = mix(warm, uTop, smoothstep(0.24, 0.6, h));
+  float toward = pow(clamp(dot(normalize(vec2(vDir.x, vDir.z)), normalize(vec2(uSunDir.x, uSunDir.z))) * 0.5 + 0.5, 0.0, 1.0), 2.2);
+  vec3 col = mix(cool, warm, toward);
   col = mix(uHorizon * 0.6, col, smoothstep(-0.04, 0.0, h));
   float sd = max(dot(vDir, uSunDir), 0.0);
   col += uSun * (pow(sd, 36.0) * 0.9 + pow(sd, 6.0) * 0.3);
@@ -42,6 +53,10 @@ export function makeSky() {
       uHorizon: { value: new THREE.Color(P.horizon) },
       uSun: { value: new THREE.Color(P.sun) },
       uSunDir: { value: new THREE.Vector3(...L.sunDir).normalize() },
+      uPink: { value: new THREE.Color(P.skyPink) },
+      uLavender: { value: new THREE.Color(P.skyLavender) },
+      uWarmLow: { value: new THREE.Color(P.skyWarmLow) },
+      uWarmMid: { value: new THREE.Color(P.skyWarmMid) },
       uCream: { value: creamRaw() },
       uRes: { value: new THREE.Vector2(1, 1) },
       uHazeLo: { value: 0.42 },

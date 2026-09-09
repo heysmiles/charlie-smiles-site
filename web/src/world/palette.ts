@@ -8,6 +8,12 @@ export const P = {
   skyMid: 0xf6c59a,
   skyLow: 0xf08a3c,
   horizon: 0xd8551c,
+  /** The east at sunset: the pink belt over a lavender sky. */
+  skyPink: 0xe8a0a4,
+  skyLavender: 0xc3b0d0,
+  /** The west: yellow at the sun, peach above it. */
+  skyWarmLow: 0xf8b448,
+  skyWarmMid: 0xf6c9a0,
   sun: 0xffd98a,
   cloud: 0xfde4d2,
   cloudShade: 0xe8a98a,

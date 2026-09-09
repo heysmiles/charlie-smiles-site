@@ -7,8 +7,6 @@ import { Wave } from './wave';
 import { Foam } from './foam';
 import { makeMountains } from './mountains';
 import { makeVenice } from './venice';
-import { DoorClouds } from './doorclouds';
-import { DOORS } from './doors';
 import { cameraAt, frontAt } from './camera';
 import { smoothstep, lerp } from './math';
 
@@ -24,9 +22,6 @@ export class World {
   wave = new Wave();
   foam = new Foam();
   ocean = makeOcean();
-  doors = new DoorClouds();
-  /** Where each door's cloud sits on screen (0..1), and how visible it is. */
-  doorScreen = DOORS.map((d) => ({ id: d.id, x: 0, y: 0, alpha: 0 }));
   private sky!: ReturnType<typeof makeSky>;
   /** Every material that takes the cream haze. */
   private hazed: { uRes: THREE.IUniform; uHazeLo: THREE.IUniform; uHazeFull: THREE.IUniform }[] = [];
@@ -73,7 +68,6 @@ export class World {
     this.scene.add(this.foam.points);
     this.scene.add(makeMountains());
     this.scene.add(makeVenice());
-    this.scene.add(this.doors.points);
   }
 
   resize(w: number, h: number) {
@@ -93,7 +87,6 @@ export class World {
     this.wave.update(front, this.time);
     this.foam.update(this.wave);
     this.ocean.tick(this.time);
-    this.doors.update(progress, this.time);
     // Cream haze over the sky, seamless with the landing above; lifted once
     // the camera drops into the tube and the sky leaves the frame.
     // The top of the frame is the landing's cream: the sky (and clouds) haze
@@ -123,15 +116,6 @@ export class World {
     const fov = cs.fov * (aspect < 1.5 ? 1 + (1.5 - aspect) * 0.4 : 1);
     if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
 
-    // Project the door clouds for the label layer.
-    const v = new THREE.Vector3();
-    for (let i = 0; i < DOORS.length; i++) {
-      v.copy(this.doors.centers[i]).project(this.camera);
-      const ds = this.doorScreen[i];
-      ds.x = v.x * 0.5 + 0.5;
-      ds.y = 1 - (v.y * 0.5 + 0.5);
-      ds.alpha = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1 ? this.doors.fade[i] : 0;
-    }
     this.renderer.render(this.scene, this.camera);
   }
 

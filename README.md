@@ -60,16 +60,20 @@ Nothing in it is an image. It lives in `web/src/world/`:
   the Erwin and the Venice V rising at Windward, tall skinny fan palms along
   the walk; the Rec Center on the sand — skate park bowls, Muscle Beach's
   blue-and-white gym, handball walls, basketball and paddle-tennis courts;
-  the breakwater's rocks off Windward; the Venice Fishing Pier at Washington
-  to the south (long, straight, pilings, round end, lamps, bait shack); and
-  far off, the Santa Monica Pier with its wheel to the north and the Marina
-  del Rey towers to the south, unlit and fogged. Distances along the beach are
-  compressed so it all fits one frame from the water; Windward is `L.veniceX`.
-- `doorclouds.ts` — the five doors as cumulus: clusters of soft sprites lit
-  from below by the low sun (peach undersides, cream tops), hanging in the
-  sky of the final view and drifting slowly left to right across it. They
-  exist only in the end state; `World.doorScreen` projects each cloud's
-  centre so the section can place its label over it.
+  the Venice Fishing Pier at Washington to the south (long, straight,
+  pilings, round end, lamps, bait shack); far off, the Santa Monica Pier with
+  its wheel to the north and the Marina del Rey towers to the south, unlit and
+  fogged; and far inland, low layered hills in the pink of the eastern sky,
+  sitting just under the palm line. Lifeguard towers are the LA County tower
+  proper (stilts, deck and railing, cabin with a wraparound window band, hip
+  roof, ramp with rails, number board, flag); facades carry cornices, belt
+  courses, sills, sign boards, doors, balconies and rooftop clutter; palms
+  have fan crowns of a dozen-plus fronds, some drooping, a few dead.
+  Distances along the beach are compressed so it all fits one frame from the
+  water; Windward is `L.veniceX`.
+- `doors.ts` — the five door labels. Their placement is on hold until
+  Charlie picks which buildings each one belongs to (the cloud version is on
+  the `today-sep-8` history if wanted).
 - `camera.ts` — one Catmull-Rom path over the whole section (velocity never
   stops at a key): side-on at the water closing in, straight in under the lip
   with the look turning once to face down the line, a beat inside the tube
@@ -81,7 +85,10 @@ Nothing in it is an image. It lives in `web/src/world/`:
   is relative to it, so the wave keeps crashing while the camera keeps
   moving; the frame then eases onto fixed keys facing the sea. There is no
   surfer: the viewer is the one in the tube.
-- `sky.ts` — gradient dome with the sun, soft sprite clouds. The dome is also
+- `sky.ts` — gradient dome with the sun, soft sprite clouds. A real sunset:
+  away from the sun (the east, over Venice) a red horizon, the pink belt,
+  lavender above it, then cream; toward the sun (the west, over the sea)
+  yellow, orange, peach, cream — blended by azimuth. The dome is also
   baked into the scene's environment map. It hazes
   the top of the frame to the landing's cream (screen-space, sky only) so the
   page above and the sky are one surface; the haze lifts once the camera is
@@ -99,10 +106,6 @@ arriving — so the edge between landing and world is invisible and the sunset
 reads as the same page.
 
 All of the scroll is yours; nothing auto-scrolls.
-
-**The doors** (`world/doors.ts`) are the clouds of the final view: each
-label in `ui/WaveSection.tsx` is a link placed over its cloud's projected
-centre, fading in with the end state and out at the edges of the drift.
 
 **The sun** sets down the line (`L.sunDir`), over the seaward end of the
 range as seen through the mouth of the tube; in the final view it is behind

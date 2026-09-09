@@ -100,33 +100,66 @@ function frontRow(g: THREE.Group) {
     const w = 9 + hash(k, 1) * 14;
     const floors = hash(k, 2) < 0.55 ? 2 : hash(k, 2) < 0.9 ? 3 : 1;
     let h = floors * 3.6 + hash(k, 3) * 1.2;
+    let nFloors = floors;
     const depth = 16 + hash(k, 4) * 10;
     let c = FRONT[Math.floor(hash(k, 5) * FRONT.length)];
     const cx = x + w / 2;
-    // The landmarks at Windward: Hotel Erwin (terracotta, tall for the walk,
-    // rooftop bar) and the Venice V; a mid-rise condo further south.
     const dx = cx - X;
-    if (Math.abs(dx + 42) < 9) { h = 21; c = 0xb9694a; }
-    else if (Math.abs(dx + 60) < 7) { h = 16; c = 0xf4efe6; }
-    else if (Math.abs(dx - 120) < 10) { h = 17; c = 0xe6d7c3; }
-    const b = box(g, w - 0.8, h, depth, c, cx, groundH(cx, ROW1 - depth / 2), ROW1 - depth / 2);
-    void b;
+    // The landmarks at Windward: Hotel Erwin (terracotta, six floors, the
+    // rooftop bar) and the Venice V (white with a blue band); a mid-rise
+    // condo further south.
+    let erwin = false, veniceV = false;
+    if (Math.abs(dx + 42) < 9) { h = 21.6; nFloors = 6; c = 0xb9694a; erwin = true; }
+    else if (Math.abs(dx + 60) < 7) { h = 16.2; nFloors = 4; c = 0xf4efe6; veniceV = true; }
+    else if (Math.abs(dx - 120) < 10) { h = 17.5; nFloors = 5; c = 0xe6d7c3; }
     const gy = groundH(cx, ROW1);
-    // Parapet and a rooftop box (stair head or the Erwin's bar canopy).
-    box(g, w - 0.4, 0.5, depth, 0x6f6259, cx, gy + h, ROW1 - depth / 2);
-    if (h > 10) box(g, w * 0.5, 2.2, 6, 0x5a4a44, cx, gy + h + 0.5, ROW1 - depth / 2 - 2);
-    // Murals: a big colour panel on many facades.
-    if (hash(k, 6) < 0.45) box(g, w * (0.5 + hash(k, 7) * 0.4), h * 0.55, 0.3, MURAL[Math.floor(hash(k, 8) * MURAL.length)], cx + (hash(k, 9) - 0.5) * w * 0.3, gy + 1.2 + hash(k, 10) * 1.5, ROW1 + 0.15);
-    // Ground-floor awnings and a dark shopfront band.
-    box(g, w - 1.2, 1.6, 0.4, 0x3a332f, cx, gy + 1.9, ROW1 + 0.2);
-    if (hash(k, 11) < 0.7) {
-      const a = box(g, w - 2, 0.3, 2.6, AWNING[Math.floor(hash(k, 12) * AWNING.length)], cx, gy + 3.5, ROW1 + 1.4);
-      a.rotation.x = 0.25;
+    const zc = ROW1 - depth / 2;
+    box(g, w - 0.8, h, depth, c, cx, groundH(cx, zc), zc);
+    // Two-tone facades on some: the upper floors a second colour.
+    if (!erwin && !veniceV && hash(k, 13) < 0.35) box(g, w - 0.7, h * 0.5, 0.25, FRONT[Math.floor(hash(k, 14) * FRONT.length)], cx, gy + h * 0.5, ROW1 + 0.1);
+    if (veniceV) box(g, w - 0.7, 1.2, 0.3, 0x2f6fa3, cx, gy + h - 3.0, ROW1 + 0.15);
+    // Cornice, parapet, rooftop clutter.
+    box(g, w - 0.2, 0.35, depth + 0.6, 0xeae2d6, cx, gy + h - 0.35, zc);
+    box(g, w - 0.4, 0.55, depth, 0x6f6259, cx, gy + h, zc);
+    if (hash(k, 15) < 0.6) box(g, 1.4, 1.0, 1.2, 0x9a9a9a, cx + (hash(k, 16) - 0.5) * (w - 4), gy + h + 0.5, zc - 2 + hash(k, 17) * 3); // AC unit
+    if (hash(k, 18) < 0.3) box(g, 0.08, 2.6, 0.08, 0x555, cx + (hash(k, 19) - 0.5) * (w - 3), gy + h + 0.5, zc); // antenna
+    if (h > 12) {
+      box(g, w * 0.5, 2.4, 6, 0x5a4a44, cx, gy + h + 0.5, zc - 2); // stair head / bar canopy
+      if (erwin) {
+        const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 2.2, 10), mat(0x8a8078));
+        tank.position.set(cx + w * 0.3, gy + h + 1.6, zc + 3); g.add(tank);
+        box(g, 0.9, 6.5, 0.4, 0xe0553a, cx - w / 2 + 0.2, gy + h - 7.5, ROW1 + 0.3); // the vertical ERWIN sign
+        for (let i = 0; i < 5; i++) box(g, 0.5, 0.5, 0.1, 0xfff3d0, cx - w / 2 + 0.2, gy + h - 6.8 + i * 1.2, ROW1 + 0.52);
+      }
     }
-    // Windows: a row of dark panes per upper floor.
-    for (let f = 1; f < floors; f++) {
+    // Murals: a big colour panel, sometimes two.
+    if (hash(k, 6) < 0.45) box(g, w * (0.5 + hash(k, 7) * 0.4), h * 0.5, 0.3, MURAL[Math.floor(hash(k, 8) * MURAL.length)], cx + (hash(k, 9) - 0.5) * w * 0.3, gy + 1.4 + hash(k, 10) * 1.5, ROW1 + 0.15);
+    if (hash(k, 20) < 0.2) box(g, w * 0.3, h * 0.3, 0.32, MURAL[Math.floor(hash(k, 21) * MURAL.length)], cx + (hash(k, 22) - 0.5) * w * 0.5, gy + h * 0.55, ROW1 + 0.18);
+    // Ground floor: shopfront band, door, a sign board, an awning on posts.
+    box(g, w - 1.2, 1.8, 0.4, 0x3a332f, cx, gy + 1.7, ROW1 + 0.2);
+    box(g, 1.2, 2.4, 0.3, 0x2a2420, cx + (hash(k, 23) - 0.5) * (w - 4), gy, ROW1 + 0.25);
+    box(g, w * 0.6, 0.7, 0.2, hash(k, 24) < 0.5 ? 0xf1c232 : 0xe8e8e8, cx, gy + 3.55, ROW1 + 0.3);
+    box(g, w * 0.36, 0.35, 0.12, 0x2a2420, cx, gy + 3.72, ROW1 + 0.42); // the lettering
+    if (hash(k, 11) < 0.7) {
+      const a = box(g, w - 2, 0.3, 2.6, AWNING[Math.floor(hash(k, 12) * AWNING.length)], cx, gy + 3.4, ROW1 + 1.4);
+      a.rotation.x = 0.25;
+      for (const side of [-1, 1]) box(g, 0.12, 3.0, 0.12, 0x555, cx + side * (w / 2 - 1.3), gy, ROW1 + 2.5);
+    }
+    // Upper floors: windows with sills, a belt course, balconies on some.
+    for (let f = 1; f < nFloors; f++) {
+      const fy = gy + f * 3.6;
+      box(g, w - 0.6, 0.18, 0.25, 0xeae2d6, cx, fy - 0.1, ROW1 + 0.12); // belt course
       const n = Math.max(1, Math.floor((w - 2) / 3));
-      for (let i = 0; i < n; i++) box(g, 1.4, 1.5, 0.2, 0x2f3a4a, cx - (n - 1) * 1.5 + i * 3, gy + f * 3.6 + 1.0, ROW1 + 0.12);
+      for (let i = 0; i < n; i++) {
+        const wx = cx - (n - 1) * 1.5 + i * 3;
+        box(g, 1.4, 1.5, 0.2, 0x2f3a4a, wx, fy + 1.0, ROW1 + 0.12);
+        box(g, 1.6, 0.12, 0.3, 0xeae2d6, wx, fy + 0.9, ROW1 + 0.2); // sill
+      }
+      if (hash(k, 30 + f) < 0.3) {
+        box(g, w * 0.55, 0.16, 1.4, 0xd8d0c4, cx, fy + 0.3, ROW1 + 0.8); // balcony slab
+        box(g, w * 0.55, 0.06, 0.06, 0x3a3a3a, cx, fy + 1.3, ROW1 + 1.45);
+        for (let i = 0; i < 5; i++) box(g, 0.05, 1.0, 0.05, 0x3a3a3a, cx - w * 0.27 + i * (w * 0.55 / 4), fy + 0.3, ROW1 + 1.45);
+      }
     }
     x += w; k++;
   }
@@ -149,46 +182,84 @@ function backRows(g: THREE.Group) {
 
 // ------------------------------------------------------------------ palms
 function palms(g: THREE.Group) {
-  const trunk = new THREE.CylinderGeometry(0.28, 0.42, 1, 6);
-  const frond = new THREE.BoxGeometry(0.9, 0.12, 4.2);
-  frond.translate(0, 0, 2.0);
-  const tm = mat(P.trunk), fm = mat(P.frond), fl = mat(P.frondLit);
+  const trunk = new THREE.CylinderGeometry(0.24, 0.42, 1, 7);
+  // A fan palm's frond is a fan: a wedge of a disc on a short stem.
+  const fan = new THREE.CircleGeometry(2.4, 7, -0.62, 1.24);
+  fan.translate(0.5, 0, 0);
+  const stem = new THREE.BoxGeometry(0.9, 0.08, 0.08);
+  stem.translate(0.45, 0, 0);
+  const tm = mat(P.trunk), tl = mat(0x8a6a4c);
+  const greens = [mat(P.frond), mat(P.frondLit), mat(0x3f6a34), mat(0x9fb85a)];
+  const dead = mat(0xa0804a);
   const plant = (x: number, z: number, hgt: number, seed: number) => {
     const y = groundH(x, z);
-    const t = new THREE.Mesh(trunk, tm);
-    t.scale.set(1, hgt, 1); t.position.set(x, y + hgt / 2, z);
-    t.rotation.z = (hash(seed, 1) - 0.5) * 0.12; t.rotation.x = (hash(seed, 2) - 0.5) * 0.1;
-    g.add(t);
-    const top = new THREE.Vector3(x + Math.sin(t.rotation.z) * -hgt, y + hgt, z + Math.sin(t.rotation.x) * hgt);
-    const n = 8;
+    const lean = (hash(seed, 1) - 0.5) * 0.16, leanX = (hash(seed, 2) - 0.5) * 0.12;
+    const t = new THREE.Mesh(trunk, hash(seed, 9) < 0.3 ? tl : tm);
+    t.scale.set(1, hgt, 1); t.position.set(x, y + hgt / 2, z); t.rotation.set(leanX, 0, lean); g.add(t);
+    const top = new THREE.Vector3(x - Math.sin(lean) * hgt, y + Math.cos(lean) * hgt, z + Math.sin(leanX) * hgt);
+    const crown = new THREE.Group(); crown.position.copy(top); g.add(crown);
+    const n = 13 + Math.floor(hash(seed, 3) * 5);
     for (let i = 0; i < n; i++) {
-      const f = new THREE.Mesh(frond, hash(seed, i, 3) < 0.4 ? fl : fm);
-      f.position.copy(top);
-      f.rotation.set(-0.35 - hash(seed, i, 4) * 0.5, (i / n) * Math.PI * 2 + hash(seed, i, 5) * 0.4, 0, 'YXZ');
-      g.add(f);
+      const f = new THREE.Group();
+      f.rotation.y = (i / n) * Math.PI * 2 + hash(seed, i, 4) * 0.5;
+      // Upper fronds stand up, lower ones droop; the odd one hangs dead.
+      const droop = 0.15 + hash(seed, i, 5) * 1.1;
+      const isDead = hash(seed, i, 6) < 0.12;
+      f.rotation.z = -(isDead ? 1.9 : droop);
+      const blade = new THREE.Mesh(fan, isDead ? dead : greens[Math.floor(hash(seed, i, 7) * greens.length)]);
+      blade.rotation.x = Math.PI / 2 + (hash(seed, i, 8) - 0.5) * 0.5; // the fan lies along the stem, twisted a little
+      blade.scale.setScalar(0.8 + hash(seed, i, 10) * 0.5);
+      const st = new THREE.Mesh(stem, isDead ? dead : tm);
+      f.add(st); f.add(blade);
+      crown.add(f);
     }
-    // The skirt of dead fronds under the crown that fan palms carry.
-    const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.9, 1.6, 7), mat(0x8a6a3c));
-    skirt.position.copy(top).y -= 0.9; g.add(skirt);
+    // The skirt of old fronds under the crown, and the crown's heart.
+    const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.75, 1.8, 8), dead);
+    skirt.position.copy(top).y -= 1.0; g.add(skirt);
+    const heart = new THREE.Mesh(new THREE.SphereGeometry(0.42, 6, 5), greens[2]);
+    heart.position.copy(top); g.add(heart);
   };
-  // A line along the seaward edge of the walk — the Venice signature.
-  for (let x = X - 340; x < X + 340; x += 11 + hash(x, 41) * 8) plant(x + (hash(x, 42) - 0.5) * 3, WALK + 3 + (hash(x, 43) - 0.5) * 4, 15 + hash(x, 44) * 9, x);
-  // Clusters on the sand around the Rec Center and toward the pier.
-  for (let k = 0; k < 26; k++) plant(X - 110 + (hash(k, 45) - 0.5) * 90, SHORE - 78 + hash(k, 46) * 20, 11 + hash(k, 47) * 9, k + 900);
-  for (let k = 0; k < 14; k++) plant(X + 60 + hash(k, 48) * 120, SHORE - 84 + hash(k, 49) * 14, 12 + hash(k, 50) * 8, k + 950);
+  // The signature: a long line of tall fan palms along the seaward edge of the walk.
+  for (let x = X - 360; x < X + 360; x += 6 + hash(x, 41) * 5) plant(x + (hash(x, 42) - 0.5) * 3, WALK + 3 + (hash(x, 43) - 0.5) * 5, 14 + hash(x, 44) * 10, x);
+  // A second, looser line along the back streets, showing above the roofs.
+  for (let x = X - 380; x < X + 380; x += 12 + hash(x, 51) * 12) plant(x + (hash(x, 52) - 0.5) * 6, ROW1 - 28 - hash(x, 53) * 14, 18 + hash(x, 54) * 9, x + 1000);
+  // Clusters on the sand: around the Rec Center, by the pagodas, toward the pier.
+  for (let k = 0; k < 40; k++) plant(X - 110 + (hash(k, 45) - 0.5) * 120, SHORE - 74 + hash(k, 46) * 24, 10 + hash(k, 47) * 10, k + 900);
+  for (let k = 0; k < 22; k++) plant(X + 70 + hash(k, 48) * 150, SHORE - 82 + hash(k, 49) * 16, 11 + hash(k, 50) * 9, k + 950);
+  for (let k = 0; k < 16; k++) plant(X - 330 + hash(k, 55) * 120, SHORE - 80 + hash(k, 56) * 16, 12 + hash(k, 57) * 9, k + 980);
 }
 
 // ------------------------------------------------------ lifeguard towers
 function towers(g: THREE.Group) {
-  const blue = 0x3d7ea6, white = 0xf4f6f6, wood = 0xb08a63;
-  for (let x = X - 330; x <= X + 300; x += 46) {
+  const blue = 0x2f79a8, roofBlue = 0x275f85, white = 0xf4f6f6, wood = 0xb08a63, glass = 0x24384c;
+  let n = 1;
+  for (let x = X - 330; x <= X + 300; x += 46, n++) {
     const z = SHORE - 18, y = groundH(x, z);
-    for (const [dx, dz] of [[-1.3, -1.2], [1.3, -1.2], [-1.3, 1.2], [1.3, 1.2]]) box(g, 0.28, 2.6, 0.28, wood, x + dx, y, z + dz);
-    box(g, 3.4, 0.25, 3.0, wood, x, y + 2.6, z);
-    box(g, 3.0, 2.3, 2.6, blue, x, y + 2.85, z);
-    box(g, 3.0, 0.7, 2.6, white, x, y + 5.15, z); // the white band under the roof
-    box(g, 3.6, 0.2, 3.2, blue, x, y + 5.85, z);
-    const ramp = box(g, 1.0, 0.16, 5.5, wood, x - 0.3, y + 1.3, z - 4.2); ramp.rotation.x = -0.46;
+    // Stilts, cross-brace, the deck.
+    for (const [dx, dz] of [[-1.5, -1.4], [1.5, -1.4], [-1.5, 1.4], [1.5, 1.4]]) box(g, 0.26, 2.8, 0.26, wood, x + dx, y, z + dz);
+    box(g, 3.2, 0.12, 0.12, wood, x, y + 1.2, z + 1.4);
+    box(g, 4.4, 0.24, 4.0, wood, x, y + 2.8, z);
+    // Deck railing: posts and a top rail, white.
+    for (const [dx, dz] of [[-2.1, -1.9], [2.1, -1.9], [-2.1, 1.9], [2.1, 1.9], [0, 1.9], [-2.1, 0], [2.1, 0]]) box(g, 0.1, 1.0, 0.1, white, x + dx, y + 3.04, z + dz);
+    box(g, 4.3, 0.08, 0.08, white, x, y + 4.0, z + 1.9);
+    box(g, 0.08, 0.08, 3.9, white, x - 2.1, y + 4.0, z);
+    box(g, 0.08, 0.08, 3.9, white, x + 2.1, y + 4.0, z);
+    // The cabin: blue, with the wraparound window band and white frames.
+    box(g, 3.0, 2.4, 2.6, blue, x, y + 3.04, z);
+    box(g, 3.04, 0.8, 2.64, glass, x, y + 4.2, z);
+    box(g, 3.1, 0.08, 2.7, white, x, y + 4.16, z);
+    box(g, 3.1, 0.08, 2.7, white, x, y + 5.0, z);
+    for (const dx of [-1.0, 0, 1.0]) box(g, 0.08, 0.84, 2.7, white, x + dx, y + 4.18, z);
+    // Hip roof with an overhang, a fascia, the tower number board and a flag.
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(2.9, 1.1, 4), mat(roofBlue));
+    roof.rotation.y = Math.PI / 4; roof.position.set(x, y + 5.44 + 0.55, z); g.add(roof);
+    box(g, 3.6, 0.16, 3.2, white, x, y + 5.44, z);
+    box(g, 0.9, 0.5, 0.08, white, x + 0.8, y + 3.3, z + 1.34);
+    box(g, 0.08, 2.4, 0.08, 0x777, x - 1.3, y + 5.5, z - 1.1);
+    box(g, 0.7, 0.4, 0.04, n % 3 === 0 ? 0xd9533a : 0xf1c232, x - 0.95, y + 7.4, z - 1.1);
+    // The ramp down the back with its railings.
+    const ramp = box(g, 1.1, 0.14, 6.0, wood, x - 0.6, y + 1.4, z - 4.4); ramp.rotation.x = -0.45;
+    for (const side of [-0.6, 0.6]) { const r = box(g, 0.06, 0.06, 6.0, white, x - 0.6 + side, y + 2.3, z - 4.4); r.rotation.x = -0.45; }
   }
 }
 
@@ -226,23 +297,6 @@ function recCenter(g: THREE.Group) {
   // Paddle-tennis courts with fences.
   for (let i = 0; i < 3; i++) box(g, 10, 0.12, 20, 0x5f7f60, X + 112 + i * 11, groundH(X + 112, SHORE - 80) - 0.05, SHORE - 80);
   for (let i = 0; i < 10; i++) box(g, 0.1, 2.8, 0.1, 0x4d4d4d, X + 106 + i * 3.6, groundH(X + 106, SHORE - 70), SHORE - 70);
-}
-
-// ----------------------------------------------------------- the breakwater
-function breakwater(g: THREE.Group) {
-  const rock = new THREE.DodecahedronGeometry(1, 0);
-  const rm = mat(0x4a4744), rl = mat(0x6a655f);
-  const place = (x: number, z: number, s: number, k: number) => {
-    const m = new THREE.Mesh(rock, hash(k, 71) < 0.4 ? rl : rm);
-    m.position.set(x + (hash(k, 72) - 0.5) * 1.6, -0.9 + s * 0.55 + hash(k, 73) * 0.4, z + (hash(k, 74) - 0.5) * 1.6);
-    m.scale.set(s * (0.8 + hash(k, 75) * 0.6), s * 0.6, s * (0.8 + hash(k, 76) * 0.6));
-    m.rotation.set(hash(k, 77) * 3, hash(k, 78) * 3, hash(k, 79) * 3);
-    g.add(m);
-  };
-  // The groin out from the beach off Windward, then the arm parallel to the shore.
-  let k = 0;
-  for (let z = SHORE - 3; z < SHORE + 30; z += 1.8) for (let j = 0; j < 2; j++) place(X - 62 + (j - 0.5) * 1.8, z, 1.3 + hash(k, 80) * 0.7, k++);
-  for (let x = X - 62; x < X + 8; x += 1.9) for (let j = 0; j < 2; j++) place(x, SHORE + 31 + (j - 0.5) * 2.0, 1.4 + hash(k, 81) * 0.8, k++);
 }
 
 // ----------------------------------------------------------- Venice Pier
@@ -287,15 +341,47 @@ function farEnds(g: THREE.Group) {
     const tx = X + 470 + hash(i, 91) * 140, tz = ROW1 - 60 - hash(i, 92) * 120;
     box(g, 12 + hash(i, 93) * 8, 32 + hash(i, 94) * 26, 12 + hash(i, 95) * 8, tw[i % tw.length], tx, groundH(tx, tz), tz, 0, true);
   }
-  // Behind Venice the land is flat; a very low ridge far inland (the Baldwin
-  // Hills) to keep the horizon from being a ruler.
-  const ridge = new THREE.Mesh(new THREE.PlaneGeometry(900, 200, 60, 10).toNonIndexed(), new THREE.MeshBasicMaterial({ color: 0xc79a80 }));
-  ridge.rotation.x = -Math.PI / 2;
-  const rp = ridge.geometry.attributes.position as THREE.BufferAttribute;
-  for (let i = 0; i < rp.count; i++) { const lx = rp.getX(i), lz = rp.getY(i); rp.setZ(i, Math.max(0, 22 * Math.exp(-((lx - 120) * (lx - 120)) / (260 * 260)) + 14 * Math.exp(-((lx + 300) * (lx + 300)) / (200 * 200)) - Math.abs(lz) * 0.12 + fbm2(lx * 0.01, lz * 0.02) * 6)); }
-  ridge.geometry.computeVertexNormals();
-  ridge.position.set(X + 160, 0, ROW1 - 640);
-  g.add(ridge);
+  backRange(g);
+}
+
+/**
+ * Behind Venice the land is flat, but far inland the hills rise: low,
+ * layered ridges in the pink of the eastern sky at sunset, sitting just
+ * under the line of the palm crowns from the water.
+ */
+function backRange(g: THREE.Group) {
+  const layers = [
+    { z: ROW1 - 560, h: 22, base: 0x8d6e86, haze: 0.35, peaks: [[-380, 1.0, 180], [-120, 0.7, 140], [140, 1.1, 200], [420, 0.6, 160]] },
+    { z: ROW1 - 720, h: 34, base: 0x9c7e97, haze: 0.5, peaks: [[-520, 0.8, 220], [-200, 1.0, 190], [90, 0.75, 170], [330, 1.05, 210], [600, 0.5, 180]] },
+    { z: ROW1 - 900, h: 44, base: 0xab90a8, haze: 0.66, peaks: [[-600, 0.7, 260], [-260, 1.0, 230], [60, 0.85, 220], [420, 0.95, 250], [760, 0.6, 220]] },
+  ];
+  const pink = new THREE.Color(P.skyPink);
+  const peak = (x: number, at: number, a: number, w: number) => a * Math.exp(-((x - at) * (x - at)) / (w * w));
+  for (const layer of layers) {
+    const W = 1900, D = 160;
+    const geo = new THREE.PlaneGeometry(W, D, 150, 8).toNonIndexed();
+    geo.rotateX(-Math.PI / 2);
+    geo.translate(X + 60, 0, layer.z);
+    const pos = geo.attributes.position as THREE.BufferAttribute;
+    const colors = new Float32Array(pos.count * 3);
+    const base = new THREE.Color(layer.base).lerp(pink, layer.haze), high = base.clone().lerp(pink, 0.35);
+    const c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i) - X - 60, z = pos.getZ(i) - layer.z;
+      let ridge = 0;
+      for (const [at, a, w] of layer.peaks) ridge += peak(x, at, a, w);
+      const fold = 1 - Math.abs(fbm2(x * 0.012 + 5, layer.z * 0.01) * 2 - 1);
+      let h = layer.h * ridge * (0.65 + fold * 0.6) * (1 - Math.abs(z) / (D / 2)) - 1;
+      h += (fbm2(x * 0.03, layer.z * 0.02 + 2) - 0.5) * 5 * Math.min(1, ridge);
+      pos.setY(i, Math.max(-1, h));
+      c.copy(base).lerp(high, smoothstep(2, layer.h * 0.8, h));
+      colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
+    m.frustumCulled = false;
+    g.add(m);
+  }
 }
 
 export function makeVenice() {
@@ -306,7 +392,6 @@ export function makeVenice() {
   palms(g);
   towers(g);
   recCenter(g);
-  breakwater(g);
   venicePier(g);
   farEnds(g);
   void lerp;
