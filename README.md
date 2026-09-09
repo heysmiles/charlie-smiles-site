@@ -64,13 +64,18 @@ Nothing in it is an image. It lives in `web/src/world/`:
   pilings, round end, lamps, bait shack); far off, the Santa Monica Pier with
   its wheel to the north and the Marina del Rey towers to the south, unlit and
   fogged; and far inland, low layered hills in the pink of the eastern sky,
-  sitting just under the palm line. Lifeguard towers are the LA County tower
-  proper (stilts, deck and railing, cabin with a wraparound window band, hip
-  roof, ramp with rails, number board, flag); facades carry cornices, belt
-  courses, sills, sign boards, doors, balconies and rooftop clutter; palms
-  have fan crowns of a dozen-plus fronds, some drooping, a few dead.
-  Distances along the beach are compressed so it all fits one frame from the
-  water; Windward is `L.veniceX`.
+  sitting just under the palm line. Lifeguard towers are the Venice tower as
+  photographed: pale aqua, flat overhanging roof, a railed deck across the
+  seaward front, a long railed ramp down the north side, X-braced legs, the
+  big observation window, number, flag and rescue can. Facades carry
+  cornices, belt courses, windows, sign boards, doors, awnings and murals —
+  no thin stray lines. Palms have compact rounded fan-palm heads in three
+  tiers (standing, reaching, hanging) over a shag of dead fronds.
+  The bay curves: north of Venice the shore bends seaward (`shoreAt`) and
+  the town runs on through Santa Monica — taller, paler hotels on the bluff,
+  the pier — thinning and fogging toward the foot of the range, so the coast
+  recedes in perspective instead of stopping. Distances along the beach are
+  compressed so it all fits one frame from the water; Windward is `L.veniceX`.
 - `doors.ts` — the five door labels. Their placement is on hold until
   Charlie picks which buildings each one belongs to (the cloud version is on
   the `today-sep-8` history if wanted).

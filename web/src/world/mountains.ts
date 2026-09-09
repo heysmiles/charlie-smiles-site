@@ -12,12 +12,12 @@ import { fbm2, smoothstep } from './math';
  */
 type Layer = { dx: number; haze: number; base: number; high: number; width: number; fade: [number, number]; peaks: [number, number, number][]; coast: number };
 const LAYERS: Layer[] = [
-  { dx: 0, haze: 0.1, base: 0x2a1f30, high: 0x4a3546, width: 60, fade: [360, 540], coast: 5,
-    peaks: [[-560, 8, 240], [-320, 16, 150], [-110, 27, 115], [90, 24, 105], [260, 14, 95], [410, 7, 85]] },
-  { dx: -130, haze: 0.26, base: 0x35283a, high: 0x574152, width: 85, fade: [430, 640], coast: 3,
-    peaks: [[-640, 7, 260], [-400, 22, 170], [-160, 42, 150], [60, 36, 135], [260, 24, 125], [430, 11, 110]] },
-  { dx: -290, haze: 0.44, base: 0x43303f, high: 0x67505f, width: 110, fade: [520, 760], coast: 0,
-    peaks: [[-520, 12, 250], [-240, 32, 210], [20, 52, 180], [250, 38, 170], [460, 20, 150]] },
+  { dx: 0, haze: 0.1, base: 0x2a1f30, high: 0x4a3546, width: 90, fade: [420, 640], coast: 8,
+    peaks: [[-560, 14, 300], [-320, 28, 200], [-110, 46, 160], [90, 42, 150], [260, 26, 130], [430, 13, 120]] },
+  { dx: -170, haze: 0.26, base: 0x35283a, high: 0x574152, width: 120, fade: [500, 760], coast: 5,
+    peaks: [[-640, 12, 320], [-400, 38, 220], [-160, 70, 200], [60, 62, 180], [280, 42, 170], [470, 20, 150]] },
+  { dx: -370, haze: 0.44, base: 0x43303f, high: 0x67505f, width: 150, fade: [600, 900], coast: 0,
+    peaks: [[-520, 20, 320], [-240, 56, 280], [20, 90, 240], [270, 66, 230], [500, 36, 200]] },
 ];
 
 export function makeMountains() {

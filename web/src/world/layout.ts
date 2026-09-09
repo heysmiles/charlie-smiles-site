@@ -19,7 +19,7 @@ export const L = {
   frontStart: -32,
   frontEnd: -190,
   /** The low range down the line, about where the pier used to stand. */
-  rangeX: -480,
+  rangeX: -900,
   /** Low over the sea, down the line: it sets over the seaward end of the range. */
   sunDir: [-0.8, 0.07, 0.45] as const,
   /** Windward Avenue's x along the beach — the centre of Venice, under the camera's rest. */

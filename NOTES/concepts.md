@@ -153,6 +153,18 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-08, night — the coast recedes, cleaner Venice, real towers
+
+Charlie: the strip met the mountain with a hard drop — make it a perspective
+shot fading into the range; remove Muscle Beach; buildings detailed but
+clean (no stray lines); palms more realistic; towers like the photo (pale
+aqua Venice tower with the front deck and long ramp). Done: the shore bends
+seaward north of Venice and the town runs on through Santa Monica (taller,
+paler) toward the range, which moved out past it and grew; the ocean foam
+follows the bend; Muscle Beach removed; balconies, posts, antennas and
+lettering bars removed; fan-palm heads in three tiers; towers rebuilt from
+the photo.
+
 ## Status — 2026-09-08, later still — detail pass on Venice
 
 Charlie: clouds out (labels return later, pinned to buildings he'll pick);
