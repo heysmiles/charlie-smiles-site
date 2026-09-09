@@ -12,8 +12,8 @@ export const remap = (x: number, a0: number, a1: number, b0: number, b1: number)
   lerp(b0, b1, clamp01((x - a0) / (a1 - a0 || 1e-6)));
 
 /** Deterministic hash in [0,1). */
-export function hash(x: number, y = 0, z = 0) {
-  let h = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453;
+export function hash(x: number, y = 0, z = 0, w = 0) {
+  let h = Math.sin(x * 127.1 + y * 311.7 + z * 74.7 + w * 269.5) * 43758.5453;
   return h - Math.floor(h);
 }
 /** Smooth 2D value noise in [0,1]. */

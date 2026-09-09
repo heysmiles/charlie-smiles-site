@@ -22,7 +22,6 @@ export class World {
   wave = new Wave();
   foam = new Foam();
   ocean = makeOcean();
-  private sky!: ReturnType<typeof makeSky>;
   /** Every material that takes the cream haze. */
   private hazed: { uRes: THREE.IUniform; uHazeLo: THREE.IUniform; uHazeFull: THREE.IUniform }[] = [];
   progress = 0;
@@ -67,7 +66,6 @@ export class World {
     this.scene.add(new THREE.AmbientLight(0xffe0c0, 0.2));
 
     const sky = makeSky();
-    this.sky = sky;
     this.scene.add(sky.group);
     // Bake the sky into an environment map so water and everything else
     // reflects the sunset instead of a black void.

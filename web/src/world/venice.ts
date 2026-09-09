@@ -36,7 +36,6 @@ const WALK_W = 14;
 export const shoreAt = (x: number) => SHORE + 95 * smoothstep(250, 1000, -(x - X));
 const walkAt = (x: number) => shoreAt(x) - 100; // Ocean Front Walk's seaward edge
 const row1At = (x: number) => walkAt(x) - WALK_W - 2; // seaward face of the first building row
-const WALK = walkAt(X);
 const ROW1 = row1At(X);
 
 // One material per colour, flat-shaded, and one unlit set for the far things.
