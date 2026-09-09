@@ -1,3 +1,6 @@
 node_modules/
 dist/
 .DS_Store
+
+# Reference clips (third-party footage): kept locally, not published
+assets/reference/

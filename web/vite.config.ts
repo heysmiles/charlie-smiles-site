@@ -32,7 +32,9 @@ function frameSink(): Plugin {
   }
 }
 
+// Served from GitHub Pages at /charlie-smiles-site/ in production; at / in dev.
 export default defineConfig({
+  base: process.env.GITHUB_PAGES ? '/charlie-smiles-site/' : '/',
   server: { port: 5174, strictPort: true },
   plugins: [react(), frameSink()],
 })

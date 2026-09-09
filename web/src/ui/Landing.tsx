@@ -6,7 +6,7 @@ export function Landing() {
   return (
     <div className="landing">
       <div className="landing__inner">
-        <video className="landing__star" src="/brand/star.webm" poster="/brand/star.png" autoPlay muted loop playsInline />
+        <video className="landing__star" src={`${import.meta.env.BASE_URL}brand/star.webm`} poster={`${import.meta.env.BASE_URL}brand/star.png`} autoPlay muted loop playsInline />
         <h1 className="landing__name" aria-label="Charlie Smiles" />
         <div className="landing__cue">
           <span className="landing__tagline">to enter, surf the internet</span>
