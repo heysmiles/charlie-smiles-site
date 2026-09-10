@@ -359,22 +359,78 @@ function venicePier(g: THREE.Group) {
   box(g, 5.6, 0.4, 4.6, 0x7a4b3a, px + 5.5, y + 3.7, from + 30);
 }
 
+// ------------------------------------------------------- Santa Monica Pier
+/**
+ * The Santa Monica Pier as it stands, seen from the water to the south: two
+ * piers side by side — the wide Pleasure Pier at the shore end carrying
+ * Pacific Park, and the long, narrow Municipal Pier running on out to sea
+ * — on timber pilings. On the wide deck: the Hippodrome's cream carousel
+ * house with its red-brown dome and turrets, the Playland arcade, Bubba
+ * Gump's blue-green house, the restaurants; Pacific Park's white Pacific
+ * Wheel on its A-frame with twenty gondolas, the West Coaster's yellow track
+ * on blue steel snaking around it, the Pacific Plunge drop tower, the Sea
+ * Dragon swinging ship, the scrambler; vintage lamps along the rails; the
+ * harbor office and its lookout at the far end. Unlit and fogged: it reads
+ * as a silhouette with a few bright accents from down the line.
+ */
+function santaMonicaPier(g: THREE.Group) {
+  const sx = X - 560, y = 9, S = shoreAt(sx);
+  const timber = 0x6e5a48, piling = 0x4a3f36, rail = 0x8a8078, cream = 0xefe3c8, dome = 0x8e4a3a;
+  const b = (w: number, h: number, d: number, c: number, x: number, yy: number, z: number, ry = 0) => box(g, w, h, d, c, x, yy, z, ry, true);
+  // Decks: the wide Pleasure Pier, then the narrow Municipal Pier out to sea.
+  b(46, 1.2, 110, timber, sx + 6, y, S + 5);
+  b(11, 1.2, 250, timber, sx - 10, y, S + 175);
+  for (let z = S - 45; z < S + 60; z += 8) for (const dx of [-16, -5, 6, 17, 28]) b(1.3, y + 2.5, 1.3, piling, sx + dx, -2.5, z);
+  for (let z = S + 60; z < S + 300; z += 8) for (const dx of [-14, -6]) b(1.3, y + 2.5, 1.3, piling, sx + dx, -2.5, z);
+  // Railings and lamp posts.
+  b(0.2, 1.1, 110, rail, sx - 17, y + 1.2, S + 5); b(0.2, 1.1, 110, rail, sx + 29, y + 1.2, S + 5);
+  b(0.2, 1.1, 250, rail, sx - 15.5, y + 1.2, S + 175); b(0.2, 1.1, 250, rail, sx - 4.5, y + 1.2, S + 175);
+  for (let z = S - 40; z < S + 295; z += 16) { const lx = z < S + 60 ? sx + 29 : sx - 4.5; b(0.22, 4.4, 0.22, 0x2f3a36, lx, y + 1.2, z); b(0.8, 0.7, 0.8, 0xfff0c8, lx, y + 5.4, z); }
+  // The shore end: the Hippodrome — octagonal carousel house, dome, turrets.
+  const hip = new THREE.Mesh(new THREE.CylinderGeometry(9.5, 9.5, 9, 8), farMat(cream));
+  hip.position.set(sx - 4, y + 5.7, S - 28); g.add(hip);
+  const hipDome = new THREE.Mesh(new THREE.SphereGeometry(8.8, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), farMat(dome));
+  hipDome.position.set(sx - 4, y + 10.2, S - 28); g.add(hipDome);
+  for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; const tx = sx - 4 + Math.cos(a) * 9.5, tz = S - 28 + Math.sin(a) * 9.5; b(2.4, 11, 2.4, cream, tx, y + 1.2, tz); const cap = new THREE.Mesh(new THREE.SphereGeometry(1.6, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), farMat(dome)); cap.position.set(tx, y + 12.2, tz); g.add(cap); }
+  b(8, 1.4, 8, cream, sx - 4, y + 18.6, S - 28); // the lantern on top of the dome
+  const lanternCap = new THREE.Mesh(new THREE.ConeGeometry(4.6, 3.2, 8), farMat(dome)); lanternCap.position.set(sx - 4, y + 21.6, S - 28); g.add(lanternCap);
+  // The Playland arcade: long, low, a loud striped band; Bubba Gump's house;
+  // Pier Burger and the restaurants; a few kiosks and shade tents.
+  b(30, 5.5, 11, 0xf1e2c4, sx + 16, y + 1.2, S - 30);
+  for (let i = 0; i < 6; i++) b(4.6, 1.6, 0.3, [0xe0553a, 0xf0b13c, 0x3f7fb8, 0x4e9c72, 0xb04f8a, 0xf1e2c4][i], sx + 4 + i * 5, y + 4.2, S - 24.3);
+  b(14, 9, 13, 0x4f8f8a, sx + 18, y + 1.2, S - 8); b(14.6, 0.6, 13.6, 0xf4f0ea, sx + 18, y + 10.2, S - 8); b(14.6, 0.5, 13.6, 0xf4f0ea, sx + 18, y + 5.6, S - 8); // Bubba Gump
+  b(10, 4.5, 8, 0xe9d7c8, sx - 12, y + 1.2, S - 8); b(10.6, 1.6, 8.6, 0xb47a5a, sx - 12, y + 5.7, S - 8);
+  b(12, 6, 10, 0xf4efe6, sx + 24, y + 1.2, S + 62); b(12.6, 0.8, 10.6, 0x8e4a3a, sx + 24, y + 7.2, S + 62); // Mariasol's end of the wide deck
+  for (let i = 0; i < 5; i++) { const kx = sx - 14 + i * 9, kz = S + 4 + hash(i, 61) * 20; b(3, 2.6, 3, [0xf1c232, 0xe0553a, 0x3c6fae, 0xfff7ee, 0x4e9c72][i], kx, y + 1.2, kz); const tent = new THREE.Mesh(new THREE.ConeGeometry(2.4, 1.6, 4), farMat(0xf4f0ea)); tent.rotation.y = Math.PI / 4; tent.position.set(kx, y + 4.6, kz); g.add(tent); }
+  // Pacific Park. The Pacific Wheel: rim, inner rim, spokes, twenty gondolas,
+  // the A-frame legs and the base.
+  const wx = sx + 16, wy = y + 19, wz = S + 30, R = 15;
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.55, 6, 32), farMat(0xf4f0ea)); rim.position.set(wx, wy, wz); g.add(rim);
+  const rim2 = new THREE.Mesh(new THREE.TorusGeometry(R * 0.55, 0.35, 6, 24), farMat(0xf4f0ea)); rim2.position.set(wx, wy, wz); g.add(rim2);
+  for (let i = 0; i < 12; i++) { const sp = b(0.4, R * 2, 0.4, 0xf4f0ea, wx, wy - R, wz); sp.position.y = wy; sp.rotation.z = (i / 12) * Math.PI; }
+  for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2; b(1.6, 1.8, 1.4, i % 2 ? 0x3c6fae : 0xe0553a, wx + Math.cos(a) * R, wy + Math.sin(a) * R - 0.9, wz); }
+  for (const side of [-1, 1]) { const leg = b(1.0, 24, 1.0, 0xf4f0ea, wx + side * 6, y + 1.2, wz + 2.2); leg.position.set(wx + side * 5.5, y + 1.2 + 10.5, wz + 2.2); leg.rotation.z = side * -0.48; const leg2 = b(1.0, 24, 1.0, 0xf4f0ea, wx, y, wz); leg2.position.set(wx + side * 5.5, y + 1.2 + 10.5, wz - 2.2); leg2.rotation.z = side * -0.48; }
+  b(16, 1.2, 8, 0x3c6fae, wx, y + 1.2, wz);
+  // The West Coaster: a yellow track on blue steel, dipping and climbing around the wheel.
+  const pts: THREE.Vector3[] = [];
+  const path: [number, number, number][] = [[-14, 4, -6], [-6, 9, -2], [2, 14, 2], [10, 7, 6], [20, 11, 14], [30, 5, 22], [34, 12, 34], [26, 6, 46], [14, 10, 52], [2, 4, 46], [-8, 8, 38], [-14, 5, 26], [-16, 9, 14], [-14, 4, -6]];
+  for (const [px, py, pz] of path) pts.push(new THREE.Vector3(sx + px, y + 1.2 + py, wz + pz - 20));
+  const curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal');
+  const track = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, 0.5, 6, true), farMat(0xf2c230)); g.add(track);
+  for (let i = 0; i < 44; i++) { const q = curve.getPoint(i / 44); b(0.5, q.y - (y + 1.2), 0.5, 0x2b5ea8, q.x, y + 1.2, q.z); }
+  // Pacific Plunge (the drop tower), the Sea Dragon, the scrambler.
+  b(1.4, 26, 1.4, 0xd9d4cc, sx + 30, y + 1.2, S + 8); b(4.5, 1.2, 4.5, 0xe0553a, sx + 30, y + 15, S + 8); b(2.4, 1.0, 2.4, 0x3c6fae, sx + 30, y + 27, S + 8);
+  for (const side of [-1, 1]) { const a = b(0.7, 13, 0.7, 0x2b5ea8, sx - 10 + side * 3.2, y + 1.2, S + 44); a.position.set(sx - 10 + side * 3.2, y + 1.2 + 6, S + 44); a.rotation.z = side * -0.42; }
+  const hull = b(9, 2.4, 3.2, 0xe0553a, sx - 10, y + 3.4, S + 44); hull.rotation.z = 0.18;
+  b(1.0, 6, 1.0, 0xd9d4cc, sx + 4, y + 1.2, S + 50); for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; b(6, 0.4, 0.4, 0xf2c230, sx + 4 + Math.cos(a) * 3, y + 6.6, S + 50 + Math.sin(a) * 3, -a); }
+  // The far end: the harbor office with its lookout, and the bait shop.
+  b(9, 4.5, 8, 0xf4efe6, sx - 10, y + 1.2, S + 288); b(3.2, 5, 3.2, 0xf4efe6, sx - 12, y + 5.7, S + 290); b(4, 0.8, 4, 0x8e4a3a, sx - 12, y + 10.7, S + 290);
+  b(6, 3.2, 5, 0xe9d7c8, sx - 8, y + 1.2, S + 270);
+}
+
 // ----------------------------------------------------- the far ends of the bay
 function farEnds(g: THREE.Group) {
-  // Santa Monica Pier, far north (screen-left), under the range: deck, the
-  // Pacific Wheel, the coaster's hump, the Hippodrome's roof.
-  const sx = X - 560, y = 9, S = shoreAt(sx);
-  box(g, 12, 1.2, 300, 0x9b8a78, sx, y, S - 90, 0, true);
-  for (let z = S - 230; z < S + 60; z += 10) box(g, 1.4, y + 2, 1.4, 0x5a5048, sx - 4, -2, z, 0, true), box(g, 1.4, y + 2, 1.4, 0x5a5048, sx + 4, -2, z, 0, true);
-  const wheel = new THREE.Mesh(new THREE.TorusGeometry(15, 0.7, 6, 24), farMat(0xe9d7c8));
-  wheel.position.set(sx + 12, y + 17, S - 30); g.add(wheel);
-  for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI; const sp = box(g, 0.5, 30, 0.5, 0xe9d7c8, sx + 12, y + 2, S - 30, 0, true); sp.rotation.z = a; sp.position.y = y + 17; }
-  box(g, 26, 9, 10, 0xd8c3ad, sx + 30, y + 1.2, S - 60, 0, true); // coaster's box, hump
-  const hump = new THREE.Mesh(new THREE.CylinderGeometry(9, 9, 6, 12, 1, false, 0, Math.PI), farMat(0xd8c3ad));
-  hump.rotation.z = Math.PI / 2; hump.rotation.y = Math.PI / 2; hump.position.set(sx + 30, y + 10, S - 60); g.add(hump);
-  box(g, 18, 12, 18, 0xe6d9c8, sx - 14, y + 1.2, S - 120, 0, true); // the Hippodrome
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(12, 9, 4), farMat(0xb47a5a));
-  roof.rotation.y = Math.PI / 4; roof.position.set(sx - 14, y + 17.7, S - 120); g.add(roof);
+  santaMonicaPier(g);
   // Marina del Rey's towers, far south (screen-right), white and beige.
   const tw = [0xf2ede6, 0xe9dccb, 0xdad3c9, 0xf6f1ea, 0xd9cbb8, 0xe6e0d6];
   for (let i = 0; i < 9; i++) {

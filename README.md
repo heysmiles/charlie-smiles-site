@@ -70,9 +70,16 @@ Nothing in it is an image. It lives in `web/src/world/`:
   the walk; the Rec Center on the sand — skate park bowls, Muscle Beach's
   blue-and-white gym, handball walls, basketball and paddle-tennis courts;
   the Venice Fishing Pier at Washington to the south (long, straight,
-  pilings, round end, lamps, bait shack); far off, the Santa Monica Pier with
-  its wheel to the north and the Marina del Rey towers to the south, unlit and
-  fogged; and far inland, low layered hills in the pink of the eastern sky,
+  pilings, round end, lamps, bait shack); far off to the north the **Santa
+  Monica Pier** built from its real parts (`santaMonicaPier`) — the wide
+  Pleasure Pier carrying Pacific Park and the long narrow Municipal Pier
+  running on to sea, on timber pilings; the Hippodrome's domed carousel house
+  with turrets, the Playland arcade, Bubba Gump's blue-green house, the
+  restaurants, kiosks and tents; the Pacific Wheel on its A-frame with twenty
+  gondolas, the West Coaster's yellow track on blue steel around it, the
+  Pacific Plunge drop tower, the Sea Dragon, the scrambler; lamps along the
+  rails; the harbor office and lookout at the end — and the Marina del Rey
+  towers to the south, all unlit and fogged; and far inland, low layered hills in the pink of the eastern sky,
   sitting just under the palm line. Lifeguard towers are the Venice tower as
   photographed: pale aqua, flat overhanging roof, a railed deck across the
   seaward front, a long railed ramp down the north side, X-braced legs, the

@@ -153,6 +153,18 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-09 — the Santa Monica Pier, for real
+
+Charlie: more detail on the Santa Monica Pier seen through the wave, built
+from what it actually looks like. Done: two decks (Pleasure Pier wide at the
+shore end, Municipal Pier long and narrow), timber pilings, railings and
+lamps, the Hippodrome with dome and turrets, Playland, Bubba Gump, the
+restaurants and kiosks, the Pacific Wheel (rims, spokes, twenty gondolas,
+A-frame, base), the West Coaster as a yellow tube track on blue supports,
+the drop tower, the Sea Dragon, the scrambler, the harbor office and lookout
+at the end. Also: pushed to GitHub (heysmiles/charlie-smiles-site) with a
+Pages workflow — live at heysmiles.github.io/charlie-smiles-site.
+
 ## Status — 2026-09-09 — shore break, and facades that hold still
 
 Charlie: the waves on the beach should be more realistic and well rendered;
