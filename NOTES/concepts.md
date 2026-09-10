@@ -153,6 +153,15 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-09, later — pier halved, camera clear of the lip
+
+Charlie: the park looks good; halve the pier's length; the camera clips
+through the wave entering and exiting the barrel — keep the movement, avoid
+the crest. Done: the Municipal Pier deck is 125 long; the camera dips to
+y≈4.5 through the entry (the lip's underside hangs to about y 6 at the tip)
+and slides shoreward beneath the tip before rising on the exit. Checked frame
+by frame 0.48–1.0: the horizon stays visible in every frame.
+
 ## Status — 2026-09-09 — the Santa Monica Pier, for real
 
 Charlie: more detail on the Santa Monica Pier seen through the wave, built

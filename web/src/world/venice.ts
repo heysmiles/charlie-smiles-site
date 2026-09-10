@@ -379,13 +379,13 @@ function santaMonicaPier(g: THREE.Group) {
   const b = (w: number, h: number, d: number, c: number, x: number, yy: number, z: number, ry = 0) => box(g, w, h, d, c, x, yy, z, ry, true);
   // Decks: the wide Pleasure Pier, then the narrow Municipal Pier out to sea.
   b(46, 1.2, 110, timber, sx + 6, y, S + 5);
-  b(11, 1.2, 250, timber, sx - 10, y, S + 175);
+  b(11, 1.2, 125, timber, sx - 10, y, S + 122);
   for (let z = S - 45; z < S + 60; z += 8) for (const dx of [-16, -5, 6, 17, 28]) b(1.3, y + 2.5, 1.3, piling, sx + dx, -2.5, z);
-  for (let z = S + 60; z < S + 300; z += 8) for (const dx of [-14, -6]) b(1.3, y + 2.5, 1.3, piling, sx + dx, -2.5, z);
+  for (let z = S + 60; z < S + 185; z += 8) for (const dx of [-14, -6]) b(1.3, y + 2.5, 1.3, piling, sx + dx, -2.5, z);
   // Railings and lamp posts.
   b(0.2, 1.1, 110, rail, sx - 17, y + 1.2, S + 5); b(0.2, 1.1, 110, rail, sx + 29, y + 1.2, S + 5);
-  b(0.2, 1.1, 250, rail, sx - 15.5, y + 1.2, S + 175); b(0.2, 1.1, 250, rail, sx - 4.5, y + 1.2, S + 175);
-  for (let z = S - 40; z < S + 295; z += 16) { const lx = z < S + 60 ? sx + 29 : sx - 4.5; b(0.22, 4.4, 0.22, 0x2f3a36, lx, y + 1.2, z); b(0.8, 0.7, 0.8, 0xfff0c8, lx, y + 5.4, z); }
+  b(0.2, 1.1, 125, rail, sx - 15.5, y + 1.2, S + 122); b(0.2, 1.1, 125, rail, sx - 4.5, y + 1.2, S + 122);
+  for (let z = S - 40; z < S + 182; z += 16) { const lx = z < S + 60 ? sx + 29 : sx - 4.5; b(0.22, 4.4, 0.22, 0x2f3a36, lx, y + 1.2, z); b(0.8, 0.7, 0.8, 0xfff0c8, lx, y + 5.4, z); }
   // The shore end: the Hippodrome — octagonal carousel house, dome, turrets.
   const hip = new THREE.Mesh(new THREE.CylinderGeometry(9.5, 9.5, 9, 8), farMat(cream));
   hip.position.set(sx - 4, y + 5.7, S - 28); g.add(hip);
@@ -424,8 +424,8 @@ function santaMonicaPier(g: THREE.Group) {
   const hull = b(9, 2.4, 3.2, 0xe0553a, sx - 10, y + 3.4, S + 44); hull.rotation.z = 0.18;
   b(1.0, 6, 1.0, 0xd9d4cc, sx + 4, y + 1.2, S + 50); for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; b(6, 0.4, 0.4, 0xf2c230, sx + 4 + Math.cos(a) * 3, y + 6.6, S + 50 + Math.sin(a) * 3, -a); }
   // The far end: the harbor office with its lookout, and the bait shop.
-  b(9, 4.5, 8, 0xf4efe6, sx - 10, y + 1.2, S + 288); b(3.2, 5, 3.2, 0xf4efe6, sx - 12, y + 5.7, S + 290); b(4, 0.8, 4, 0x8e4a3a, sx - 12, y + 10.7, S + 290);
-  b(6, 3.2, 5, 0xe9d7c8, sx - 8, y + 1.2, S + 270);
+  b(9, 4.5, 8, 0xf4efe6, sx - 10, y + 1.2, S + 176); b(3.2, 5, 3.2, 0xf4efe6, sx - 12, y + 5.7, S + 178); b(4, 0.8, 4, 0x8e4a3a, sx - 12, y + 10.7, S + 178);
+  b(6, 3.2, 5, 0xe9d7c8, sx - 8, y + 1.2, S + 158);
 }
 
 // ----------------------------------------------------- the far ends of the bay

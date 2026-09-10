@@ -32,12 +32,16 @@ const PATH: { t: number; v: number[] }[] = [
   { t: 0.0, v: [40, 5, -46, 28, 6.5, 4, 42] },
   { t: L.pin, v: [41, 5.3, -44, 29, 4.8, 3, 43] },
   { t: 0.4, v: [44, 6.5, -32, 40, 6, -2, 46] },
-  { t: 0.52, v: [50, 7.5, -18, 34, 7, -6, 52] },
-  { t: 0.62, v: [57, 6.5, -9, 18, 6, -8, 60] },
-  { t: 0.74, v: [54, 6.5, -8, 12, 6, -8, 62] },
-  { t: 0.86, v: [43, 8.5, -9, -8, 6, -16, 58] },
-  { t: 0.9, v: [wx(-124), 18, -22, wx(-130), 10, -120, 56] },
-  { t: 0.95, v: [wx(-118), 20, -66, wx(-116), 8, -260, 52] },
+  // Low through the entry: the camera passes under the falling lip, not
+  // through it (the lip's underside hangs to about y 6 at the tip).
+  { t: 0.52, v: [50, 4.6, -18, 34, 7, -6, 52] },
+  { t: 0.62, v: [57, 4.4, -9, 18, 6, -8, 60] },
+  { t: 0.74, v: [54, 5.8, -8, 12, 6, -8, 62] },
+  // Out: slide shoreward beneath the lip's tip first, then rise.
+  { t: 0.86, v: [43, 5.2, -10, -8, 6, -16, 58] },
+  { t: 0.9, v: [wx(-124), 8, -25, wx(-130), 10, -120, 56] },
+  { t: 0.93, v: [wx(-120), 15, -42, wx(-118), 9, -200, 54] },
+  { t: 0.96, v: [wx(-118), 20, -68, wx(-116), 8, -260, 52] },
   { t: 1.0, v: [wx(L.endCam.pos[0]), L.endCam.pos[1], L.endCam.pos[2], wx(L.endCam.look[0]), L.endCam.look[1], L.endCam.look[2], 50] },
 ];
 
