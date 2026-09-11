@@ -153,6 +153,16 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-09-10 — the Stan building
+
+Charlie sent three photos of the office on the walk (one at sunset with the
+glass glowing gold, two street views): white modern block, shopfronts under
+a white fascia, terrace with glass rail, two floors of gridded glass in four
+bays, four rooftop pop-ups with decks. Built it as its own lot two buildings
+south of the Erwin, three lots wide, facade drawn to a texture with the glass
+a pale warm gold with a sheen (he said the sunset photo was too orange but to
+keep the shine). This is the "the day job" door's building when labels return.
+
 ## Status — 2026-09-09, later — pier halved, camera clear of the lip
 
 Charlie: the park looks good; halve the pier's length; the camera clips

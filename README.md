@@ -66,8 +66,12 @@ Nothing in it is an image. It lives in `web/src/world/`:
   the very wide flat beach with the bike path snaking through it and the blue
   LA County lifeguard towers along the waterline; Ocean Front Walk with its
   dense row of low, loud buildings (murals, awnings, shopfronts, windows),
-  the Erwin and the Venice V rising at Windward, tall skinny fan palms along
-  the walk; the Rec Center on the sand — skate park bowls, Muscle Beach's
+  the Erwin and the Venice V rising at Windward, and **the Stan building** —
+  the office — a couple of lots south of the Erwin (`stanBuilding`, drawn
+  from photos: a white modern block, shopfronts under a long white fascia, a
+  glass-railed terrace, two floors of gridded floor-to-ceiling glass in four
+  bays between white piers with a warm sheen, four rooftop pop-ups with
+  glass-railed decks); tall skinny fan palms along the walk; the Rec Center on the sand — skate park bowls, Muscle Beach's
   blue-and-white gym, handball walls, basketball and paddle-tennis courts;
   the Venice Fishing Pier at Washington to the south (long, straight,
   pilings, round end, lamps, bait shack); far off to the north the **Santa

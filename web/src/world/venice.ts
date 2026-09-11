@@ -172,10 +172,91 @@ function facadeTexture(f: FacadeSpec) {
   return tex;
 }
 
+
+/**
+ * The Stan building — the office, on the walk a couple of lots south of the
+ * Erwin. From the photos: a white modern block; a row of shopfronts under a
+ * long white fascia; a terrace with a glass rail above them; two floors of
+ * floor-to-ceiling glass in four bays between white piers, gridded with
+ * mullions, catching the sunset; and four rooftop pop-ups, each with a small
+ * glass-railed deck, that give it its stepped crown. The glass is a pale
+ * warm gold with a sheen, not the saturated orange of the sunset photo.
+ */
+const STAN_W = 34, STAN_H = 13.6;
+function stanTexture(fw: number, h: number) {
+  const S = 28;
+  const cw = Math.round(fw * S), ch = Math.round(h * S);
+  const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+  const g = cv.getContext('2d')!;
+  const Y = (y: number) => ch - y * S;
+  const rect = (x: number, y: number, w: number, hh: number, c: string) => { g.fillStyle = c; g.fillRect(x * S, Y(y + hh), w * S, hh * S); };
+  rect(0, 0, fw, h, '#f4f2ee');
+  // Ground floor: five shopfronts between white piers, glass with a warm interior glow, under the white fascia.
+  const bays = 5, pier = 0.9, bayW = (fw - pier * (bays + 1)) / bays;
+  for (let i = 0; i < bays; i++) {
+    const bx = pier + i * (bayW + pier);
+    rect(bx, 0.15, bayW, 3.3, '#3b4652');
+    const gl = g.createLinearGradient(0, Y(3.45), 0, Y(0.15)); gl.addColorStop(0, '#5d6b78'); gl.addColorStop(1, '#8b7a5c');
+    g.fillStyle = gl; g.fillRect((bx + 0.12) * S, Y(3.3), (bayW - 0.24) * S, 3.05 * S);
+    for (let m = 1; m < 4; m++) rect(bx + (bayW / 4) * m - 0.04, 0.15, 0.08, 3.3, '#e9ebe9'); // mullions
+    rect(bx + 0.12, 0.25, bayW - 0.24, 0.7, '#d9b57a'); // lit interior at the floor line
+  }
+  rect(0, 3.5, fw, 0.75, '#fbfaf7'); // the fascia
+  rect(0.6, 3.72, fw - 1.2, 0.18, '#3a3a3a'); // the lettering line along it
+  // The terrace: slab and glass rail.
+  rect(0, 4.25, fw, 0.5, '#e6e3dd');
+  rect(0, 4.75, fw, 1.0, '#d8dee1');
+  for (let x = 0.3; x < fw; x += 1.5) rect(x, 4.75, 0.06, 1.0, '#f4f2ee');
+  rect(0, 5.7, fw, 0.1, '#f4f2ee');
+  // Upper floors: four bays of glass between white piers, gridded, gold with a sheen.
+  const ub = 4, upier = 1.3, ubayW = (fw - upier * (ub + 1)) / ub, y0 = 5.8, gh = h - y0 - 0.55;
+  for (let i = 0; i < ub; i++) {
+    const bx = upier + i * (ubayW + upier);
+    const gl = g.createLinearGradient(0, Y(y0 + gh), (ubayW * S) * 0.6, Y(y0));
+    gl.addColorStop(0, '#f1d7a3'); gl.addColorStop(0.45, '#e2b877'); gl.addColorStop(0.6, '#f6e2b8'); gl.addColorStop(1, '#8d8b86');
+    g.fillStyle = gl; g.fillRect(bx * S, Y(y0 + gh), ubayW * S, gh * S);
+    const cols = 5, rows = 4;
+    for (let m = 1; m < cols; m++) rect(bx + (ubayW / cols) * m - 0.05, y0, 0.1, gh, '#eceae5');
+    for (let r = 1; r < rows; r++) rect(bx, y0 + (gh / rows) * r - 0.05, ubayW, r === 2 ? 0.34 : 0.1, '#eceae5');
+    rect(bx, y0 + gh / 2 - 0.17, ubayW, 0.34, '#f4f2ee'); // the floor slab line between the two glass floors
+  }
+  rect(0, h - 0.55, fw, 0.55, '#f7f5f1'); // parapet
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter;
+  return tex;
+}
+
+function stanBuilding(g: THREE.Group, x0: number) {
+  const w = STAN_W, h = STAN_H, cx = x0 + w / 2, depth = 22;
+  const row1 = row1At(cx), gy = groundH(cx, row1), zc = row1 - depth / 2;
+  const white = 0xf4f2ee;
+  box(g, w - 0.8, h, depth, white, cx, groundH(cx, zc), zc);
+  const fw = w - 0.8;
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(fw, h), new THREE.MeshStandardMaterial({ map: stanTexture(fw, h), roughness: 0.55, metalness: 0.05, flatShading: true }));
+  face.position.set(cx, gy + h / 2, row1 + 0.06); face.receiveShadow = true; g.add(face);
+  // The terrace slab stands proud of the shopfronts, with its glass rail.
+  box(g, fw, 0.35, 1.6, 0xe6e3dd, cx, gy + 4.2, row1 + 0.8);
+  box(g, fw - 0.4, 1.0, 0.08, 0xd8dee1, cx, gy + 4.55, row1 + 1.55);
+  // Four rooftop pop-ups with glass-railed decks: the stepped crown.
+  for (let i = 0; i < 4; i++) {
+    const px = cx - fw / 2 + fw * ((i + 0.5) / 4);
+    box(g, 6.4, 2.8, 8, white, px, gy + h, zc + 2);
+    box(g, 6.6, 0.3, 8.2, 0xe6e3dd, px, gy + h + 2.8, zc + 2);
+    box(g, 6.2, 0.9, 0.08, 0xd8dee1, px, gy + h, zc + 6.2); // the deck's glass rail
+    box(g, 0.08, 0.9, 3.0, 0xd8dee1, px - 3.1, gy + h, zc + 4.7);
+    box(g, 0.08, 0.9, 3.0, 0xd8dee1, px + 3.1, gy + h, zc + 4.7);
+  }
+  // The lower white wing on the north side.
+  box(g, 7, 8.2, 14, white, x0 - 3.2, groundH(x0 - 3.2, row1 - 7), row1 - 7);
+}
+
 function frontRow(g: THREE.Group) {
   let x = X - 900;
   let k = 0;
+  let stanDone = false;
   while (x < X + 330) {
+    // The Stan building takes its own lot a couple of buildings south of the Erwin.
+    if (!stanDone && x - X >= -14) { stanBuilding(g, x); x += STAN_W; stanDone = true; k++; continue; }
     const santaMonica = x < X - 400; // north of Venice: hotels on the bluff, taller, paler
     const w = (santaMonica ? 14 : 9) + hash(k, 1) * 14;
     let nFloors = santaMonica ? 4 + Math.floor(hash(k, 2) * 6) : hash(k, 2) < 0.55 ? 2 : hash(k, 2) < 0.9 ? 3 : 1;
