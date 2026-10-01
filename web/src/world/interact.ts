@@ -1,0 +1,327 @@
+import * as THREE from 'three';
+import type { World } from './World';
+import { VENICE, shoreAt, type Kind, type LampSet } from './venice';
+import { SpritePool, softDisc } from './sprites';
+import { oceanH } from './ocean';
+import { hash, clamp01, lerp } from './math';
+
+/**
+ * Touching Venice. Once the camera rests off the beach, a tap reaches into the
+ * world: the raycaster finds what was hit by its `userData.kind`, and each kind
+ * answers in its own way —
+ *
+ *   tower      the light inside comes on (and off again), with the warm-up
+ *              flicker of a fluorescent tube, and a glow spills from the glass
+ *   building   its windows light up, each its own shade, a few staying dark
+ *   water      a splash: a crown of droplets thrown up and falling back, a
+ *              ring spreading out across the surface
+ *   palm       a gust through the crown — the fronds ruffle, the head sways,
+ *              a couple of dead fronds let go and drift down
+ *   ground     a puff of sand kicked up
+ *   sky        a cloud is born where you tapped, puffs up, and drifts; it
+ *              bounces off the sides of the frame and never leaves. One every
+ *              five seconds, with a countdown in between
+ *   vpier      the Venice Pier's lamps come on along its length
+ *   smpier     the Santa Monica Pier lights up and the Pacific Wheel turns
+ *   hills/range  a flock of birds lifts off and crosses the sky
+ *
+ * Everything here is driven by the same clock as the world, and nothing it
+ * does depends on the scroll, so the scene keeps its state while you look.
+ */
+
+export const CLOUD_COOLDOWN = 5; // seconds between clouds
+const CLOUD_Z = -900; // the sky plane the clouds live on (world z, behind the far hills)
+const ACTIVE_FROM = 0.9; // progress at which Venice is "the screen"
+
+export type ClickResult = { kind: Kind | 'cooldown'; point?: THREE.Vector3; cloudReadyAt?: number };
+
+// Cloud formations: puffs as [dx, dy, size] about the cloud's centre, in world
+// units on the sky plane. Six shapes: a cumulus heap, a long low stratus, a
+// towering column, a small pair, a wide anvil, and a broken scatter.
+const FORMATIONS: [number, number, number][][] = [
+  [[0, 0, 72], [-34, -6, 58], [36, -4, 60], [-10, 24, 54], [18, 26, 50], [0, -16, 62]],
+  [[-72, 0, 46], [-36, 3, 52], [0, 5, 56], [36, 3, 52], [72, 0, 46], [-52, -10, 40], [52, -10, 40]],
+  [[0, 0, 62], [-14, 28, 54], [12, 32, 52], [0, 58, 46], [-8, 80, 38], [-28, -8, 52], [28, -10, 50]],
+  [[-18, 0, 46], [20, 2, 42], [0, 14, 38]],
+  [[0, 0, 58], [-42, 10, 52], [42, 10, 52], [-84, 18, 42], [84, 18, 42], [0, 26, 50], [-22, -14, 46], [22, -14, 46]],
+  [[-64, 0, 40], [-30, 10, 36], [0, -4, 44], [32, 8, 38], [66, 0, 34], [-48, -14, 32], [48, -12, 32]],
+];
+
+type Cloud = { group: THREE.Group; mats: THREE.SpriteMaterial[]; vx: number; born: number; width: number; bob: number };
+type Particle = { kind: 'drop' | 'sand' | 'leaf' | 'bird'; x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; size: number; r: number; g: number; b: number; seed: number };
+type Lit = { on: boolean; level: number; t: number };
+
+export class Interact {
+  private ray = new THREE.Raycaster();
+  private fx: SpritePool; // droplets, sand, leaves
+  private birds: SpritePool;
+  private particles: Particle[] = [];
+  private ripples: { mesh: THREE.Mesh; t: number; max: number }[] = [];
+  private rippleGeo = new THREE.RingGeometry(0.8, 1, 40);
+  private clouds: Cloud[] = [];
+  private cloudTex = softDisc(256, 0.06);
+  private cloudReadyAt = 0;
+  private cloudCount = 0;
+  private towers: Lit[] = VENICE.towers.map(() => ({ on: false, level: 0, t: 0 }));
+  private buildings: Lit[] = VENICE.buildings.map(() => ({ on: false, level: 0, t: 0 }));
+  private vpier: Lit = { on: false, level: 0, t: 0 };
+  private smpier: Lit = { on: false, level: 0, t: 0 };
+  private wheelOmega = 0;
+  private palmShakes: { ref: number; t: number }[] = [];
+  private time = 0;
+  private active = false;
+  private tmp = new THREE.Vector3();
+
+  private world: World;
+  constructor(world: World) {
+    this.world = world;
+    this.fx = new SpritePool(900, softDisc(64, 0.3));
+    this.birds = new SpritePool(80, birdTexture());
+    for (const p of [this.fx, this.birds]) { p.uniforms.uHazeFull.value = 0; p.uniforms.uHazeLo.value = 1.5; p.points.renderOrder = 5; }
+    world.scene.add(this.fx.points); world.scene.add(this.birds.points);
+    (this.ray as unknown as { firstHitOnly: boolean }).firstHitOnly = true;
+  }
+
+  get isActive() { return this.active; }
+  get cloudReady() { return this.cloudReadyAt; }
+
+  /** What is under the cursor, by kind. ndc in [-1,1]. */
+  hit(ndc: THREE.Vector2) {
+    this.ray.setFromCamera(ndc, this.world.camera);
+    const hits = this.ray.intersectObjects(this.world.scene.children, true);
+    for (const h of hits) {
+      const o = h.object as THREE.Object3D & { isMesh?: boolean };
+      if (!o.isMesh) continue;
+      let kind: Kind = (o.userData.kind as Kind) ?? 'none';
+      // The sea floor near the sand is under water; the sand only begins where it rises through the surface.
+      if (kind === 'ground' && shoreAt(h.point.x) - h.point.z < 3) kind = 'water';
+      return { kind, point: h.point, ref: (o.userData.ref as number) ?? -1 };
+    }
+    return { kind: 'sky' as Kind, point: this.skyPoint(ndc), ref: -1 };
+  }
+
+  /** A tap. Returns what it did, so the page can draw the countdown. */
+  click(ndc: THREE.Vector2): ClickResult {
+    if (!this.active) return { kind: 'none' };
+    const h = this.hit(ndc);
+    switch (h.kind) {
+      case 'tower': { const s = this.towers[h.ref]; if (s) { s.on = !s.on; s.t = 0; } break; }
+      case 'building': { const s = this.buildings[h.ref]; if (s) { s.on = !s.on; s.t = 0; } break; }
+      case 'water': this.splash(h.point); break;
+      case 'palm': this.ruffle(h.ref); break;
+      case 'ground': this.sandPuff(h.point); break;
+      case 'vpier': this.vpier.on = !this.vpier.on; this.vpier.t = 0; break;
+      case 'smpier': this.smpier.on = !this.smpier.on; this.smpier.t = 0; break;
+      case 'hills': case 'range': this.flock(h.point); break;
+      case 'sky': {
+        if (this.time < this.cloudReadyAt) return { kind: 'cooldown', point: h.point, cloudReadyAt: this.cloudReadyAt };
+        // Always on the cloud plane, not wherever the ray met the sky dome.
+        this.spawnCloud(this.skyPoint(ndc));
+        this.cloudReadyAt = this.time + CLOUD_COOLDOWN;
+        return { kind: 'sky', point: h.point, cloudReadyAt: this.cloudReadyAt };
+      }
+      default: break;
+    }
+    return { kind: h.kind, point: h.point };
+  }
+
+  /** Where a sky tap lands: the ray carried out to the cloud plane. */
+  private skyPoint(ndc: THREE.Vector2) {
+    this.ray.setFromCamera(ndc, this.world.camera);
+    const o = this.ray.ray.origin, d = this.ray.ray.direction;
+    const t = d.z !== 0 ? (CLOUD_Z - o.z) / d.z : 600;
+    const p = o.clone().addScaledVector(d, t > 0 ? t : 600);
+    p.y = Math.max(p.y, 70);
+    return p;
+  }
+
+  // ------------------------------------------------------------- reactions
+
+  private splash(p: THREE.Vector3) {
+    const y = oceanH(p.x, p.z, this.time) + 0.1;
+    // The crown: droplets thrown up in a ring, then straight up from the middle.
+    for (let i = 0; i < 34; i++) {
+      const a = (i / 34) * Math.PI * 2 + hash(i, 1) * 0.3, ring = i < 24;
+      const sp = ring ? 2.2 + hash(i, 2) * 1.6 : hash(i, 2) * 0.8;
+      this.emit('drop', p.x, y, p.z, Math.cos(a) * sp, ring ? 3.5 + hash(i, 3) * 3 : 7 + hash(i, 3) * 4, Math.sin(a) * sp, 0.9 + hash(i, 4) * 0.5, ring ? 0.35 + hash(i, 5) * 0.4 : 0.5 + hash(i, 5) * 0.5, 1, 0.96, 0.9, i);
+    }
+    // Rings spreading out across the surface, one after another.
+    for (let k = 0; k < 2; k++) {
+      const m = new THREE.Mesh(this.rippleGeo, new THREE.MeshBasicMaterial({ color: 0xfff3e6, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
+      m.rotation.x = -Math.PI / 2; m.position.set(p.x, y + 0.08, p.z); m.scale.setScalar(0.3); m.raycast = () => {};
+      this.world.scene.add(m);
+      this.ripples.push({ mesh: m, t: -k * 0.25, max: 1.4 + k * 0.4 });
+    }
+  }
+
+  private sandPuff(p: THREE.Vector3) {
+    for (let i = 0; i < 26; i++) {
+      const a = hash(i, 11) * Math.PI * 2, sp = 0.6 + hash(i, 12) * 2.2;
+      this.emit('sand', p.x, p.y + 0.1, p.z, Math.cos(a) * sp, 1.5 + hash(i, 13) * 3.5, Math.sin(a) * sp, 0.6 + hash(i, 14) * 0.5, 0.3 + hash(i, 15) * 0.5, 0.94, 0.8, 0.56, i);
+    }
+  }
+
+  private ruffle(ref: number) {
+    const palm = VENICE.palms[ref];
+    if (!palm) return;
+    if (!this.palmShakes.find((s) => s.ref === ref)) this.palmShakes.push({ ref, t: 0 });
+    // A couple of dead fronds let go and drift down.
+    for (let i = 0; i < 3; i++) this.emit('leaf', palm.top.x + (hash(ref, i, 1) - 0.5) * 2, palm.top.y - 1, palm.top.z + (hash(ref, i, 2) - 0.5) * 2, (hash(ref, i, 3) - 0.5) * 1.5, 0.4, (hash(ref, i, 4) - 0.5) * 1.5, 3 + hash(ref, i, 5) * 1.5, 1.4 + hash(ref, i, 6) * 0.8, 0.54, 0.43, 0.27, ref * 7 + i);
+  }
+
+  private flock(p: THREE.Vector3) {
+    const dir = hash(Math.round(p.x), Math.round(this.time * 7)) < 0.5 ? -1 : 1;
+    for (let i = 0; i < 9; i++) {
+      // A V: the leader ahead, the rest trailing on either side.
+      const row = Math.ceil(i / 2), side = i % 2 ? -1 : 1;
+      this.emit('bird', p.x - dir * row * 18 + (hash(i, 21) - 0.5) * 5, p.y + 50 - row * 6 + (hash(i, 22) - 0.5) * 4, p.z + side * row * 12, dir * 26, 1.6, 0, 20, 66 + hash(i, 23) * 18, 0.16, 0.13, 0.15, i);
+    }
+  }
+
+  private spawnCloud(p: THREE.Vector3) {
+    // A different formation each time, in a shuffled order rather than a fixed one.
+    const form = FORMATIONS[(this.cloudCount++ * 5 + Math.floor(hash(Math.round(p.x), Math.round(this.time * 31)) * 3)) % FORMATIONS.length];
+    const group = new THREE.Group();
+    group.position.copy(p);
+    group.scale.setScalar(0.01);
+    const mats: THREE.SpriteMaterial[] = [];
+    let width = 0;
+    const top = new THREE.Color(0xfff4ea), under = new THREE.Color(0xe8a070);
+    for (const [dx, dy, s] of form) {
+      // Lit from the low sun: the undersides peach, the tops cream.
+      const c = under.clone().lerp(top, clamp01(0.3 + dy / 70));
+      // No scene fog on these: at the sky plane's distance it would paint them the horizon's orange.
+      const m = new THREE.SpriteMaterial({ map: this.cloudTex, color: c, transparent: true, depthWrite: false, opacity: 0.95, fog: false });
+      const sp = new THREE.Sprite(m);
+      sp.position.set(dx * 2.4, dy * 2.4, (hash(dx, dy) - 0.5) * 10);
+      sp.scale.set(s * 2.4, s * 1.8, 1);
+      sp.raycast = () => {};
+      group.add(sp); mats.push(m);
+      width = Math.max(width, (Math.abs(dx) + s / 2) * 2.4);
+    }
+    this.world.scene.add(group);
+    const vx = (hash(Math.round(p.x * 3), 5) < 0.5 ? -1 : 1) * (5 + hash(Math.round(p.y), 6) * 5);
+    this.clouds.push({ group, mats, vx, born: this.time, width, bob: hash(Math.round(p.x), 9) * 6.28 });
+  }
+
+  private emit(kind: Particle['kind'], x: number, y: number, z: number, vx: number, vy: number, vz: number, max: number, size: number, r: number, g: number, b: number, seed: number) {
+    this.particles.push({ kind, x, y, z, vx, vy, vz, life: 0, max, size, r, g, b, seed });
+  }
+
+  // ------------------------------------------------------------------ update
+
+  update(dt: number, time: number, progress: number) {
+    this.time = time;
+    this.active = progress >= ACTIVE_FROM;
+
+    // Lights. A tube warms up: a flicker for the first third of a second, then
+    // steady; it goes out at once.
+    const lit = (s: Lit) => {
+      s.t += dt;
+      const target = s.on ? 1 : 0;
+      s.level += (target - s.level) * (1 - Math.exp(-dt * (s.on ? 7 : 14)));
+      let v = s.level;
+      if (s.on && s.t < 0.42) v *= hash(Math.floor(time * 40), 3) < 0.35 ? 0.25 : 1;
+      return v;
+    };
+    VENICE.towers.forEach((tw, i) => {
+      const v = lit(this.towers[i]);
+      tw.glass.emissiveIntensity = v * 1.4;
+      tw.glow.visible = v > 0.01; tw.glow.material.opacity = v * 0.55;
+      const sz = tw.glow.userData.size as number; tw.glow.scale.set(sz * (0.6 + 0.4 * v), sz * (0.6 + 0.4 * v), 1);
+    });
+    VENICE.buildings.forEach((b, i) => { b.mat.emissiveIntensity = lit(this.buildings[i]) * 1.1; });
+    this.lamps(VENICE.vpier, lit(this.vpier));
+    const smv = lit(this.smpier);
+    this.lamps(VENICE.smLamps, smv);
+    // The wheel turns while the pier is lit, and coasts to a stop when it isn't.
+    this.wheelOmega += ((this.smpier.on ? 0.42 : 0) - this.wheelOmega) * (1 - Math.exp(-dt * (this.smpier.on ? 0.8 : 0.5)));
+    if (VENICE.smWheel) VENICE.smWheel.rotation.z += this.wheelOmega * dt;
+
+    // Palms: a gust runs through the crown and dies away.
+    for (let i = this.palmShakes.length - 1; i >= 0; i--) {
+      const s = this.palmShakes[i]; s.t += dt;
+      const palm = VENICE.palms[s.ref];
+      const T = 1.7, decay = Math.max(0, 1 - s.t / T) ** 1.4;
+      palm.crown.rotation.x = Math.sin(s.t * 15) * 0.09 * decay;
+      palm.crown.rotation.z = Math.sin(s.t * 11 + 1.3) * 0.07 * decay;
+      palm.trunk.rotation.z = palm.trunkZ + Math.sin(s.t * 9) * 0.012 * decay;
+      palm.fronds.forEach((f, k) => { f.g.rotation.z = f.z + Math.sin(s.t * 24 + k * 1.7) * 0.2 * decay * (0.6 + hash(k, 2) * 0.6); });
+      if (s.t >= T) { palm.crown.rotation.x = 0; palm.crown.rotation.z = 0; palm.trunk.rotation.z = palm.trunkZ; palm.fronds.forEach((f) => { f.g.rotation.z = f.z; }); this.palmShakes.splice(i, 1); }
+    }
+
+    // Ripples spread and fade.
+    for (let i = this.ripples.length - 1; i >= 0; i--) {
+      const r = this.ripples[i]; r.t += dt;
+      if (r.t < 0) continue;
+      const k = r.t / r.max;
+      r.mesh.scale.setScalar(0.3 + k * 9);
+      (r.mesh.material as THREE.MeshBasicMaterial).opacity = 0.55 * (1 - k) * (1 - k);
+      r.mesh.position.y = oceanH(r.mesh.position.x, r.mesh.position.z, time) + 0.08;
+      if (k >= 1) { this.world.scene.remove(r.mesh); (r.mesh.material as THREE.Material).dispose(); this.ripples.splice(i, 1); }
+    }
+
+    // Particles.
+    const fx = this.fx, birds = this.birds;
+    let nf = 0, nb = 0;
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i]; p.life += dt;
+      if (p.life >= p.max) { this.particles.splice(i, 1); continue; }
+      const u = p.life / p.max;
+      if (p.kind === 'drop') { p.vy -= 13 * dt; p.vx *= 1 - dt * 0.6; p.vz *= 1 - dt * 0.6; }
+      else if (p.kind === 'sand') { p.vy -= 11 * dt; p.vx *= 1 - dt * 2; p.vz *= 1 - dt * 2; }
+      else if (p.kind === 'leaf') { p.vy = -0.9 - Math.sin(p.life * 3 + p.seed) * 0.5; p.vx += Math.sin(p.life * 2.3 + p.seed) * dt * 2.2; p.vz += Math.cos(p.life * 1.9 + p.seed) * dt * 2.2; }
+      else if (p.kind === 'bird') { p.vy = 1.2 + Math.sin(p.life * 0.8 + p.seed) * 0.6; }
+      p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+      if (p.kind === 'drop' && p.y < oceanH(p.x, p.z, time) - 0.2) { this.particles.splice(i, 1); continue; }
+      if (p.kind === 'bird') {
+        if (nb >= 80) continue;
+        const flap = 0.72 + 0.28 * Math.sin(p.life * 15 + p.seed * 2);
+        birds.pos[nb * 3] = p.x; birds.pos[nb * 3 + 1] = p.y; birds.pos[nb * 3 + 2] = p.z;
+        birds.size[nb] = p.size * flap; birds.alpha[nb] = 0.9 * (1 - Math.max(0, u - 0.85) / 0.15);
+        birds.color[nb * 3] = p.r; birds.color[nb * 3 + 1] = p.g; birds.color[nb * 3 + 2] = p.b; nb++;
+      } else {
+        if (nf >= 900) continue;
+        const a = p.kind === 'drop' ? 0.9 * (1 - u * u) : p.kind === 'sand' ? 0.8 * (1 - u) : 0.95 * (1 - Math.max(0, u - 0.8) / 0.2);
+        fx.pos[nf * 3] = p.x; fx.pos[nf * 3 + 1] = p.y; fx.pos[nf * 3 + 2] = p.z;
+        fx.size[nf] = p.size; fx.alpha[nf] = a;
+        fx.color[nf * 3] = p.r; fx.color[nf * 3 + 1] = p.g; fx.color[nf * 3 + 2] = p.b; nf++;
+      }
+    }
+    for (let i = nf; i < 900; i++) fx.alpha[i] = 0;
+    for (let i = nb; i < 80; i++) birds.alpha[i] = 0;
+    fx.commit(); birds.commit();
+
+    // Clouds: puff up when born, drift, bounce off the sides of the frame.
+    const cam = this.world.camera;
+    const show = clamp01((progress - 0.86) / 0.06);
+    for (const c of this.clouds) {
+      const age = time - c.born;
+      const grow = age < 1.2 ? 1 - Math.pow(1 - age / 1.2, 3) * (1 + 0.6 * Math.sin(age * 6)) : 1;
+      c.group.scale.setScalar(Math.max(0.01, grow));
+      c.group.position.x += c.vx * dt;
+      c.group.position.y += Math.sin(time * 0.35 + c.bob) * dt * 0.6;
+      for (const m of c.mats) m.opacity = 0.95 * show;
+      // Bounce: project each edge of the cloud; if it has reached the frame's side, turn around.
+      const edge = this.tmp.set(c.group.position.x + Math.sign(c.vx) * c.width, c.group.position.y, c.group.position.z).project(cam);
+      if (Math.abs(edge.x) > 0.98 && Math.sign(edge.x) === Math.sign(c.vx)) c.vx = -c.vx;
+    }
+  }
+
+  private lamps(set: LampSet | null, v: number) {
+    if (!set) return;
+    if (set.basic) (set.mat as THREE.MeshBasicMaterial).color.setHex(0xfff0c8).lerp(new THREE.Color(0xffe27a), v);
+    else (set.mat as THREE.MeshStandardMaterial).emissiveIntensity = v * 1.6;
+    for (const g of set.glows) { g.visible = v > 0.01; g.material.opacity = v * 0.5; const sz = g.userData.size as number; g.scale.set(sz * lerp(0.5, 1, v), sz * lerp(0.5, 1, v), 1); }
+  }
+}
+
+/** A bird as a shallow V, drawn once. */
+function birdTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 32;
+  const x = c.getContext('2d')!;
+  x.strokeStyle = '#fff'; x.lineWidth = 3.2; x.lineCap = 'round';
+  x.beginPath(); x.moveTo(3, 20); x.quadraticCurveTo(10, 10, 16, 16); x.quadraticCurveTo(22, 10, 29, 20); x.stroke();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}

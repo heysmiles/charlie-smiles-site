@@ -66,6 +66,7 @@ export function makeSky() {
   const dome = new THREE.Mesh(new THREE.SphereGeometry(1800, 40, 20), mat);
   dome.renderOrder = -10;
   dome.frustumCulled = false;
+  dome.userData.kind = 'sky';
   g.add(dome);
 
   // Soft clouds: clusters of sprites, cream over the sun, pinker away from it.

@@ -153,6 +153,20 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-01 — touching Venice
+
+Charlie: once you're on the Venice screen, a tap gives a small pixelated
+explosion at the cursor and manipulates what it hit — towers light on/off,
+water splashes, palms ruffle, buildings' windows light on/off, sky spawns a
+cloud (5–6 formations, drifts, bounces off the frame's sides, never leaves,
+one per 5 s with a 5-4-3-2-1 countdown), and something fitting for anything
+else big enough to click. Built `interact.ts` (raycast by `userData.kind`,
+per-kind reactions on the world clock) and `Overlay.ts` (2D pixel burst and
+countdown badge). Extras I chose: sand puffs, the Venice Pier's lamps, the SM
+Pier lighting up with the wheel turning, birds off the hills and the range.
+Verified by driving taps headlessly and rendering mid-animation; the live
+pane stayed hidden so real pointer events are unverified by eye.
+
 ## Status — 2026-09-10 — the Stan building
 
 Charlie sent three photos of the office on the walk (one at sunset with the

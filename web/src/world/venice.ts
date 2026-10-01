@@ -52,11 +52,44 @@ const farMat = (c: number) => {
   return m;
 };
 
+/**
+ * What a click can reach. Every mesh built here carries `userData.kind` (and a
+ * `ref` into the registry below where something animates), so the interaction
+ * layer can raycast the scene and know what it hit.
+ */
+export type Kind = 'sky' | 'water' | 'ground' | 'palm' | 'tower' | 'building' | 'vpier' | 'smpier' | 'hills' | 'range' | 'none';
+let KIND: Kind = 'none';
+let REF = -1;
+const tag = (o: THREE.Object3D, kind: Kind = KIND, ref = REF) => { o.userData.kind = kind; o.userData.ref = ref; return o; };
+
+export type TowerRef = { glass: THREE.MeshStandardMaterial; glow: THREE.Sprite };
+export type PalmRef = { crown: THREE.Group; fronds: { g: THREE.Group; z: number }[]; trunk: THREE.Mesh; trunkZ: number; top: THREE.Vector3 };
+export type BuildingRef = { mat: THREE.MeshStandardMaterial; seed: number };
+export type LampSet = { mat: THREE.MeshStandardMaterial | THREE.MeshBasicMaterial; basic: boolean; glows: THREE.Sprite[] };
+/** Everything the interaction layer can light, shake or spin. */
+export const VENICE = {
+  towers: [] as TowerRef[],
+  palms: [] as PalmRef[],
+  buildings: [] as BuildingRef[],
+  vpier: null as LampSet | null,
+  smLamps: null as LampSet | null,
+  smWheel: null as THREE.Group | null,
+};
+
+let glowTex: THREE.Texture | null = null;
+/** A soft additive glow sprite, for lit windows and lamps; starts invisible. */
+export function glowSprite(color: number, size: number) {
+  if (!glowTex) { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d')!; const gr = x.createRadialGradient(64, 64, 4, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128); glowTex = new THREE.CanvasTexture(c); glowTex.colorSpace = THREE.SRGBColorSpace; }
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+  sp.scale.set(size, size, 1); sp.userData.size = size; sp.visible = false; sp.raycast = () => {};
+  return sp;
+}
+
 const box = (g: THREE.Object3D, w: number, h: number, d: number, c: number, x: number, y: number, z: number, ry = 0, far = false) => {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), far ? farMat(c) : mat(c));
   m.position.set(x, y + h / 2, z); m.rotation.y = ry;
   if (!far) { m.castShadow = true; m.receiveShadow = true; }
-  g.add(m); return m;
+  tag(m); g.add(m); return m;
 };
 
 /** Ground height: the beach is nearly flat, with a soft berm up to the walk, then the flat city. */
@@ -101,6 +134,7 @@ function terrain() {
   geo.computeVertexNormals();
   const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1, envMapIntensity: 0.06 }));
   mesh.receiveShadow = true;
+  tag(mesh, 'ground');
   return mesh;
 }
 
@@ -118,13 +152,32 @@ type FacadeSpec = { w: number; h: number; floors: number; color: number; upper?:
  * detail minifies through mipmaps, so it holds still at distance where thin
  * geometry would shimmer.
  */
-function facadeTexture(f: FacadeSpec) {
+function facadeTexture(f: FacadeSpec, lit = false) {
   const S = 28; // pixels per world unit
   const cw = Math.max(8, Math.round(f.w * S)), ch = Math.max(8, Math.round(f.h * S));
   const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
   const g = cv.getContext('2d')!;
   const Y = (y: number) => ch - y * S; // world y (0 at ground) → canvas y
   const rect = (x: number, y: number, w: number, h: number, c: string) => { g.fillStyle = c; g.fillRect(x * S, Y(y + h), w * S, h * S); };
+  if (lit) {
+    // The lit map: black everywhere but the glass, which glows warm — each
+    // window its own shade, a few left dark, the way a building lights up.
+    rect(0, 0, f.w, f.h, '#000');
+    const warm = ['#f7c86a', '#f3b85a', '#ffd98c', '#e9a84e', '#fbe0a6'];
+    for (let fl = 1; fl < f.floors; fl++) {
+      const fy = fl * 3.6, n = Math.max(1, Math.floor((f.w - 1.6) / 2.8)), pitch = (f.w - 1.2) / n;
+      for (let i = 0; i < n; i++) {
+        const wx = 0.6 + pitch * i + pitch / 2 - 0.7;
+        if (hash(f.seed, fl, i, 4) < 0.14) continue; // this one stays dark
+        rect(wx, fy + 0.95, 1.4, 1.5, warm[Math.floor(hash(f.seed, fl, i, 5) * warm.length)]);
+      }
+    }
+    if (f.shop) rect(0.6, 1.0, f.w - 1.2, 2.0, '#e0a24c');
+    rect(f.doorX + 0.15, 1.3, 0.9, 0.9, '#d9b57a');
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter;
+    return tex;
+  }
   rect(0, 0, f.w, f.h, css(f.color));
   if (f.upper) rect(0, f.h * 0.5, f.w, f.h * 0.5, css(f.upper));
   if (f.band) rect(0, f.h - 3.0, f.w, 1.2, css(f.band));
@@ -183,13 +236,29 @@ function facadeTexture(f: FacadeSpec) {
  * warm gold with a sheen, not the saturated orange of the sunset photo.
  */
 const STAN_W = 34, STAN_H = 13.6;
-function stanTexture(fw: number, h: number) {
+function stanTexture(fw: number, h: number, lit = false) {
   const S = 28;
   const cw = Math.round(fw * S), ch = Math.round(h * S);
   const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
   const g = cv.getContext('2d')!;
   const Y = (y: number) => ch - y * S;
   const rect = (x: number, y: number, w: number, hh: number, c: string) => { g.fillStyle = c; g.fillRect(x * S, Y(y + hh), w * S, hh * S); };
+  if (lit) {
+    // Lit: every bay of glass glows gold, the shopfronts warm; the piers and slabs stay black.
+    rect(0, 0, fw, h, '#000');
+    const bays = 5, pier = 0.9, bayW = (fw - pier * (bays + 1)) / bays;
+    for (let i = 0; i < bays; i++) rect(pier + i * (bayW + pier) + 0.12, 0.25, bayW - 0.24, 3.05, '#e8b45a');
+    const ub = 4, upier = 1.3, ubayW = (fw - upier * (ub + 1)) / ub, y0 = 5.8, gh = h - y0 - 0.55;
+    for (let i = 0; i < ub; i++) {
+      const bx = upier + i * (ubayW + upier);
+      rect(bx, y0, ubayW, gh, '#f6c66a');
+      for (let m = 1; m < 5; m++) rect(bx + (ubayW / 5) * m - 0.05, y0, 0.1, gh, '#000');
+      for (let r = 1; r < 4; r++) rect(bx, y0 + (gh / 4) * r - 0.05, ubayW, r === 2 ? 0.34 : 0.1, '#000');
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter;
+    return tex;
+  }
   rect(0, 0, fw, h, '#f4f2ee');
   // Ground floor: five shopfronts between white piers, glass with a warm interior glow, under the white fascia.
   const bays = 5, pier = 0.9, bayW = (fw - pier * (bays + 1)) / bays;
@@ -230,10 +299,13 @@ function stanBuilding(g: THREE.Group, x0: number) {
   const w = STAN_W, h = STAN_H, cx = x0 + w / 2, depth = 22;
   const row1 = row1At(cx), gy = groundH(cx, row1), zc = row1 - depth / 2;
   const white = 0xf4f2ee;
+  KIND = 'building'; REF = VENICE.buildings.length;
   box(g, w - 0.8, h, depth, white, cx, groundH(cx, zc), zc);
   const fw = w - 0.8;
-  const face = new THREE.Mesh(new THREE.PlaneGeometry(fw, h), new THREE.MeshStandardMaterial({ map: stanTexture(fw, h), roughness: 0.55, metalness: 0.05, flatShading: true }));
-  face.position.set(cx, gy + h / 2, row1 + 0.06); face.receiveShadow = true; g.add(face);
+  const faceMat = new THREE.MeshStandardMaterial({ map: stanTexture(fw, h), emissiveMap: stanTexture(fw, h, true), emissive: new THREE.Color(0xffffff), emissiveIntensity: 0, roughness: 0.55, metalness: 0.05, flatShading: true });
+  VENICE.buildings.push({ mat: faceMat, seed: 777 });
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(fw, h), faceMat);
+  face.position.set(cx, gy + h / 2, row1 + 0.06); face.receiveShadow = true; tag(face); g.add(face);
   // The terrace slab stands proud of the shopfronts, with its glass rail.
   box(g, fw, 0.35, 1.6, 0xe6e3dd, cx, gy + 4.2, row1 + 0.8);
   box(g, fw - 0.4, 1.0, 0.08, 0xd8dee1, cx, gy + 4.55, row1 + 1.55);
@@ -248,6 +320,7 @@ function stanBuilding(g: THREE.Group, x0: number) {
   }
   // The lower white wing on the north side.
   box(g, 7, 8.2, 14, white, x0 - 3.2, groundH(x0 - 3.2, row1 - 7), row1 - 7);
+  KIND = 'none'; REF = -1;
 }
 
 function frontRow(g: THREE.Group) {
@@ -272,6 +345,7 @@ function frontRow(g: THREE.Group) {
     const row1 = row1At(cx);
     const gy = groundH(cx, row1);
     const zc = row1 - depth / 2;
+    KIND = 'building'; REF = VENICE.buildings.length;
     box(g, w - 0.8, h, depth, c, cx, groundH(cx, zc), zc);
     // The facade, drawn.
     const fw = w - 0.8;
@@ -283,9 +357,12 @@ function frontRow(g: THREE.Group) {
       sign: !santaMonica && hash(k, 24) < 0.5 ? 0xf1c232 : undefined,
       shop: !santaMonica, doorX: 0.8 + hash(k, 23) * Math.max(0.1, fw - 2.8),
     };
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(fw, h), new THREE.MeshStandardMaterial({ map: facadeTexture(spec), roughness: 0.95, metalness: 0, flatShading: true }));
+    const faceMat = new THREE.MeshStandardMaterial({ map: facadeTexture(spec), emissiveMap: facadeTexture(spec, true), emissive: new THREE.Color(0xffffff), emissiveIntensity: 0, roughness: 0.95, metalness: 0, flatShading: true });
+    VENICE.buildings.push({ mat: faceMat, seed: k });
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(fw, h), faceMat);
     face.position.set(cx, gy + h / 2, row1 + 0.06);
     face.receiveShadow = true;
+    tag(face);
     g.add(face);
     // The parapet's lip and a rooftop box on the taller ones; the Erwin's tank and sign.
     box(g, w - 0.4, 0.4, depth + 0.4, 0xeae2d6, cx, gy + h - 0.4, zc);
@@ -300,6 +377,7 @@ function frontRow(g: THREE.Group) {
       const a = box(g, w - 2, 0.3, 2.6, AWNING[Math.floor(hash(k, 12) * AWNING.length)], cx, gy + 3.35, row1 + 1.4);
       a.rotation.x = 0.25;
     }
+    KIND = 'none'; REF = -1;
     x += w; k++;
   }
 }
@@ -334,10 +412,13 @@ function palms(g: THREE.Group) {
   const plant = (x: number, z: number, hgt: number, seed: number) => {
     const y = groundH(x, z);
     const lean = (hash(seed, 1) - 0.5) * 0.14, leanX = (hash(seed, 2) - 0.5) * 0.1;
+    const ref = VENICE.palms.length;
     const t = new THREE.Mesh(trunk, hash(seed, 9) < 0.3 ? tl : tm);
-    t.scale.set(1, hgt, 1); t.position.set(x, y + hgt / 2, z); t.rotation.set(leanX, 0, lean); t.castShadow = true; g.add(t);
+    t.scale.set(1, hgt, 1); t.position.set(x, y + hgt / 2, z); t.rotation.set(leanX, 0, lean); t.castShadow = true; tag(t, 'palm', ref); g.add(t);
     const top = new THREE.Vector3(x - Math.sin(lean) * hgt, y + Math.cos(lean) * hgt, z + Math.sin(leanX) * hgt);
     const crown = new THREE.Group(); crown.position.copy(top); crown.rotation.y = hash(seed, 3) * 6.28; g.add(crown);
+    const palm: PalmRef = { crown, fronds: [], trunk: t, trunkZ: lean, top };
+    VENICE.palms.push(palm);
     // Three tiers: the top fronds stand up, the middle reach out, the lower hang.
     const tiers: [number, number, number][] = [[7, 0.95, 0.3], [11, 0.35, 0.3], [9, -0.45, 0.35]];
     for (let ti = 0; ti < tiers.length; ti++) {
@@ -352,15 +433,18 @@ function palms(g: THREE.Group) {
         blade.rotation.x = Math.PI / 2 + (hash(seed, ti, i, 8) - 0.5) * 0.7; // the fan plane, twisted a little to catch light
         blade.rotation.z = 0.15; // fans tip up at their ends
         blade.scale.setScalar(0.85 + hash(seed, ti, i, 10) * 0.35);
-        f.add(new THREE.Mesh(stem, isDead ? dead : tm)); f.add(blade);
+        tag(blade, 'palm', ref);
+        const st = new THREE.Mesh(stem, isDead ? dead : tm); tag(st, 'palm', ref);
+        f.add(st); f.add(blade);
         crown.add(f);
+        palm.fronds.push({ g: f, z: f.rotation.z });
       }
     }
     // The shag of dead fronds under the head, and the head's heart.
     const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.6, 8), dead);
-    skirt.position.copy(top).y -= 1.3; skirt.castShadow = true; g.add(skirt);
+    skirt.position.copy(top).y -= 1.3; skirt.castShadow = true; tag(skirt, 'palm', ref); g.add(skirt);
     const heart = new THREE.Mesh(new THREE.SphereGeometry(0.5, 7, 5), greens[0]);
-    heart.position.copy(top).y += 0.2; g.add(heart);
+    heart.position.copy(top).y += 0.2; tag(heart, 'palm', ref); g.add(heart);
   };
   // The signature: a long line of tall fan palms along the seaward edge of the walk, running north.
   for (let x = X - 900; x < X + 360; x += 6 + hash(x, 41) * 5) plant(x + (hash(x, 42) - 0.5) * 3, walkAt(x) + 3 + (hash(x, 43) - 0.5) * 5, 14 + hash(x, 44) * 10, x);
@@ -385,6 +469,13 @@ function towers(g: THREE.Group) {
   for (let x = X - 880; x <= X + 300; x += 46, n++) {
     const z = shoreAt(x) - 18, y = groundH(x, z);
     const deckY = y + 2.7;
+    KIND = 'tower'; REF = VENICE.towers.length;
+    // This tower's glass: its own material, so its light can come on alone.
+    const gm = new THREE.MeshStandardMaterial({ color: glass, roughness: 0.35, metalness: 0, emissive: new THREE.Color(0xffd27a), emissiveIntensity: 0, flatShading: true });
+    const glow = glowSprite(0xffc46a, 7);
+    glow.position.set(x, deckY + 1.2, z + 1.0); g.add(glow);
+    VENICE.towers.push({ glass: gm, glow });
+    const pane = (w: number, h: number, d: number, px: number, py: number, pz: number) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), gm); m.position.set(px, py + h / 2, pz); tag(m); g.add(m); };
     // Legs and the X braces.
     for (const [dx, dz] of [[-1.7, -1.5], [1.7, -1.5], [-1.7, 1.5], [1.7, 1.5]]) box(g, 0.24, 2.7, 0.24, aqua, x + dx, y, z + dz);
     for (const dz of [-1.5, 1.5]) { const b1 = box(g, 0.14, 4.2, 0.14, aqua, x, y + 0.2, z + dz); b1.rotation.z = 0.93; const b2 = box(g, 0.14, 4.2, 0.14, aqua, x, y + 0.2, z + dz); b2.rotation.z = -0.93; }
@@ -392,9 +483,9 @@ function towers(g: THREE.Group) {
     box(g, 4.8, 0.22, 4.6, aqua, x, deckY - 0.22, z);
     box(g, 3.2, 2.5, 2.9, aqua, x, deckY, z - 0.8);
     // The observation window across the front, side windows, the number.
-    box(g, 2.6, 1.1, 0.12, glass, x, deckY + 1.15, z + 0.66);
-    box(g, 0.12, 0.7, 0.9, glass, x + 1.62, deckY + 1.35, z - 0.9);
-    box(g, 0.12, 0.7, 0.9, glass, x - 1.62, deckY + 1.35, z - 0.9);
+    pane(2.6, 1.1, 0.12, x, deckY + 1.15, z + 0.66);
+    pane(0.12, 0.7, 0.9, x + 1.62, deckY + 1.35, z - 0.9);
+    pane(0.12, 0.7, 0.9, x - 1.62, deckY + 1.35, z - 0.9);
     box(g, 0.06, 0.5, 0.7, dark, x + 1.64, deckY + 0.5, z - 1.4);
     // The flat roof, overhanging all round.
     box(g, 4.2, 0.2, 3.8, trim, x, deckY + 2.5, z - 0.8);
@@ -418,26 +509,36 @@ function towers(g: THREE.Group) {
     box(g, 0.9, 0.5, 0.05, n % 4 === 0 ? 0xb03030 : 0xf1c232, x + 2.1, deckY + 5.5, z - 2.2);
     box(g, 0.3, 0.8, 0.3, 0xe0402a, x + 1.6, deckY + 0.2, z + 2.35);
   }
+  KIND = 'none'; REF = -1;
 }
 
 // ----------------------------------------------------------- Venice Pier
 function venicePier(g: THREE.Group) {
   const px = X + 210, y = 7.5, from = shoreAt(px) - 8, to = shoreAt(px) + 180;
   const concrete = 0xc9c4bb, rail = 0x8b8f93, piling = 0x5a5550;
+  KIND = 'vpier';
+  const lampMat = new THREE.MeshStandardMaterial({ color: 0xfff1c8, roughness: 0.6, emissive: new THREE.Color(0xffd080), emissiveIntensity: 0, flatShading: true });
+  const lamps: LampSet = { mat: lampMat, basic: false, glows: [] };
+  VENICE.vpier = lamps;
   box(g, 7.5, 0.7, to - from, concrete, px, y, (from + to) / 2);
   for (let z = from + 6; z < to; z += 12) { box(g, 0.9, y + 1.5, 0.9, piling, px - 2.6, -1.5, z); box(g, 0.9, y + 1.5, 0.9, piling, px + 2.6, -1.5, z); }
   box(g, 0.14, 1.1, to - from, rail, px - 3.6, y + 0.7, (from + to) / 2);
   box(g, 0.14, 1.1, to - from, rail, px + 3.6, y + 0.7, (from + to) / 2);
-  for (let z = from + 10; z < to; z += 24) { box(g, 0.16, 4.2, 0.16, 0x3a3a3a, px + 3.2, y + 0.7, z); box(g, 0.7, 0.4, 0.7, 0xfff1c8, px + 3.2, y + 4.9, z); }
+  for (let z = from + 10; z < to; z += 24) {
+    box(g, 0.16, 4.2, 0.16, 0x3a3a3a, px + 3.2, y + 0.7, z);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.4, 0.7), lampMat); head.position.set(px + 3.2, y + 5.1, z); tag(head); g.add(head);
+    const glow = glowSprite(0xffd080, 5); glow.position.set(px + 3.2, y + 5.1, z); g.add(glow); lamps.glows.push(glow);
+  }
   // The round end.
   const end = new THREE.Mesh(new THREE.CylinderGeometry(13, 13, 0.7, 20), mat(concrete));
-  end.position.set(px, y + 0.35, to); g.add(end);
+  end.position.set(px, y + 0.35, to); tag(end); g.add(end);
   const endRail = new THREE.Mesh(new THREE.TorusGeometry(12.6, 0.12, 5, 40), mat(rail));
-  endRail.rotation.x = Math.PI / 2; endRail.position.set(px, y + 1.5, to); g.add(endRail);
+  endRail.rotation.x = Math.PI / 2; endRail.position.set(px, y + 1.5, to); tag(endRail); g.add(endRail);
   for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; box(g, 0.9, y + 1.5, 0.9, piling, px + Math.cos(a) * 10, -1.5, to + Math.sin(a) * 10); }
   // The bait-and-tackle shack near the land end, and the lifeguard hut.
   box(g, 5, 3, 4, 0xf2e9d8, px + 5.5, y + 0.7, from + 30);
   box(g, 5.6, 0.4, 4.6, 0x7a4b3a, px + 5.5, y + 3.7, from + 30);
+  KIND = 'none';
 }
 
 // ------------------------------------------------------- Santa Monica Pier
@@ -458,6 +559,10 @@ function santaMonicaPier(g: THREE.Group) {
   const sx = X - 560, y = 9, S = shoreAt(sx);
   const timber = 0x6e5a48, piling = 0x4a3f36, rail = 0x8a8078, cream = 0xefe3c8, dome = 0x8e4a3a;
   const b = (w: number, h: number, d: number, c: number, x: number, yy: number, z: number, ry = 0) => box(g, w, h, d, c, x, yy, z, ry, true);
+  KIND = 'smpier';
+  const lampMat = new THREE.MeshBasicMaterial({ color: 0xfff0c8 });
+  const lamps: LampSet = { mat: lampMat, basic: true, glows: [] };
+  VENICE.smLamps = lamps;
   // Decks: the wide Pleasure Pier, then the narrow Municipal Pier out to sea.
   b(46, 1.2, 110, timber, sx + 6, y, S + 5);
   b(11, 1.2, 125, timber, sx - 10, y, S + 122);
@@ -466,12 +571,17 @@ function santaMonicaPier(g: THREE.Group) {
   // Railings and lamp posts.
   b(0.2, 1.1, 110, rail, sx - 17, y + 1.2, S + 5); b(0.2, 1.1, 110, rail, sx + 29, y + 1.2, S + 5);
   b(0.2, 1.1, 125, rail, sx - 15.5, y + 1.2, S + 122); b(0.2, 1.1, 125, rail, sx - 4.5, y + 1.2, S + 122);
-  for (let z = S - 40; z < S + 182; z += 16) { const lx = z < S + 60 ? sx + 29 : sx - 4.5; b(0.22, 4.4, 0.22, 0x2f3a36, lx, y + 1.2, z); b(0.8, 0.7, 0.8, 0xfff0c8, lx, y + 5.4, z); }
+  for (let z = S - 40; z < S + 182; z += 16) {
+    const lx = z < S + 60 ? sx + 29 : sx - 4.5;
+    b(0.22, 4.4, 0.22, 0x2f3a36, lx, y + 1.2, z);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 0.8), lampMat); head.position.set(lx, y + 5.75, z); tag(head); g.add(head);
+    const glow = glowSprite(0xffd080, 7); glow.position.set(lx, y + 5.75, z); g.add(glow); lamps.glows.push(glow);
+  }
   // The shore end: the Hippodrome — octagonal carousel house, dome, turrets.
   const hip = new THREE.Mesh(new THREE.CylinderGeometry(9.5, 9.5, 9, 8), farMat(cream));
-  hip.position.set(sx - 4, y + 5.7, S - 28); g.add(hip);
+  hip.position.set(sx - 4, y + 5.7, S - 28); tag(hip); g.add(hip);
   const hipDome = new THREE.Mesh(new THREE.SphereGeometry(8.8, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), farMat(dome));
-  hipDome.position.set(sx - 4, y + 10.2, S - 28); g.add(hipDome);
+  hipDome.position.set(sx - 4, y + 10.2, S - 28); tag(hipDome); g.add(hipDome);
   for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; const tx = sx - 4 + Math.cos(a) * 9.5, tz = S - 28 + Math.sin(a) * 9.5; b(2.4, 11, 2.4, cream, tx, y + 1.2, tz); const cap = new THREE.Mesh(new THREE.SphereGeometry(1.6, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), farMat(dome)); cap.position.set(tx, y + 12.2, tz); g.add(cap); }
   b(8, 1.4, 8, cream, sx - 4, y + 18.6, S - 28); // the lantern on top of the dome
   const lanternCap = new THREE.Mesh(new THREE.ConeGeometry(4.6, 3.2, 8), farMat(dome)); lanternCap.position.set(sx - 4, y + 21.6, S - 28); g.add(lanternCap);
@@ -486,10 +596,12 @@ function santaMonicaPier(g: THREE.Group) {
   // Pacific Park. The Pacific Wheel: rim, inner rim, spokes, twenty gondolas,
   // the A-frame legs and the base.
   const wx = sx + 16, wy = y + 19, wz = S + 30, R = 15;
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.55, 6, 32), farMat(0xf4f0ea)); rim.position.set(wx, wy, wz); g.add(rim);
-  const rim2 = new THREE.Mesh(new THREE.TorusGeometry(R * 0.55, 0.35, 6, 24), farMat(0xf4f0ea)); rim2.position.set(wx, wy, wz); g.add(rim2);
-  for (let i = 0; i < 12; i++) { const sp = b(0.4, R * 2, 0.4, 0xf4f0ea, wx, wy - R, wz); sp.position.y = wy; sp.rotation.z = (i / 12) * Math.PI; }
-  for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2; b(1.6, 1.8, 1.4, i % 2 ? 0x3c6fae : 0xe0553a, wx + Math.cos(a) * R, wy + Math.sin(a) * R - 0.9, wz); }
+  // The wheel turns as one: rims, spokes and gondolas in a group at the hub.
+  const wheel = new THREE.Group(); wheel.position.set(wx, wy, wz); g.add(wheel); VENICE.smWheel = wheel;
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.55, 6, 32), farMat(0xf4f0ea)); tag(rim); wheel.add(rim);
+  const rim2 = new THREE.Mesh(new THREE.TorusGeometry(R * 0.55, 0.35, 6, 24), farMat(0xf4f0ea)); tag(rim2); wheel.add(rim2);
+  for (let i = 0; i < 12; i++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.4, R * 2, 0.4), farMat(0xf4f0ea)); sp.rotation.z = (i / 12) * Math.PI; tag(sp); wheel.add(sp); }
+  for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2; const car = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.8, 1.4), farMat(i % 2 ? 0x3c6fae : 0xe0553a)); car.position.set(Math.cos(a) * R, Math.sin(a) * R, 0); tag(car); wheel.add(car); }
   for (const side of [-1, 1]) { const leg = b(1.0, 24, 1.0, 0xf4f0ea, wx + side * 6, y + 1.2, wz + 2.2); leg.position.set(wx + side * 5.5, y + 1.2 + 10.5, wz + 2.2); leg.rotation.z = side * -0.48; const leg2 = b(1.0, 24, 1.0, 0xf4f0ea, wx, y, wz); leg2.position.set(wx + side * 5.5, y + 1.2 + 10.5, wz - 2.2); leg2.rotation.z = side * -0.48; }
   b(16, 1.2, 8, 0x3c6fae, wx, y + 1.2, wz);
   // The West Coaster: a yellow track on blue steel, dipping and climbing around the wheel.
@@ -497,7 +609,7 @@ function santaMonicaPier(g: THREE.Group) {
   const path: [number, number, number][] = [[-14, 4, -6], [-6, 9, -2], [2, 14, 2], [10, 7, 6], [20, 11, 14], [30, 5, 22], [34, 12, 34], [26, 6, 46], [14, 10, 52], [2, 4, 46], [-8, 8, 38], [-14, 5, 26], [-16, 9, 14], [-14, 4, -6]];
   for (const [px, py, pz] of path) pts.push(new THREE.Vector3(sx + px, y + 1.2 + py, wz + pz - 20));
   const curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal');
-  const track = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, 0.5, 6, true), farMat(0xf2c230)); g.add(track);
+  const track = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, 0.5, 6, true), farMat(0xf2c230)); tag(track); g.add(track);
   for (let i = 0; i < 44; i++) { const q = curve.getPoint(i / 44); b(0.5, q.y - (y + 1.2), 0.5, 0x2b5ea8, q.x, y + 1.2, q.z); }
   // Pacific Plunge (the drop tower), the Sea Dragon, the scrambler.
   b(1.4, 26, 1.4, 0xd9d4cc, sx + 30, y + 1.2, S + 8); b(4.5, 1.2, 4.5, 0xe0553a, sx + 30, y + 15, S + 8); b(2.4, 1.0, 2.4, 0x3c6fae, sx + 30, y + 27, S + 8);
@@ -507,6 +619,7 @@ function santaMonicaPier(g: THREE.Group) {
   // The far end: the harbor office with its lookout, and the bait shop.
   b(9, 4.5, 8, 0xf4efe6, sx - 10, y + 1.2, S + 176); b(3.2, 5, 3.2, 0xf4efe6, sx - 12, y + 5.7, S + 178); b(4, 0.8, 4, 0x8e4a3a, sx - 12, y + 10.7, S + 178);
   b(6, 3.2, 5, 0xe9d7c8, sx - 8, y + 1.2, S + 158);
+  KIND = 'none';
 }
 
 // ----------------------------------------------------- the far ends of the bay
@@ -557,6 +670,7 @@ function backRange(g: THREE.Group) {
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
     m.frustumCulled = false;
+    tag(m, 'hills');
     g.add(m);
   }
 }

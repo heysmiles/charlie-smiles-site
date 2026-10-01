@@ -29,6 +29,10 @@ body {
 .wave { position: relative; }
 .wave__stage { position: sticky; top: 0; height: 100vh; overflow: hidden; background: var(--cream); }
 .wave__canvas { display: block; width: 100%; height: 100%; }
+.wave__fx { position: absolute; inset: 0; pointer-events: none; }
+/* Once the camera rests off Venice, the world can be touched. */
+.wave__stage.is-touchable { cursor: crosshair; }
+.wave__stage { touch-action: pan-y; }
 .wave__doors { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 
 /* -------------------------------------------------------------- landing -- */

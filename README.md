@@ -139,6 +139,22 @@ reads as the same page.
 
 All of the scroll is yours; nothing auto-scrolls.
 
+**Touching Venice** (`world/interact.ts`, `ui/Overlay.ts`). Once the camera
+rests off the beach, a tap reaches into the world. Every mesh carries a
+`userData.kind`; the raycaster finds what was hit and each kind answers:
+a lifeguard tower's light comes on (fluorescent warm-up flicker, a glow from
+the glass) and off again; a building's windows light up (each facade has an
+emissive map drawn alongside its texture, every window its own shade, a few
+left dark); water throws a crown of droplets and spreading rings; a palm
+takes a gust (crown sways, fronds ruffle, a couple of dead fronds drift
+down); sand puffs; the Venice Pier's lamps come on; the Santa Monica Pier
+lights up and the Pacific Wheel turns; the hills and the range send up a
+flock of birds; the sky grows a cloud where you tapped — one of six
+formations, lit from below, drifting and bouncing off the sides of the frame,
+never leaving — one every five seconds, with a pixel countdown in between.
+Every tap bursts a few pixels at the cursor. All of it runs on the world's
+clock, so scrolling away and back finds things as you left them.
+
 **The sun** sets down the line (`L.sunDir`), over the seaward end of the
 range as seen through the mouth of the tube; in the final view it is behind
 the camera, lighting Venice gold against the eastern sky.

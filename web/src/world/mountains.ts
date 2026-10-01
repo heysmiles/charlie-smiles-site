@@ -58,6 +58,7 @@ export function makeMountains() {
     // near white at this distance. The vertex colours are the whole look.
     const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
     mesh.frustumCulled = false;
+    mesh.userData.kind = 'range';
     group.add(mesh);
   }
   return group;

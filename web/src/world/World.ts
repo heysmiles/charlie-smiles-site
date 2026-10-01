@@ -7,6 +7,7 @@ import { Wave } from './wave';
 import { Foam } from './foam';
 import { makeMountains } from './mountains';
 import { makeVenice } from './venice';
+import { Interact } from './interact';
 import { cameraAt, frontAt } from './camera';
 import { smoothstep, lerp } from './math';
 
@@ -25,6 +26,8 @@ export class World {
   /** Every material that takes the cream haze. */
   private hazed: { uRes: THREE.IUniform; uHazeLo: THREE.IUniform; uHazeFull: THREE.IUniform }[] = [];
   progress = 0;
+  /** Touching the world once the camera rests off Venice. */
+  interact!: Interact;
   private time = 0;
   private look = new THREE.Vector3();
   private smoothPos = new THREE.Vector3();
@@ -84,7 +87,13 @@ export class World {
     this.scene.add(this.foam.points);
     this.scene.add(makeMountains());
     this.scene.add(makeVenice());
+    this.ocean.mesh.userData.kind = 'water';
+    this.wave.mesh.userData.kind = 'water';
+    this.interact = new Interact(this);
   }
+
+  /** The world's clock, for the page's overlays. */
+  get clock() { return this.time; }
 
   resize(w: number, h: number) {
     this.renderer.setSize(w, h, false);
@@ -132,6 +141,7 @@ export class World {
     const fov = cs.fov * (aspect < 1.5 ? 1 + (1.5 - aspect) * 0.4 : 1);
     if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
 
+    this.interact.update(dt, this.time, progress);
     this.renderer.render(this.scene, this.camera);
   }
 
