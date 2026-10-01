@@ -107,7 +107,9 @@ Nothing in it is an image. It lives in `web/src/world/`:
   sends a thin sheet running up the slope with a white edge leading it, which
   stalls, drains back, and leaves the sand dark and wet where it reached; the
   stain melts over a few seconds (the shader samples its own analytic run-up
-  at a handful of past moments). Different waves run up different distances.
+  at a handful of past moments). It is a small, translucent detail: strongest
+  at the waterline and fading to nothing up the sand, so the sand shows
+  through and it never reads as a band laid on top.
   The bay curves: north of Venice the shore bends seaward (`shoreAt`) and
   the town runs on through Santa Monica — taller, paler hotels on the bluff,
   the pier — thinning and fogging toward the foot of the range, so the coast
@@ -163,10 +165,11 @@ flock of white gulls (each its own sprite with a six-frame wingbeat — a
 quick downstroke, a slower upstroke, a glide every few beats); the sky grows a **pixel-art cloud** where you tapped
 (`world/pixelcloud.ts`: a union of round bumps over a flat base on a cell
 grid, drawn to a canvas and shown nearest-neighbour, shaded in bands from the
-top surface down — white, cream, peach underside with darker dots; five
-puffy formations, no thin ones; born pixel by pixel from the middle out), drifting and bouncing
-off the sides of the frame, never leaving — one every five seconds, with a
-pixel countdown in between. Every tap sets off a very small white firework of
+top surface down — white, cream, peach underside with darker dots, dithered
+where the bands meet — on a grid fine enough to read as a drawing rather than
+blocks; five puffy formations, no thin ones). A cloud appears whole with a
+small settling jiggle; there is no timer, and tapping a cloud removes it, drifting and bouncing
+off the sides of the frame, never leaving. Every tap sets off a very small white firework of
 pixels at the cursor. All of it runs on the world's clock, so scrolling away
 and back finds things as you left them. The sky has no other clouds.
 

@@ -153,6 +153,18 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-01, last — swash as a detail; clouds settle in, tap to remove
+
+Charlie: the swash much smaller, translucent (sand visible through it),
+strongest toward the ocean and bleeding to invisible up the sand. Clouds a
+touch more realistic like the buildings but same vibe; no creation
+animation, just a slight jiggle in; no timer; tap a cloud again to delete it.
+Done: run-up cut to ~1–4 units, alpha roughly halved with an inland fade;
+clouds on a 2× cell grid with the same band shading plus dithering at the
+band edges, appearing whole with a decaying wobble; cooldown and countdown
+badge removed; cloud sprites are raycast first so a tap on one shrinks it
+away. The sky dome has no other clouds.
+
 ## Status — 2026-10-01, late — clouds reverted (puffy only), gulls, the swash
 
 Charlie: the new clouds don't look good — revert to the earlier version but

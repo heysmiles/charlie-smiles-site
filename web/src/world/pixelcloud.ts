@@ -15,7 +15,7 @@ import { hash } from './math';
 export type Formation = { w: number; h: number; base: number; bumps: [number, number, number][] };
 
 // Six formations on a cell grid: [cx, cy, r] bumps (y down), `base` the flat bottom row.
-export const FORMATIONS: Formation[] = [
+const RAW: Formation[] = [
   // a classic cumulus: two big bumps and a shoulder
   { w: 44, h: 24, base: 21, bumps: [[16, 11, 8], [27, 9, 9], [36, 14, 6], [8, 16, 5]] },
   // a towering column
@@ -27,6 +27,10 @@ export const FORMATIONS: Formation[] = [
   // a tall puff with a heavy shoulder
   { w: 40, h: 28, base: 25, bumps: [[22, 10, 9], [13, 17, 8], [30, 18, 7], [20, 20, 9]] },
 ];
+
+// Twice the cells of the sketches above: a finer pixel, the same shapes and shading.
+const SCALE = 2;
+export const FORMATIONS: Formation[] = RAW.map((f) => ({ w: f.w * SCALE, h: f.h * SCALE, base: f.base * SCALE, bumps: f.bumps.map(([x, y, r]) => [x * SCALE, y * SCALE, r * SCALE] as [number, number, number]) }));
 
 const TOP = '#fffaf4', BODY = '#fde9d6', UNDER = '#f6c8a4', SHADE = '#e9a67c', DOT = '#e3996e';
 
@@ -59,27 +63,23 @@ function draw(f: Formation, m: Uint8Array, seed: number, t: number) {
     // depth from the cloud's top surface in this column
     let d = 0; while (y - d - 1 >= 0 && m[(y - d - 1) * f.w + x]) d++;
     const fromBase = f.base - y;
+    // the same bands as before, at twice the resolution, dithered where they meet
+    const j = hash(seed, x, y, 6) * 2;
     let c = BODY;
-    if (d < 2) c = TOP;
-    else if (fromBase <= 1) c = SHADE;
-    else if (fromBase <= 4) c = hash(seed, x, y) < 0.22 ? DOT : UNDER;
-    else if (d < 5) c = hash(seed, x, y, 2) < 0.15 ? TOP : BODY;
+    if (d < 3 + j) c = TOP;
+    else if (fromBase <= 2) c = SHADE;
+    else if (fromBase <= 7 + j) c = hash(seed, x, y) < 0.22 ? DOT : UNDER;
+    else if (d < 9 + j * 2) c = hash(seed, x, y, 2) < 0.15 ? TOP : BODY;
     else if (hash(seed, x, y, 3) < 0.08) c = UNDER;
     g.fillStyle = c; g.fillRect(x, y, 1, 1);
   }
   return cv;
 }
 
-/** The birth frames of a cloud: N canvases, the cells appearing from the middle out. */
-export function cloudFrames(f: Formation, seed: number, n = 7) {
-  const m = mask(f);
-  const out: THREE.CanvasTexture[] = [];
-  for (let i = 0; i < n; i++) {
-    const t = i === n - 1 ? 2 : (i + 1) / n;
-    const tex = new THREE.CanvasTexture(draw(f, m, seed, t));
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false;
-    out.push(tex);
-  }
-  return out;
+/** The cloud, whole, as one texture. */
+export function cloudTexture(f: Formation, seed: number) {
+  const tex = new THREE.CanvasTexture(draw(f, mask(f), seed, 2));
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false;
+  return tex;
 }

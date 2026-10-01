@@ -43,8 +43,7 @@ export function WaveSection() {
       const r = stage.getBoundingClientRect();
       const x = e.clientX - r.left, y = e.clientY - r.top;
       overlay.burst(x, y);
-      const res = world.interact.click(new Vector2((x / r.width) * 2 - 1, -(y / r.height) * 2 + 1));
-      if (res.kind === 'sky' || res.kind === 'cooldown') overlay.countdown(x, y, res.cloudReadyAt ?? 0, res.kind === 'cooldown');
+      world.interact.click(new Vector2((x / r.width) * 2 - 1, -(y / r.height) * 2 + 1));
     };
     stage.addEventListener('pointerdown', onDown);
     stage.addEventListener('pointerup', onUp);
@@ -63,7 +62,7 @@ export function WaveSection() {
       // viewport, so the wave is already breaking while the landing leaves.
       const p = override ?? clamp01((window.innerHeight - rect.top) / Math.max(1, el.offsetHeight));
       world.update(p, dt);
-      overlay.draw(dt, world.clock);
+      overlay.draw(dt);
       stage.classList.toggle('is-touchable', world.interact.isActive);
       raf = requestAnimationFrame(loop);
     };

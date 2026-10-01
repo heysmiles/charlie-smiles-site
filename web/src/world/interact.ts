@@ -4,7 +4,7 @@ import { VENICE, shoreAt, type Kind, type LampSet } from './venice';
 import { SpritePool, softDisc } from './sprites';
 import { oceanH } from './ocean';
 import { hash, clamp01, lerp } from './math';
-import { FORMATIONS, cloudFrames } from './pixelcloud';
+import { FORMATIONS, cloudTexture } from './pixelcloud';
 
 /**
  * Touching Venice. Once the camera rests off the beach, a tap reaches into the
@@ -30,13 +30,12 @@ import { FORMATIONS, cloudFrames } from './pixelcloud';
  * does depends on the scroll, so the scene keeps its state while you look.
  */
 
-export const CLOUD_COOLDOWN = 5; // seconds between clouds
 const CLOUD_Z = -900; // the sky plane the clouds live on (world z, behind the far hills)
 const ACTIVE_FROM = 0.9; // progress at which Venice is "the screen"
 
-export type ClickResult = { kind: Kind | 'cooldown'; point?: THREE.Vector3; cloudReadyAt?: number };
+export type ClickResult = { kind: Kind | 'cloud'; point?: THREE.Vector3 };
 
-type Cloud = { sprite: THREE.Sprite; frames: THREE.CanvasTexture[]; vx: number; born: number; width: number; bob: number };
+type Cloud = { sprite: THREE.Sprite; vx: number; born: number; width: number; bob: number; w: number; h: number; dying: number };
 type Particle = { kind: 'drop' | 'sand' | 'leaf' | 'bird'; x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; size: number; r: number; g: number; b: number; seed: number; sprite?: THREE.Sprite };
 type Lit = { on: boolean; level: number; t: number };
 
@@ -48,7 +47,6 @@ export class Interact {
   private ripples: { mesh: THREE.Mesh; t: number; max: number }[] = [];
   private rippleGeo = new THREE.RingGeometry(0.8, 1, 40);
   private clouds: Cloud[] = [];
-  private cloudReadyAt = 0;
   private cloudCount = 0;
   private towers: Lit[] = VENICE.towers.map(() => ({ on: false, level: 0, t: 0 }));
   private buildings: Lit[] = VENICE.buildings.map(() => ({ on: false, level: 0, t: 0 }));
@@ -70,11 +68,16 @@ export class Interact {
   }
 
   get isActive() { return this.active; }
-  get cloudReady() { return this.cloudReadyAt; }
 
   /** What is under the cursor, by kind. ndc in [-1,1]. */
   hit(ndc: THREE.Vector2) {
     this.ray.setFromCamera(ndc, this.world.camera);
+    // A cloud under the cursor comes first: tapping one removes it.
+    for (const c of this.clouds) {
+      if (c.dying >= 0) continue;
+      const hc = this.ray.intersectObject(c.sprite, false);
+      if (hc.length) return { kind: 'cloud' as const, point: hc[0].point, ref: this.clouds.indexOf(c) };
+    }
     const hits = this.ray.intersectObjects(this.world.scene.children, true);
     for (const h of hits) {
       const o = h.object as THREE.Object3D & { isMesh?: boolean };
@@ -84,7 +87,7 @@ export class Interact {
       if (kind === 'ground' && shoreAt(h.point.x) - h.point.z < 3) kind = 'water';
       return { kind, point: h.point, ref: (o.userData.ref as number) ?? -1 };
     }
-    return { kind: 'sky' as Kind, point: this.skyPoint(ndc), ref: -1 };
+    return { kind: 'sky' as const, point: this.skyPoint(ndc), ref: -1 };
   }
 
   /** A tap. Returns what it did, so the page can draw the countdown. */
@@ -100,13 +103,8 @@ export class Interact {
       case 'vpier': this.vpier.on = !this.vpier.on; this.vpier.t = 0; break;
       case 'smpier': this.smpier.on = !this.smpier.on; this.smpier.t = 0; break;
       case 'hills': case 'range': this.flock(h.point); break;
-      case 'sky': {
-        if (this.time < this.cloudReadyAt) return { kind: 'cooldown', point: h.point, cloudReadyAt: this.cloudReadyAt };
-        // Always on the cloud plane, not wherever the ray met the sky dome.
-        this.spawnCloud(this.skyPoint(ndc));
-        this.cloudReadyAt = this.time + CLOUD_COOLDOWN;
-        return { kind: 'sky', point: h.point, cloudReadyAt: this.cloudReadyAt };
-      }
+      case 'cloud': { const c = this.clouds[h.ref]; if (c) c.dying = this.time; break; }
+      case 'sky': this.spawnCloud(this.skyPoint(ndc)); break; // always on the cloud plane, not wherever the ray met the dome
       default: break;
     }
     return { kind: h.kind, point: h.point };
@@ -169,15 +167,14 @@ export class Interact {
     // A different formation each time, in a shuffled order rather than a fixed one.
     const form = FORMATIONS[(this.cloudCount++ * 5 + Math.floor(hash(Math.round(p.x), Math.round(this.time * 31)) * 3)) % FORMATIONS.length];
     const seed = Math.round(p.x * 3 + this.time * 17);
-    const frames = cloudFrames(form, seed);
-    const CELL = 3.2; // world units per pixel on the cloud plane
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: frames[0], transparent: true, depthWrite: false, fog: false, opacity: 1 }));
+    const CELL = 1.6; // world units per pixel on the cloud plane
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudTexture(form, seed), transparent: true, depthWrite: false, fog: false, opacity: 1 }));
     sprite.position.copy(p);
-    sprite.scale.set(form.w * CELL, form.h * CELL, 1);
-    sprite.raycast = () => {};
+    const w = form.w * CELL, h = form.h * CELL;
+    sprite.scale.set(w, h, 1);
     this.world.scene.add(sprite);
     const vx = (hash(Math.round(p.x * 3), 5) < 0.5 ? -1 : 1) * (5 + hash(Math.round(p.y), 6) * 5);
-    this.clouds.push({ sprite, frames, vx, born: this.time, width: form.w * CELL / 2, bob: hash(Math.round(p.x), 9) * 6.28 });
+    this.clouds.push({ sprite, vx, born: this.time, width: w / 2, bob: hash(Math.round(p.x), 9) * 6.28, w, h, dying: -1 });
   }
 
   private emit(kind: Particle['kind'], x: number, y: number, z: number, vx: number, vy: number, vz: number, max: number, size: number, r: number, g: number, b: number, seed: number) {
@@ -287,18 +284,27 @@ export class Interact {
     for (let i = nf; i < 900; i++) fx.alpha[i] = 0;
     fx.commit();
 
-    // Clouds: pop in pixel by pixel when born, drift, bounce off the sides of the frame.
+    // Clouds: appear whole with a small settling jiggle, drift, bounce off
+    // the sides of the frame; tapped again, they shrink away.
     const cam = this.world.camera;
     const show = clamp01((progress - 0.86) / 0.06);
-    for (const c of this.clouds) {
-      const age = time - c.born;
-      const fi = Math.min(c.frames.length - 1, Math.floor(age / 0.09));
+    for (let i = this.clouds.length - 1; i >= 0; i--) {
+      const c = this.clouds[i];
       const mat = c.sprite.material as THREE.SpriteMaterial;
-      if (mat.map !== c.frames[fi]) { mat.map = c.frames[fi]; mat.needsUpdate = true; }
+      if (c.dying >= 0) {
+        const k = (time - c.dying) / 0.28;
+        if (k >= 1) { this.world.scene.remove(c.sprite); mat.map?.dispose(); mat.dispose(); this.clouds.splice(i, 1); continue; }
+        const s = (1 - k) * (1 + 0.12 * Math.sin(k * 18));
+        c.sprite.scale.set(c.w * s, c.h * s, 1); mat.opacity = (1 - k * k) * show;
+        continue;
+      }
+      const age = time - c.born;
+      // the jiggle: a quick decaying wobble of scale and a little bob, settling in half a second
+      const jig = age < 0.55 ? Math.exp(-age * 7) * Math.sin(age * 32) : 0;
+      c.sprite.scale.set(c.w * (1 + jig * 0.05), c.h * (1 - jig * 0.06), 1);
       c.sprite.position.x += c.vx * dt;
-      c.sprite.position.y += Math.sin(time * 0.35 + c.bob) * dt * 0.6;
+      c.sprite.position.y += Math.sin(time * 0.35 + c.bob) * dt * 0.6 + jig * 1.2 * dt * 10;
       mat.opacity = show;
-      // Bounce: project the cloud's leading edge; at the frame's side, turn around.
       const edge = this.tmp.set(c.sprite.position.x + Math.sign(c.vx) * c.width, c.sprite.position.y, c.sprite.position.z).project(cam);
       if (Math.abs(edge.x) > 0.98 && Math.sign(edge.x) === Math.sign(c.vx)) c.vx = -c.vx;
     }
