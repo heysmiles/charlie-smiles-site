@@ -99,7 +99,11 @@ Nothing in it is an image. It lives in `web/src/world/`:
   successive foam fronts rolling up with a ragged sheet behind each, and a
   solid white rim at the waterline — keyed to water depth, so it rides the
   swell and is always at the visible edge, thicker than the fronts — with a
-  ragged lace fraying back from it into the shallows.
+  ragged lace fraying back from it into the shallows. Here and there a crest
+  stands up and breaks as it reaches the shallows — a thicker white lip, a
+  darker steepening face just shoreward of it, a spit of spray — with the
+  breaking stretches drifting along the beach over time, never everywhere at
+  once.
   The bay curves: north of Venice the shore bends seaward (`shoreAt`) and
   the town runs on through Santa Monica — taller, paler hotels on the bluff,
   the pier — thinning and fogging toward the foot of the range, so the coast
@@ -151,10 +155,12 @@ left dark); water throws a crown of droplets and spreading rings; a palm
 takes a gust (crown sways, fronds ruffle, a couple of dead fronds drift
 down); sand puffs; the Venice Pier's lamps come on; the Santa Monica Pier
 lights up and the Pacific Wheel turns; the hills and the range send up a
-flock of birds; the sky grows a **pixel-art cloud** where you tapped
-(`world/pixelcloud.ts`: a union of round bumps over a flat base on a cell
-grid, drawn to a canvas and shown nearest-neighbour, shaded in bands from the
-top surface down — white, cream, peach underside with darker dots; six
+flock of birds (each its own sprite with a six-frame wingbeat — a quick
+downstroke, a slower upstroke, a glide every few beats); the sky grows a **pixel-art cloud** where you tapped
+(`world/pixelcloud.ts`: a union of round lobes with cauliflower bumps on
+top over a flat base on a fine cell grid, drawn to a canvas and shown
+nearest-neighbour, lit the town's way — sunlit faces on the left, mauve
+shadow on the right, gold underside, dithered at the band edges; six
 formations; born pixel by pixel from the middle out), drifting and bouncing
 off the sides of the frame, never leaving — one every five seconds, with a
 pixel countdown in between. Every tap sets off a very small white firework of

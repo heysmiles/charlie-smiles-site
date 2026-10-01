@@ -153,6 +153,19 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-01, night — livelier clouds, breakers, real wingbeats
+
+Charlie: cloud shapes better, no flat ones, with texture and excitement; a
+touch more realistic with proper shadows and sunshine matching the
+buildings; a bit of a break at the water's edge so it isn't a pool
+overflowing, not everywhere at once; birds should flap up and down in a real
+pattern. Done: six built-up formations on a 2× grid with cauliflower tops,
+lobe lighting from the left (sunlit / cream / mauve shadow / gold
+underside, dithered); breakers in the ocean shader (lip + dark face +
+spray, patchy along the beach and in time); birds as sprites with a
+six-frame wingbeat (fast down, slow up, glides). Gotcha: `patch` is a GLSL
+reserved word — the ocean shader silently failed until renamed.
+
 ## Status — 2026-10-01, later — pixel clouds, tiny firework, solid waterline
 
 Charlie sent two pixel-cloud reference sheets: the clouds should be

@@ -87,6 +87,18 @@ void main(){
   float sheet = (1.0 - smoothstep(0.05, 0.6, f)) * smoothstep(0.35, 0.7, vnoise2(vec2(vWorld.x * 0.9, sd * 0.9 + uTime * 0.6)) * 0.6 + vnoise2(vec2(vWorld.x * 2.4, sd * 2.4)) * 0.4);
   float zone = smoothstep(-3.0, 3.0, sd) * (1.0 - smoothstep(12.0, 30.0, sd));
   float foamAmt = clamp(edge * 0.9 + sheet * 0.55, 0.0, 1.0) * zone * (0.35 + 0.65 * shallow);
+  // Breakers: here and there a crest stands up and breaks as it reaches the
+  // shallows — a thicker white lip, a darker steepening face just shoreward
+  // of it, a spit of spray on top. Which crests, and where along the beach,
+  // drifts with time, so it never breaks everywhere at once.
+  float where = smoothstep(0.5, 0.78, vnoise2(vec2(vWorld.x * 0.022 + uTime * 0.02, floor(ph) * 0.41)) * 0.7 + vnoise2(vec2(vWorld.x * 0.09, floor(ph) * 1.3)) * 0.3);
+  float bzone = smoothstep(2.0, 6.0, sd) * (1.0 - smoothstep(9.0, 20.0, sd));
+  float lip = smoothstep(0.0, 0.03, f) * (1.0 - smoothstep(0.05, 0.24, f));
+  float face = smoothstep(0.8, 0.97, f) * (1.0 - smoothstep(0.985, 1.0, f));
+  float spray = lip * step(0.62, vnoise2(vec2(vWorld.x * 5.0, sd * 4.0 + uTime * 2.0)));
+  float brk = where * bzone;
+  col = mix(col, uDeep * 0.55, face * brk * 0.7);
+  foamAmt += (lip * 0.95 + spray * 0.6) * brk;
   // The waterline. Where the water is thinnest it is foam, always: a solid
   // white edge keyed to depth so it rides with the swell, thicker than the
   // fronts, then a ragged lace fraying back from it into the shallows.

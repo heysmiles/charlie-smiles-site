@@ -37,13 +37,13 @@ const ACTIVE_FROM = 0.9; // progress at which Venice is "the screen"
 export type ClickResult = { kind: Kind | 'cooldown'; point?: THREE.Vector3; cloudReadyAt?: number };
 
 type Cloud = { sprite: THREE.Sprite; frames: THREE.CanvasTexture[]; vx: number; born: number; width: number; bob: number };
-type Particle = { kind: 'drop' | 'sand' | 'leaf' | 'bird'; x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; size: number; r: number; g: number; b: number; seed: number };
+type Particle = { kind: 'drop' | 'sand' | 'leaf' | 'bird'; x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; size: number; r: number; g: number; b: number; seed: number; sprite?: THREE.Sprite };
 type Lit = { on: boolean; level: number; t: number };
 
 export class Interact {
   private ray = new THREE.Raycaster();
   private fx: SpritePool; // droplets, sand, leaves
-  private birds: SpritePool;
+  private birdFrames: THREE.Texture[] = birdFrames();
   private particles: Particle[] = [];
   private ripples: { mesh: THREE.Mesh; t: number; max: number }[] = [];
   private rippleGeo = new THREE.RingGeometry(0.8, 1, 40);
@@ -64,9 +64,8 @@ export class Interact {
   constructor(world: World) {
     this.world = world;
     this.fx = new SpritePool(900, softDisc(64, 0.3));
-    this.birds = new SpritePool(80, birdTexture());
-    for (const p of [this.fx, this.birds]) { p.uniforms.uHazeFull.value = 0; p.uniforms.uHazeLo.value = 1.5; p.points.renderOrder = 5; }
-    world.scene.add(this.fx.points); world.scene.add(this.birds.points);
+    this.fx.uniforms.uHazeFull.value = 0; this.fx.uniforms.uHazeLo.value = 1.5; this.fx.points.renderOrder = 5;
+    world.scene.add(this.fx.points);
     (this.ray as unknown as { firstHitOnly: boolean }).firstHitOnly = true;
   }
 
@@ -162,7 +161,7 @@ export class Interact {
     for (let i = 0; i < 9; i++) {
       // A V: the leader ahead, the rest trailing on either side.
       const row = Math.ceil(i / 2), side = i % 2 ? -1 : 1;
-      this.emit('bird', p.x - dir * row * 18 + (hash(i, 21) - 0.5) * 5, p.y + 50 - row * 6 + (hash(i, 22) - 0.5) * 4, p.z + side * row * 12, dir * 26, 1.6, 0, 20, 66 + hash(i, 23) * 18, 0.16, 0.13, 0.15, i);
+      this.emit('bird', p.x - dir * row * 30 + (hash(i, 21) - 0.5) * 6, p.y + 50 - row * 7 + (hash(i, 22) - 0.5) * 5, p.z + side * row * 22, dir * 26, 1.6, 0, 20, 30 + hash(i, 23) * 8, 0.16, 0.13, 0.15, i);
     }
   }
 
@@ -171,7 +170,7 @@ export class Interact {
     const form = FORMATIONS[(this.cloudCount++ * 5 + Math.floor(hash(Math.round(p.x), Math.round(this.time * 31)) * 3)) % FORMATIONS.length];
     const seed = Math.round(p.x * 3 + this.time * 17);
     const frames = cloudFrames(form, seed);
-    const CELL = 3.2; // world units per pixel on the cloud plane
+    const CELL = 1.6; // world units per pixel on the cloud plane
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: frames[0], transparent: true, depthWrite: false, fog: false, opacity: 1 }));
     sprite.position.copy(p);
     sprite.scale.set(form.w * CELL, form.h * CELL, 1);
@@ -182,7 +181,14 @@ export class Interact {
   }
 
   private emit(kind: Particle['kind'], x: number, y: number, z: number, vx: number, vy: number, vz: number, max: number, size: number, r: number, g: number, b: number, seed: number) {
-    this.particles.push({ kind, x, y, z, vx, vy, vz, life: 0, max, size, r, g, b, seed });
+    const p: Particle = { kind, x, y, z, vx, vy, vz, life: 0, max, size, r, g, b, seed };
+    if (kind === 'bird') {
+      // Each bird is its own sprite, so its wings can be on their own beat.
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.birdFrames[2], color: new THREE.Color(r, g, b), transparent: true, depthWrite: false, fog: false }));
+      sp.position.set(x, y, z); sp.scale.set(size, size, 1); sp.raycast = () => {};
+      this.world.scene.add(sp); p.sprite = sp;
+    }
+    this.particles.push(p);
   }
 
   // ------------------------------------------------------------------ update
@@ -239,25 +245,38 @@ export class Interact {
     }
 
     // Particles.
-    const fx = this.fx, birds = this.birds;
-    let nf = 0, nb = 0;
+    const fx = this.fx;
+    let nf = 0;
+    const drop = (p: Particle) => { if (p.sprite) { this.world.scene.remove(p.sprite); p.sprite.material.dispose(); } };
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i]; p.life += dt;
-      if (p.life >= p.max) { this.particles.splice(i, 1); continue; }
+      if (p.life >= p.max) { drop(p); this.particles.splice(i, 1); continue; }
       const u = p.life / p.max;
       if (p.kind === 'drop') { p.vy -= 13 * dt; p.vx *= 1 - dt * 0.6; p.vz *= 1 - dt * 0.6; }
       else if (p.kind === 'sand') { p.vy -= 11 * dt; p.vx *= 1 - dt * 2; p.vz *= 1 - dt * 2; }
       else if (p.kind === 'leaf') { p.vy = -0.9 - Math.sin(p.life * 3 + p.seed) * 0.5; p.vx += Math.sin(p.life * 2.3 + p.seed) * dt * 2.2; p.vz += Math.cos(p.life * 1.9 + p.seed) * dt * 2.2; }
       else if (p.kind === 'bird') { p.vy = 1.2 + Math.sin(p.life * 0.8 + p.seed) * 0.6; }
       p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+      if (p.kind === 'bird' && p.sprite) {
+        // The wingbeat: a quick downstroke, a slower upstroke, and every few
+        // beats a glide with the wings held level. The body lifts on the
+        // downstroke and settles on the up.
+        const beats = p.life * 2.3 + p.seed * 0.7;
+        const bar = Math.floor(beats / 6), inBar = beats - bar * 6;
+        const glide = hash(p.seed, bar) < 0.45 && inBar > 4.2;
+        let wing = 0; // -1 down … +1 up
+        if (!glide) { const u = beats - Math.floor(beats); wing = u < 0.38 ? 1 - 2 * (u / 0.38) : -1 + 2 * ((u - 0.38) / 0.62); }
+        const frame = Math.round((wing + 1) / 2 * (this.birdFrames.length - 1));
+        const m = p.sprite.material as THREE.SpriteMaterial;
+        if (m.map !== this.birdFrames[frame]) { m.map = this.birdFrames[frame]; m.needsUpdate = true; }
+        const u = p.life / p.max;
+        m.opacity = 0.95 * (1 - Math.max(0, u - 0.85) / 0.15);
+        p.sprite.position.set(p.x, p.y + (glide ? 0 : -wing * 0.35), p.z);
+        p.sprite.scale.set(p.size, p.size, 1);
+        continue;
+      }
       if (p.kind === 'drop' && p.y < oceanH(p.x, p.z, time) - 0.2) { this.particles.splice(i, 1); continue; }
-      if (p.kind === 'bird') {
-        if (nb >= 80) continue;
-        const flap = 0.72 + 0.28 * Math.sin(p.life * 15 + p.seed * 2);
-        birds.pos[nb * 3] = p.x; birds.pos[nb * 3 + 1] = p.y; birds.pos[nb * 3 + 2] = p.z;
-        birds.size[nb] = p.size * flap; birds.alpha[nb] = 0.9 * (1 - Math.max(0, u - 0.85) / 0.15);
-        birds.color[nb * 3] = p.r; birds.color[nb * 3 + 1] = p.g; birds.color[nb * 3 + 2] = p.b; nb++;
-      } else {
+      {
         if (nf >= 900) continue;
         const a = p.kind === 'drop' ? 0.9 * (1 - u * u) : p.kind === 'sand' ? 0.8 * (1 - u) : 0.95 * (1 - Math.max(0, u - 0.8) / 0.2);
         fx.pos[nf * 3] = p.x; fx.pos[nf * 3 + 1] = p.y; fx.pos[nf * 3 + 2] = p.z;
@@ -266,8 +285,7 @@ export class Interact {
       }
     }
     for (let i = nf; i < 900; i++) fx.alpha[i] = 0;
-    for (let i = nb; i < 80; i++) birds.alpha[i] = 0;
-    fx.commit(); birds.commit();
+    fx.commit();
 
     // Clouds: pop in pixel by pixel when born, drift, bounce off the sides of the frame.
     const cam = this.world.camera;
@@ -294,12 +312,31 @@ export class Interact {
   }
 }
 
-/** A bird as a shallow V, drawn once. */
-function birdTexture() {
-  const c = document.createElement('canvas'); c.width = c.height = 32;
-  const x = c.getContext('2d')!;
-  x.strokeStyle = '#fff'; x.lineWidth = 3.2; x.lineCap = 'round';
-  x.beginPath(); x.moveTo(3, 20); x.quadraticCurveTo(10, 10, 16, 16); x.quadraticCurveTo(22, 10, 29, 20); x.stroke();
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  return t;
+/**
+ * A bird's wingbeat as six frames, wings from raised through level to down:
+ * a small body with two wings that bend at the wrist, seen from below and
+ * behind as the flock crosses the sky.
+ */
+function birdFrames() {
+  const out: THREE.Texture[] = [];
+  const N = 6;
+  for (let k = 0; k < N; k++) {
+    const a = 1.05 - (k / (N - 1)) * 1.75; // wing angle: +1.05 raised … -0.7 down
+    const c = document.createElement('canvas'); c.width = c.height = 48;
+    const x = c.getContext('2d')!;
+    x.strokeStyle = '#fff'; x.fillStyle = '#fff'; x.lineCap = 'round'; x.lineJoin = 'round';
+    const bx = 24, by = 26;
+    // body
+    x.beginPath(); x.ellipse(bx, by, 3.2, 1.8, 0, 0, Math.PI * 2); x.fill();
+    for (const s of [-1, 1]) {
+      // inner wing to the wrist, then the outer wing folding a little further
+      const wx = bx + s * 9 * Math.cos(a * 0.6), wy = by - 9 * Math.sin(a * 0.6);
+      const tx = wx + s * 11 * Math.cos(a), ty = wy - 11 * Math.sin(a) - (a < 0 ? 1.5 : 0);
+      x.lineWidth = 3.2; x.beginPath(); x.moveTo(bx + s * 2, by); x.quadraticCurveTo(bx + s * 5, by - 2.5 * Math.sin(a * 0.6) - 1, wx, wy); x.stroke();
+      x.lineWidth = 2.4; x.beginPath(); x.moveTo(wx, wy); x.quadraticCurveTo(wx + s * 6 * Math.cos(a), wy - 6 * Math.sin(a) - 1.2, tx, ty); x.stroke();
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    out.push(t);
+  }
+  return out;
 }
