@@ -103,7 +103,11 @@ Nothing in it is an image. It lives in `web/src/world/`:
   stands up and breaks as it reaches the shallows — a thicker white lip, a
   darker steepening face just shoreward of it, a spit of spray — with the
   breaking stretches drifting along the beach over time, never everywhere at
-  once.
+  once. Above the waterline, `swash.ts` is a ribbon over the sand: each front
+  sends a thin sheet running up the slope with a white edge leading it, which
+  stalls, drains back, and leaves the sand dark and wet where it reached; the
+  stain melts over a few seconds (the shader samples its own analytic run-up
+  at a handful of past moments). Different waves run up different distances.
   The bay curves: north of Venice the shore bends seaward (`shoreAt`) and
   the town runs on through Santa Monica — taller, paler hotels on the bluff,
   the pier — thinning and fogging toward the foot of the range, so the coast
@@ -155,13 +159,12 @@ left dark); water throws a crown of droplets and spreading rings; a palm
 takes a gust (crown sways, fronds ruffle, a couple of dead fronds drift
 down); sand puffs; the Venice Pier's lamps come on; the Santa Monica Pier
 lights up and the Pacific Wheel turns; the hills and the range send up a
-flock of birds (each its own sprite with a six-frame wingbeat — a quick
-downstroke, a slower upstroke, a glide every few beats); the sky grows a **pixel-art cloud** where you tapped
-(`world/pixelcloud.ts`: a union of round lobes with cauliflower bumps on
-top over a flat base on a fine cell grid, drawn to a canvas and shown
-nearest-neighbour, lit the town's way — sunlit faces on the left, mauve
-shadow on the right, gold underside, dithered at the band edges; six
-formations; born pixel by pixel from the middle out), drifting and bouncing
+flock of white gulls (each its own sprite with a six-frame wingbeat — a
+quick downstroke, a slower upstroke, a glide every few beats); the sky grows a **pixel-art cloud** where you tapped
+(`world/pixelcloud.ts`: a union of round bumps over a flat base on a cell
+grid, drawn to a canvas and shown nearest-neighbour, shaded in bands from the
+top surface down — white, cream, peach underside with darker dots; five
+puffy formations, no thin ones; born pixel by pixel from the middle out), drifting and bouncing
 off the sides of the frame, never leaving — one every five seconds, with a
 pixel countdown in between. Every tap sets off a very small white firework of
 pixels at the cursor. All of it runs on the world's clock, so scrolling away

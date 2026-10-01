@@ -153,6 +153,18 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-01, late — clouds reverted (puffy only), gulls, the swash
+
+Charlie: the new clouds don't look good — revert to the earlier version but
+keep only the puffy formations, not the thin lengthy ones; birds white like
+seagulls; and keep working the waterline — the water should run up, take a
+second to melt into the sand, not just go up and down. Done: pixelcloud.ts
+back to the 88ed88a version with five puffy formations (two new in the same
+style) at the original cell size; gull-white birds; `swash.ts`, a ribbon
+over the sand whose shader runs sheets up the slope with a leading white
+edge and leaves a wet stain that melts over ~3.5 s, different per wave and
+along the beach.
+
 ## Status — 2026-10-01, night — livelier clouds, breakers, real wingbeats
 
 Charlie: cloud shapes better, no flat ones, with texture and excitement; a

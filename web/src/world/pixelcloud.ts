@@ -14,32 +14,21 @@ import { hash } from './math';
  */
 export type Formation = { w: number; h: number; base: number; bumps: [number, number, number][] };
 
-// Six formations on a cell grid: [cx, cy, r] bumps (y down), `base` the flat
-// bottom row. Every one is built up: big lobes with smaller cauliflower bumps
-// riding on top, so the silhouettes are busy rather than flat.
-const RAW: Formation[] = [
-  // a big cumulus: three lobes, cauliflower on top, a shoulder each side
-  { w: 48, h: 30, base: 27, bumps: [[16, 17, 9], [29, 14, 10], [40, 20, 7], [7, 22, 6], [12, 10, 5], [22, 7, 5], [31, 5, 5], [38, 10, 5], [26, 20, 9]] },
-  // a towering cumulonimbus: a tall stack leaning a little, boiling at the top
-  { w: 40, h: 40, base: 37, bumps: [[20, 30, 11], [15, 21, 8], [24, 17, 8], [18, 10, 7], [25, 6, 5], [13, 6, 4], [8, 29, 6], [33, 28, 6], [30, 12, 4]] },
-  // twin heads over one base, a notch between them
-  { w: 56, h: 28, base: 25, bumps: [[16, 15, 9], [12, 8, 5], [21, 7, 5], [40, 13, 10], [36, 5, 5], [45, 6, 5], [28, 20, 7], [6, 21, 5], [50, 20, 5]] },
-  // a tall narrow puff with a crooked crown and a trailing wisp
-  { w: 44, h: 34, base: 31, bumps: [[18, 24, 10], [14, 14, 7], [22, 10, 6], [19, 4, 4], [27, 15, 5], [9, 27, 5], [34, 27, 5], [40, 29, 3]] },
-  // a wide bank with three peaks, each with its own small bumps
-  { w: 64, h: 28, base: 25, bumps: [[12, 17, 8], [10, 9, 5], [17, 8, 4], [32, 13, 10], [28, 5, 5], [37, 4, 5], [52, 17, 8], [50, 9, 5], [57, 10, 4], [22, 21, 7], [42, 21, 7], [4, 22, 4], [60, 22, 4]] },
-  // a big one with a small companion riding alongside
-  { w: 60, h: 26, base: 23, bumps: [[16, 13, 10], [11, 5, 5], [20, 4, 5], [26, 9, 6], [7, 18, 6], [30, 18, 7], [48, 16, 7], [45, 10, 4], [52, 11, 4], [55, 19, 4]] },
+// Six formations on a cell grid: [cx, cy, r] bumps (y down), `base` the flat bottom row.
+export const FORMATIONS: Formation[] = [
+  // a classic cumulus: two big bumps and a shoulder
+  { w: 44, h: 24, base: 21, bumps: [[16, 11, 8], [27, 9, 9], [36, 14, 6], [8, 16, 5]] },
+  // a towering column
+  { w: 36, h: 32, base: 29, bumps: [[18, 24, 10], [14, 15, 7], [21, 11, 7], [18, 5, 5], [9, 22, 5], [28, 22, 5]] },
+  // a wide anvil
+  { w: 64, h: 22, base: 19, bumps: [[32, 8, 9], [20, 12, 7], [44, 12, 7], [10, 15, 5], [54, 15, 5], [32, 15, 10]] },
+  // a double cumulus: two heads over one base
+  { w: 56, h: 26, base: 23, bumps: [[16, 13, 9], [38, 11, 10], [27, 17, 8], [7, 18, 5], [49, 17, 6]] },
+  // a tall puff with a heavy shoulder
+  { w: 40, h: 28, base: 25, bumps: [[22, 10, 9], [13, 17, 8], [30, 18, 7], [20, 20, 9]] },
 ];
 
-// Twice the cells of the sketches above: finer pixels, softer shapes.
-const SCALE = 2;
-export const FORMATIONS: Formation[] = RAW.map((f) => ({ w: f.w * SCALE, h: f.h * SCALE, base: f.base * SCALE, bumps: f.bumps.map(([x, y, r]) => [x * SCALE, y * SCALE, r * SCALE] as [number, number, number]) }));
-
-// The light is the town's: the low sun off to the left and a little behind
-// the viewer. Sunlit faces go warm white, the body cream, the side away from
-// the sun a mauve shadow, the underside gold where the low sun reaches it.
-const SUN = '#fff6e2', TOP = '#fffaf4', BODY = '#fce6d5', UNDER = '#f8cf9e', UNDER_DOT = '#efb97f', SHADE_LT = '#eac3bb', SHADE = '#dba9a6', DOT = '#c8918f';
+const TOP = '#fffaf4', BODY = '#fde9d6', UNDER = '#f6c8a4', SHADE = '#e9a67c', DOT = '#e3996e';
 
 function mask(f: Formation) {
   const m = new Uint8Array(f.w * f.h);
@@ -70,24 +59,12 @@ function draw(f: Formation, m: Uint8Array, seed: number, t: number) {
     // depth from the cloud's top surface in this column
     let d = 0; while (y - d - 1 >= 0 && m[(y - d - 1) * f.w + x]) d++;
     const fromBase = f.base - y;
-    // the lobe this cell belongs to: the smallest bump containing it (the
-    // cauliflower bumps on top win over the big lobes beneath)
-    let lobe: [number, number, number] | null = null;
-    for (const b of f.bumps) { const dx = x + 0.5 - b[0], dy = y + 0.5 - b[1]; if (dx * dx + dy * dy * 1.3 < b[2] * b[2] && (!lobe || b[2] < lobe[2])) lobe = b; }
-    // within the lobe: lit from the left and a little below, shadowed on the
-    // right and under its belly; dithered at the boundaries so the bands blend
-    let lit = 0; if (lobe) { const dx = (x + 0.5 - lobe[0]) / lobe[2], dy = (y + 0.5 - lobe[1]) / lobe[2]; lit = -dx * 0.8 - dy * 0.25; }
-    const l = lit + (hash(seed, x, y, 5) - 0.5) * 0.24;
-    const r = hash(seed, x, y);
     let c = BODY;
-    if (fromBase <= 2) c = l > 0.1 ? UNDER : SHADE;
-    else if (fromBase <= 7) c = l > 0.15 ? (r < 0.2 ? UNDER_DOT : UNDER) : (r < 0.3 ? DOT : SHADE);
-    else if (d < 3) c = l > -0.2 ? TOP : BODY;
-    else if (l > 0.42) c = SUN;
-    else if (l > 0.14) c = TOP;
-    else if (l > -0.22) c = BODY;
-    else if (l > -0.52) c = r < 0.15 ? DOT : SHADE_LT;
-    else c = r < 0.3 ? DOT : SHADE;
+    if (d < 2) c = TOP;
+    else if (fromBase <= 1) c = SHADE;
+    else if (fromBase <= 4) c = hash(seed, x, y) < 0.22 ? DOT : UNDER;
+    else if (d < 5) c = hash(seed, x, y, 2) < 0.15 ? TOP : BODY;
+    else if (hash(seed, x, y, 3) < 0.08) c = UNDER;
     g.fillStyle = c; g.fillRect(x, y, 1, 1);
   }
   return cv;

@@ -7,6 +7,7 @@ import { Wave } from './wave';
 import { Foam } from './foam';
 import { makeMountains } from './mountains';
 import { makeVenice } from './venice';
+import { makeSwash } from './swash';
 import { Interact } from './interact';
 import { cameraAt, frontAt } from './camera';
 import { smoothstep, lerp } from './math';
@@ -23,6 +24,7 @@ export class World {
   wave = new Wave();
   foam = new Foam();
   ocean = makeOcean();
+  swash = makeSwash();
   /** Every material that takes the cream haze. */
   private hazed: { uRes: THREE.IUniform; uHazeLo: THREE.IUniform; uHazeFull: THREE.IUniform }[] = [];
   progress = 0;
@@ -87,6 +89,7 @@ export class World {
     this.scene.add(this.foam.points);
     this.scene.add(makeMountains());
     this.scene.add(makeVenice());
+    this.scene.add(this.swash.mesh);
     this.ocean.mesh.userData.kind = 'water';
     this.wave.mesh.userData.kind = 'water';
     this.interact = new Interact(this);
@@ -112,6 +115,7 @@ export class World {
     this.wave.update(front, this.time);
     this.foam.update(this.wave);
     this.ocean.tick(this.time);
+    this.swash.tick(this.time);
     // Cream haze over the sky, seamless with the landing above; lifted once
     // the camera drops into the tube and the sky leaves the frame.
     // The top of the frame is the landing's cream: the sky (and clouds) haze
