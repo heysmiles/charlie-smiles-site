@@ -57,7 +57,7 @@ const farMat = (c: number) => {
  * `ref` into the registry below where something animates), so the interaction
  * layer can raycast the scene and know what it hit.
  */
-export type Kind = 'sky' | 'water' | 'ground' | 'palm' | 'tower' | 'building' | 'vpier' | 'smpier' | 'hills' | 'range' | 'none';
+export type Kind = 'sky' | 'water' | 'ground' | 'palm' | 'tower' | 'building' | 'vpier' | 'smpier' | 'hills' | 'range' | 'castle' | 'none';
 let KIND: Kind = 'none';
 let REF = -1;
 const tag = (o: THREE.Object3D, kind: Kind = KIND, ref = REF) => { o.userData.kind = kind; o.userData.ref = ref; return o; };

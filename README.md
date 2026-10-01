@@ -159,7 +159,12 @@ the glass) and off again; a building's windows light up (each facade has an
 emissive map drawn alongside its texture, every window its own shade, a few
 left dark); water throws a crown of droplets and spreading rings; a palm
 takes a gust (crown sways, fronds ruffle, a couple of dead fronds drift
-down); sand puffs; the Venice Pier's lamps come on; the Santa Monica Pier
+down); sand puffs and a **miniature sandcastle** goes up where you tapped
+(`world/sandcastle.ts`: packed-sand mound, walled platform, four corner
+towers with pointed tops, a keep with crenellations and a gate, a pennant, a
+moat scratched round it; the pieces pop up one after another in under a
+second, and tapping the castle topples them, sinking and shrinking into the
+sand with a puff); the Venice Pier's lamps come on; the Santa Monica Pier
 lights up and the Pacific Wheel turns; the hills and the range send up a
 flock of white gulls (each its own sprite with a six-frame wingbeat — a
 quick downstroke, a slower upstroke, a glide every few beats); the sky grows a **pixel-art cloud** where you tapped

@@ -5,6 +5,7 @@ import { SpritePool, softDisc } from './sprites';
 import { oceanH } from './ocean';
 import { hash, clamp01, lerp } from './math';
 import { FORMATIONS, cloudTexture } from './pixelcloud';
+import { makeCastle, tickCastle, disposeCastle, type Castle } from './sandcastle';
 
 /**
  * Touching Venice. Once the camera rests off the beach, a tap reaches into the
@@ -18,7 +19,9 @@ import { FORMATIONS, cloudTexture } from './pixelcloud';
  *              ring spreading out across the surface
  *   palm       a gust through the crown — the fronds ruffle, the head sways,
  *              a couple of dead fronds let go and drift down
- *   ground     a puff of sand kicked up
+ *   ground     a puff of sand, and a miniature sandcastle goes up where you
+ *              tapped, piece by piece
+ *   castle     it crumbles: the pieces topple and sink back into the sand
  *   sky        a cloud is born where you tapped, puffs up, and drifts; it
  *              bounces off the sides of the frame and never leaves. One every
  *              five seconds, with a countdown in between
@@ -48,6 +51,7 @@ export class Interact {
   private rippleGeo = new THREE.RingGeometry(0.8, 1, 40);
   private clouds: Cloud[] = [];
   private cloudCount = 0;
+  private castles: Castle[] = [];
   private towers: Lit[] = VENICE.towers.map(() => ({ on: false, level: 0, t: 0 }));
   private buildings: Lit[] = VENICE.buildings.map(() => ({ on: false, level: 0, t: 0 }));
   private vpier: Lit = { on: false, level: 0, t: 0 };
@@ -99,7 +103,8 @@ export class Interact {
       case 'building': { const s = this.buildings[h.ref]; if (s) { s.on = !s.on; s.t = 0; } break; }
       case 'water': this.splash(h.point); break;
       case 'palm': this.ruffle(h.ref); break;
-      case 'ground': this.sandPuff(h.point); break;
+      case 'ground': this.sandPuff(h.point); this.build(h.point); break;
+      case 'castle': { const c = this.castles.find((c) => c.id === h.ref); if (c && c.dying < 0) { c.dying = this.time; this.sandPuff(c.group.position, 0.7); } break; }
       case 'vpier': this.vpier.on = !this.vpier.on; this.vpier.t = 0; break;
       case 'smpier': this.smpier.on = !this.smpier.on; this.smpier.t = 0; break;
       case 'hills': case 'range': this.flock(h.point); break;
@@ -139,11 +144,22 @@ export class Interact {
     }
   }
 
-  private sandPuff(p: THREE.Vector3) {
+  private sandPuff(p: THREE.Vector3, spread = 1) {
     for (let i = 0; i < 26; i++) {
-      const a = hash(i, 11) * Math.PI * 2, sp = 0.6 + hash(i, 12) * 2.2;
+      const a = hash(i, 11) * Math.PI * 2, sp = (0.6 + hash(i, 12) * 2.2) * spread;
       this.emit('sand', p.x, p.y + 0.1, p.z, Math.cos(a) * sp, 1.5 + hash(i, 13) * 3.5, Math.sin(a) * sp, 0.6 + hash(i, 14) * 0.5, 0.3 + hash(i, 15) * 0.5, 0.94, 0.8, 0.56, i);
     }
+  }
+
+  /** A sandcastle where the sand was tapped: only on the beach, not up on the walk or the city. */
+  private build(p: THREE.Vector3) {
+    const inland = shoreAt(p.x) - p.z;
+    if (inland > 96) return;
+    // Not on top of one that is already there.
+    if (this.castles.some((c) => c.dying < 0 && c.group.position.distanceTo(p) < 5)) return;
+    const c = makeCastle(p.x, p.y, p.z, this.time, Math.round(p.x * 7 + p.z * 3));
+    this.world.scene.add(c.group);
+    this.castles.push(c);
   }
 
   private ruffle(ref: number) {
@@ -283,6 +299,12 @@ export class Interact {
     }
     for (let i = nf; i < 900; i++) fx.alpha[i] = 0;
     fx.commit();
+
+    // Sandcastles go up, and come down when tapped.
+    for (let i = this.castles.length - 1; i >= 0; i--) {
+      const c = this.castles[i];
+      if (tickCastle(c, time)) { this.world.scene.remove(c.group); disposeCastle(c); this.castles.splice(i, 1); }
+    }
 
     // Clouds: appear whole with a small settling jiggle, drift, bounce off
     // the sides of the frame; tapped again, they shrink away.

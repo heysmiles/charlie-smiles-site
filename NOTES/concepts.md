@@ -168,6 +168,12 @@ Follow-up: a cloud showed stray lines under its base — the flat base row was
 drawn where a bump's bottom stopped a row or two short of it. The mask now
 fills every column solid down to the base. Cursor tail straightened (vertical
 stem, flat bottom). Gulls down from 30–38 to 22–28 units.
+Then the cursor's notch leaked white outside the ink: redrawn so every white
+cell is enclosed (the generator asserts it).
+Sandcastle: tapping the sand now also builds a miniature castle there
+(`sandcastle.ts`, about a third of a lifeguard tower tall; only on the beach,
+not within 5 units of another), pieces popping up in order; tapping the
+castle crumbles it, each piece tilting, sinking and shrinking over ~0.9 s.
 
 ## Status — 2026-10-01, earlier — swash as a detail; clouds settle in, tap to remove
 
