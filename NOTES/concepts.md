@@ -153,7 +153,19 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
-## Status — 2026-10-01, last — swash as a detail; clouds settle in, tap to remove
+## Status — 2026-10-01, last — pixel cursor; swash is just the sheet
+
+Charlie: the cursor like his reference — a classic pixel arrow, ink outline,
+white fill, normal size, just a touch more pixelated. And the swash keeps only
+the translucent sheet: drop the darker brown wash-up with its white stroke;
+the sea's white rim plus the see-through sheet is enough.
+Done: the cursor is an inline SVG on `html` (11×17 cells at ~1.35 px, crisp
+edges, hotspot at the tip; links and buttons inherit it, the crosshair on the
+stage is gone). `swash.ts` lost the wet-stain history loop, the always-damp
+band, and the edge line; it draws the covered sheet (sheen tint, a few foam
+flecks thinning toward its front) with the same inland fade.
+
+## Status — 2026-10-01, earlier — swash as a detail; clouds settle in, tap to remove
 
 Charlie: the swash much smaller, translucent (sand visible through it),
 strongest toward the ocean and bleeding to invisible up the sand. Clouds a

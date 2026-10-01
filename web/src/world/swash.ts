@@ -5,15 +5,14 @@ import { NOISE } from './glsl';
 
 /**
  * The swash: what the water does on the sand. Each front that reaches the
- * beach sends a thin sheet running up the slope — a white edge leading it —
- * which stalls, drains back, and leaves the sand dark and wet where it got
- * to; the stain takes a few seconds to melt away. Different waves run up
- * different distances, and it never does the same thing all along the beach.
+ * beach sends a thin translucent sheet running up the slope, which stalls and
+ * drains back. Different waves run up different distances, and it never does
+ * the same thing all along the beach. Just the sheet: no wet stain left
+ * behind and no drawn edge, so the sand shows through and the only hard white
+ * line on the beach is the sea's own rim.
  *
- * A ribbon over the sand along the waterline, following the beach's bend,
- * with a shader that keeps its own history: the run-up is an analytic
- * function of time, so "was this spot under water in the last few seconds"
- * is answered by sampling it at a handful of past moments.
+ * A ribbon over the sand along the waterline, following the beach's bend; the
+ * run-up is an analytic function of time.
  */
 const vert = /* glsl */ `
 varying vec3 vWorld;
@@ -42,27 +41,13 @@ void main(){
   float jag = vnoise2(vec2(vWorld.x * 0.11, uTime * 0.05)) * 3.5 + vnoise2(vec2(vWorld.x * 0.4, 7.0)) * 1.2;
   float ragged = (vnoise2(vec2(vWorld.x * 0.5, 3.0)) - 0.5) * 0.8;   // the edge is never a straight line
   float now = runup(vWorld.x, uTime, jag) + ragged;
-  // Covered right now: a thin sheet of water on the sand, a white edge leading it.
-  float covered = 1.0 - smoothstep(now - 0.3, now + 0.1, d);
-  float edge = smoothstep(now - 0.7, now - 0.2, d) * (1.0 - smoothstep(now + 0.0, now + 0.35, d));
-  // Been under water lately: the wet stain, strongest where it just drained, melting over ~3.5 s.
-  float wet = 0.0;
-  for (int k = 0; k < 10; k++) {
-    float tk = uTime - float(k) * 0.35;
-    float jk = vnoise2(vec2(vWorld.x * 0.11, tk * 0.05)) * 3.5 + vnoise2(vec2(vWorld.x * 0.4, 7.0)) * 1.2;
-    float r = runup(vWorld.x, tk, jk) + ragged;
-    float was = 1.0 - smoothstep(r - 0.3, r + 0.2, d);
-    wet = max(wet, was * pow(1.0 - float(k) / 10.0, 1.3));
-  }
-  // The band just above the waterline is always damp.
-  wet = max(wet, (1.0 - smoothstep(0.0, 1.2, d)) * 0.5);
+  // Covered right now: a thin sheet of water on the sand, soft at its front.
+  float covered = 1.0 - smoothstep(now - 0.4, now + 0.1, d);
   float onSand = smoothstep(-1.5, 0.5, d);   // only above the waterline; the sea covers the rest
-  // Foam left behind as the sheet drains: a lace that thins out with the stain.
-  float lace = wet * (1.0 - covered) * smoothstep(0.55, 0.8, vnoise2(vec2(vWorld.x * 1.3, d * 1.1 + uTime * 0.2))) * 0.5;
-  vec3 col = uWet;
-  float a = wet * 0.32;
-  col = mix(col, uSheen, covered * 0.6); a = max(a, covered * 0.3);
-  col = mix(col, uFoam, max(edge, lace)); a = max(a, max(edge * 0.7, lace * 0.45));
+  // A little foam riding on the sheet, thinning toward its front.
+  float lace = covered * smoothstep(0.6, 0.85, vnoise2(vec2(vWorld.x * 1.3, d * 1.1 + uTime * 0.2))) * (1.0 - smoothstep(now - 1.0, now, d)) * 0.5;
+  vec3 col = mix(mix(uWet, uSheen, 0.6), uFoam, lace);
+  float a = covered * 0.3;
   // A small thing: translucent, and strongest at the waterline, bleeding away
   // to nothing up the sand so it never reads as a band laid on top.
   float fade = 1.0 - smoothstep(-0.5, 4.5, d);

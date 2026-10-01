@@ -104,12 +104,12 @@ Nothing in it is an image. It lives in `web/src/world/`:
   darker steepening face just shoreward of it, a spit of spray — with the
   breaking stretches drifting along the beach over time, never everywhere at
   once. Above the waterline, `swash.ts` is a ribbon over the sand: each front
-  sends a thin sheet running up the slope with a white edge leading it, which
-  stalls, drains back, and leaves the sand dark and wet where it reached; the
-  stain melts over a few seconds (the shader samples its own analytic run-up
-  at a handful of past moments). It is a small, translucent detail: strongest
-  at the waterline and fading to nothing up the sand, so the sand shows
-  through and it never reads as a band laid on top.
+  sends a thin translucent sheet running up the slope (an analytic run-up,
+  different per wave and along the beach) which stalls and drains back. Just
+  the sheet, with a little foam riding on it: no wet stain left behind and no
+  drawn edge, so the only hard white line on the beach is the sea's own rim.
+  It is a small detail, strongest at the waterline and fading to nothing up
+  the sand, so the sand shows through and it never reads as a band laid on top.
   The bay curves: north of Venice the shore bends seaward (`shoreAt`) and
   the town runs on through Santa Monica — taller, paler hotels on the bluff,
   the pier — thinning and fogging toward the foot of the range, so the coast
