@@ -44,10 +44,16 @@ function mask(f: Formation) {
       if (dx * dx + dy * dy * 1.3 < r * r) { m[y * f.w + x] = 1; break; }
     }
   }
-  // flat base: fill between the outermost filled cells on the base row
+  // flat base: between the outermost filled cells on the base row, fill every
+  // column solid from its lowest bump cell down to the base, so no bump hangs
+  // above the base line with a gap under it (a stray line below the cloud).
   let lo = -1, hi = -1;
   for (let x = 0; x < f.w; x++) if (m[f.base * f.w + x]) { if (lo < 0) lo = x; hi = x; }
-  if (lo >= 0) for (let x = lo; x <= hi; x++) { m[f.base * f.w + x] = 1; if (f.base > 0 && m[(f.base - 1) * f.w + x] === 0 && (m[(f.base - 1) * f.w + Math.max(0, x - 1)] || m[(f.base - 1) * f.w + Math.min(f.w - 1, x + 1)])) m[(f.base - 1) * f.w + x] = 1; }
+  if (lo >= 0) for (let x = lo; x <= hi; x++) {
+    let y = f.base; while (y > 0 && !m[(y - 1) * f.w + x]) y--;
+    if (y === 0) y = Math.max(0, f.base - 1); // no bump in this column at all: keep the base two cells thick
+    for (let yy = y; yy <= f.base; yy++) m[yy * f.w + x] = 1;
+  }
   return m;
 }
 

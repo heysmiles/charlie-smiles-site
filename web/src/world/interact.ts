@@ -159,7 +159,7 @@ export class Interact {
     for (let i = 0; i < 9; i++) {
       // A V: the leader ahead, the rest trailing on either side.
       const row = Math.ceil(i / 2), side = i % 2 ? -1 : 1;
-      this.emit('bird', p.x - dir * row * 30 + (hash(i, 21) - 0.5) * 6, p.y + 50 - row * 7 + (hash(i, 22) - 0.5) * 5, p.z + side * row * 22, dir * 26, 1.6, 0, 20, 30 + hash(i, 23) * 8, 0.99, 0.97, 0.93, i);
+      this.emit('bird', p.x - dir * row * 30 + (hash(i, 21) - 0.5) * 6, p.y + 50 - row * 7 + (hash(i, 22) - 0.5) * 5, p.z + side * row * 22, dir * 26, 1.6, 0, 20, 22 + hash(i, 23) * 6, 0.99, 0.97, 0.93, i);
     }
   }
 

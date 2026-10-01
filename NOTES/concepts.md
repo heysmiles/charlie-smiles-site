@@ -164,6 +164,10 @@ edges, hotspot at the tip; links and buttons inherit it, the crosshair on the
 stage is gone). `swash.ts` lost the wet-stain history loop, the always-damp
 band, and the edge line; it draws the covered sheet (sheen tint, a few foam
 flecks thinning toward its front) with the same inland fade.
+Follow-up: a cloud showed stray lines under its base — the flat base row was
+drawn where a bump's bottom stopped a row or two short of it. The mask now
+fills every column solid down to the base. Cursor tail straightened (vertical
+stem, flat bottom). Gulls down from 30–38 to 22–28 units.
 
 ## Status — 2026-10-01, earlier — swash as a detail; clouds settle in, tap to remove
 
