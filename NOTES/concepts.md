@@ -174,6 +174,13 @@ Sandcastle: tapping the sand now also builds a miniature castle there
 (`sandcastle.ts`, about a third of a lifeguard tower tall; only on the beach,
 not within 5 units of another), pieces popping up in order; tapping the
 castle crumbles it, each piece tilting, sinking and shrinking over ~0.9 s.
+Cursor again: the classic Windows arrow (12×19, tail sloping down-right in
+step pairs, flat two-cell bottom) at 1.2 px cells — Charlie's reference.
+Scroll feel: the wave track cut from 560vh to 400vh and Lenis's wheel
+multiplier 0.9 → 1.2 (touch 1.6 → 1.9), about 1.9× fewer scrolls through
+the wave. Nothing about the animation changed; it is keyed to progress. The
+camera's reveal-end key sits at `pin` = 100/400 now, so the reveal is still
+exactly one viewport of scroll.
 
 ## Status — 2026-10-01, earlier — swash as a detail; clouds settle in, tap to remove
 

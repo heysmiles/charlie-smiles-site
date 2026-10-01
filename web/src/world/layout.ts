@@ -26,8 +26,10 @@ export const L = {
   veniceX: -115,
   /** Where the camera comes to rest: off the beach, facing Windward. */
   endCam: { pos: [-115, 15, -96] as const, look: [-115, 8, -300] as const },
-  /** Height of the wave's scroll track, in viewport heights. */
-  trackVh: 560,
+  /** Height of the wave's scroll track, in viewport heights. Shorter means
+   *  fewer scrolls through the wave; the animation is keyed to progress, so
+   *  nothing about it changes, only how much scroll each step of it takes. */
+  trackVh: 400,
   /** Progress at which the stage fills the frame and pins (one viewport of slide-in). */
-  pin: 100 / 560,
+  pin: 100 / 400,
 } as const;

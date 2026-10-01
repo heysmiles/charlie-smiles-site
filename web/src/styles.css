@@ -10,12 +10,12 @@
 
 html, body, #root { margin: 0; padding: 0; }
 
-/* The cursor: a pixel arrow, ink outline and white fill, on an 11x17 grid of
+/* The cursor: a pixel arrow, ink outline and white fill, on a 12x19 grid of
    cells a touch larger than a device pixel, so it is normal cursor size but
    reads as pixels. Inlined as SVG so it is crisp on retina and needs no asset
    path. Everything, links included, inherits it. */
 html {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14.85' height='22.95' viewBox='0 0 11 17' shape-rendering='crispEdges'%3E%3Cpath fill='%23fff' d='M1 2h1v1h-1zM1 3h2v1h-2zM1 4h3v1h-3zM1 5h4v1h-4zM1 6h5v1h-5zM1 7h6v1h-6zM1 8h7v1h-7zM1 9h8v1h-8zM1 10h5v1h-5zM1 11h2v1h-2zM4 11h2v1h-2zM1 12h1v1h-1zM4 12h2v1h-2zM4 13h2v1h-2zM4 14h2v1h-2zM4 15h2v1h-2z'/%3E%3Cpath fill='%23000' d='M0 0h1v1h-1zM0 1h2v1h-2zM0 2h1v1h-1zM2 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM0 4h1v1h-1zM4 4h1v1h-1zM0 5h1v1h-1zM5 5h1v1h-1zM0 6h1v1h-1zM6 6h1v1h-1zM0 7h1v1h-1zM7 7h1v1h-1zM0 8h1v1h-1zM8 8h1v1h-1zM0 9h1v1h-1zM9 9h1v1h-1zM0 10h1v1h-1zM6 10h5v1h-5zM0 11h1v1h-1zM3 11h1v1h-1zM6 11h1v1h-1zM0 12h1v1h-1zM2 12h2v1h-2zM6 12h1v1h-1zM0 13h4v1h-4zM6 13h1v1h-1zM3 14h1v1h-1zM6 14h1v1h-1zM3 15h1v1h-1zM6 15h1v1h-1zM3 16h4v1h-4z'/%3E%3C/svg%3E") 0 0, auto;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14.40' height='22.80' viewBox='0 0 12 19' shape-rendering='crispEdges'%3E%3Cpath fill='%23fff' d='M1 2h1v1h-1zM1 3h2v1h-2zM1 4h3v1h-3zM1 5h4v1h-4zM1 6h5v1h-5zM1 7h6v1h-6zM1 8h7v1h-7zM1 9h8v1h-8zM1 10h9v1h-9zM1 11h6v1h-6zM1 12h3v1h-3zM5 12h2v1h-2zM1 13h2v1h-2zM5 13h2v1h-2zM1 14h1v1h-1zM6 14h2v1h-2zM6 15h2v1h-2zM7 16h2v1h-2zM7 17h2v1h-2z'/%3E%3Cpath fill='%23000' d='M0 0h1v1h-1zM0 1h2v1h-2zM0 2h1v1h-1zM2 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM0 4h1v1h-1zM4 4h1v1h-1zM0 5h1v1h-1zM5 5h1v1h-1zM0 6h1v1h-1zM6 6h1v1h-1zM0 7h1v1h-1zM7 7h1v1h-1zM0 8h1v1h-1zM8 8h1v1h-1zM0 9h1v1h-1zM9 9h1v1h-1zM0 10h1v1h-1zM10 10h1v1h-1zM0 11h1v1h-1zM7 11h5v1h-5zM0 12h1v1h-1zM4 12h1v1h-1zM7 12h1v1h-1zM0 13h1v1h-1zM3 13h2v1h-2zM7 13h1v1h-1zM0 14h1v1h-1zM2 14h1v1h-1zM5 14h1v1h-1zM8 14h1v1h-1zM0 15h2v1h-2zM5 15h1v1h-1zM8 15h1v1h-1zM6 16h1v1h-1zM9 16h1v1h-1zM6 17h1v1h-1zM9 17h1v1h-1zM7 18h2v1h-2z'/%3E%3C/svg%3E") 0 0, auto;
 }
 a, button, [role='button'] { cursor: inherit; }
 
