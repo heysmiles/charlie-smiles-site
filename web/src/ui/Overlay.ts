@@ -5,7 +5,7 @@
  */
 type Pixel = { x: number; y: number; vx: number; vy: number; life: number; max: number; s: number; c: string };
 
-const INK = ['#e86a17', '#fff3e6', '#66564a', '#ffb25c', '#fff9f5'];
+const INK = ['#ffffff', '#fff9f5', '#fff3e6'];
 
 export class Overlay {
   private ctx: CTX;
@@ -25,12 +25,12 @@ export class Overlay {
     this.canvas.style.width = `${w}px`; this.canvas.style.height = `${h}px`;
   }
 
-  /** A small pixelated explosion at (x, y), in CSS pixels. */
+  /** A very small firework at (x, y), in CSS pixels: a dozen white pixels out and down. */
   burst(x: number, y: number) {
-    for (let i = 0; i < 26; i++) {
-      const a = (i / 26) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-      const sp = 80 + Math.random() * 200;
-      this.px.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, life: 0, max: 0.32 + Math.random() * 0.3, s: 2 + Math.floor(Math.random() * 3) * 2, c: INK[Math.floor(Math.random() * INK.length)] });
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
+      const sp = 36 + Math.random() * 70;
+      this.px.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 24, life: 0, max: 0.22 + Math.random() * 0.2, s: 2, c: INK[Math.floor(Math.random() * INK.length)] });
     }
   }
 
@@ -48,13 +48,13 @@ export class Overlay {
     for (let i = this.px.length - 1; i >= 0; i--) {
       const p = this.px[i]; p.life += dt;
       if (p.life >= p.max) { this.px.splice(i, 1); continue; }
-      p.vx *= 1 - dt * 3; p.vy = p.vy * (1 - dt * 3) + 260 * dt;
+      p.vx *= 1 - dt * 4; p.vy = p.vy * (1 - dt * 4) + 160 * dt;
       p.x += p.vx * dt; p.y += p.vy * dt;
       const u = p.life / p.max;
-      g.globalAlpha = u < 0.7 ? 1 : 1 - (u - 0.7) / 0.3;
+      // Twinkle out: the last third blinks.
+      g.globalAlpha = u < 0.66 ? 1 : (Math.floor(u * 30) % 2 ? 1 : 0.25);
       g.fillStyle = p.c;
-      const s = u > 0.5 ? Math.max(2, p.s - 2) : p.s;
-      g.fillRect(Math.round(p.x / 2) * 2, Math.round(p.y / 2) * 2, s, s);
+      g.fillRect(Math.round(p.x / 2) * 2, Math.round(p.y / 2) * 2, p.s, p.s);
     }
     g.globalAlpha = 1;
     // The countdown badge: a tiny pixel cloud and the seconds left.

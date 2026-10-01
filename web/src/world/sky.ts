@@ -1,8 +1,6 @@
 import * as THREE from 'three';
 import { P } from './palette';
 import { L } from './layout';
-import { hash } from './math';
-import { SpritePool, softDisc } from './sprites';
 import { HAZE, creamRaw } from './glsl';
 
 const vert = /* glsl */ `
@@ -69,29 +67,5 @@ export function makeSky() {
   dome.userData.kind = 'sky';
   g.add(dome);
 
-  // Soft clouds: clusters of sprites, cream over the sun, pinker away from it.
-  const pool = new SpritePool(260, softDisc(256, 0.05));
-  const cream = new THREE.Color(P.cloud), pink = new THREE.Color(P.cloudShade), c = new THREE.Color();
-  let i = 0;
-  for (let k = 0; k < 24; k++) {
-    const cx = -900 + hash(k, 1) * 1800;
-    const cz = -300 + hash(k, 2) * 1200;
-    const cy = 60 + hash(k, 3) * 80;
-    const n = 6 + Math.floor(hash(k, 4) * 6);
-    const spread = 40 + hash(k, 5) * 70;
-    for (let m = 0; m < n && i < 260; m++) {
-      pool.pos[i * 3] = cx + (hash(k, m, 1) - 0.5) * spread * 2;
-      pool.pos[i * 3 + 1] = cy + (hash(k, m, 2) - 0.5) * 10;
-      pool.pos[i * 3 + 2] = cz + (hash(k, m, 3) - 0.5) * spread * 0.6;
-      pool.size[i] = 60 + hash(k, m, 4) * 90;
-      pool.alpha[i] = 0.35 + hash(k, m, 5) * 0.3;
-      c.copy(cream).lerp(pink, hash(k, 6));
-      pool.color[i * 3] = c.r; pool.color[i * 3 + 1] = c.g; pool.color[i * 3 + 2] = c.b;
-      i++;
-    }
-  }
-  pool.commit();
-  pool.points.renderOrder = -5;
-  g.add(pool.points);
-  return { group: g, dome, uniforms: mat.uniforms, clouds: pool.uniforms };
+  return { group: g, dome, uniforms: mat.uniforms };
 }

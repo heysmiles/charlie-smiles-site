@@ -97,7 +97,9 @@ Nothing in it is an image. It lives in `web/src/world/`:
   The beach slopes under the water (no cliff at the waterline), and the
   ocean shader's shore break rides that slope: water thinning over wet sand,
   successive foam fronts rolling up with a ragged sheet behind each, and a
-  bright swash lace where the water meets the sand.
+  solid white rim at the waterline — keyed to water depth, so it rides the
+  swell and is always at the visible edge, thicker than the fronts — with a
+  ragged lace fraying back from it into the shallows.
   The bay curves: north of Venice the shore bends seaward (`shoreAt`) and
   the town runs on through Santa Monica — taller, paler hotels on the bluff,
   the pier — thinning and fogging toward the foot of the range, so the coast
@@ -117,7 +119,7 @@ Nothing in it is an image. It lives in `web/src/world/`:
   is relative to it, so the wave keeps crashing while the camera keeps
   moving; the frame then eases onto fixed keys facing the sea. There is no
   surfer: the viewer is the one in the tube.
-- `sky.ts` — gradient dome with the sun, soft sprite clouds. A real sunset:
+- `sky.ts` — gradient dome with the sun. A real sunset:
   away from the sun (the east, over Venice) a red horizon, the pink belt,
   lavender above it, then cream; toward the sun (the west, over the sea)
   yellow, orange, peach, cream — blended by azimuth. The dome is also
@@ -149,11 +151,15 @@ left dark); water throws a crown of droplets and spreading rings; a palm
 takes a gust (crown sways, fronds ruffle, a couple of dead fronds drift
 down); sand puffs; the Venice Pier's lamps come on; the Santa Monica Pier
 lights up and the Pacific Wheel turns; the hills and the range send up a
-flock of birds; the sky grows a cloud where you tapped — one of six
-formations, lit from below, drifting and bouncing off the sides of the frame,
-never leaving — one every five seconds, with a pixel countdown in between.
-Every tap bursts a few pixels at the cursor. All of it runs on the world's
-clock, so scrolling away and back finds things as you left them.
+flock of birds; the sky grows a **pixel-art cloud** where you tapped
+(`world/pixelcloud.ts`: a union of round bumps over a flat base on a cell
+grid, drawn to a canvas and shown nearest-neighbour, shaded in bands from the
+top surface down — white, cream, peach underside with darker dots; six
+formations; born pixel by pixel from the middle out), drifting and bouncing
+off the sides of the frame, never leaving — one every five seconds, with a
+pixel countdown in between. Every tap sets off a very small white firework of
+pixels at the cursor. All of it runs on the world's clock, so scrolling away
+and back finds things as you left them. The sky has no other clouds.
 
 **The sun** sets down the line (`L.sunDir`), over the seaward end of the
 range as seen through the mouth of the tube; in the final view it is behind

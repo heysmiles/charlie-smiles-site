@@ -87,9 +87,14 @@ void main(){
   float sheet = (1.0 - smoothstep(0.05, 0.6, f)) * smoothstep(0.35, 0.7, vnoise2(vec2(vWorld.x * 0.9, sd * 0.9 + uTime * 0.6)) * 0.6 + vnoise2(vec2(vWorld.x * 2.4, sd * 2.4)) * 0.4);
   float zone = smoothstep(-3.0, 3.0, sd) * (1.0 - smoothstep(12.0, 30.0, sd));
   float foamAmt = clamp(edge * 0.9 + sheet * 0.55, 0.0, 1.0) * zone * (0.35 + 0.65 * shallow);
-  // The swash: a bright lace where the water meets the sand.
-  foamAmt += near * smoothstep(0.0, 1.2, depth) * (1.0 - smoothstep(1.2, 2.6, depth)) * 0.5 * smoothstep(0.4, 0.75, vnoise2(vec2(vWorld.x * 1.6, uTime * 0.7 + sd)));
-  col = mix(col, uFoam, clamp(foamAmt, 0.0, 0.92));
+  // The waterline. Where the water is thinnest it is foam, always: a solid
+  // white edge keyed to depth so it rides with the swell, thicker than the
+  // fronts, then a ragged lace fraying back from it into the shallows.
+  float rim = (1.0 - smoothstep(0.0, 0.8, depth)) * near;
+  float lace = (1.0 - smoothstep(0.5, 2.6, depth)) * near * smoothstep(0.3, 0.7, vnoise2(vec2(vWorld.x * 1.6, uTime * 0.7 + sd)) * 0.7 + vnoise2(vec2(vWorld.x * 4.0, sd * 3.0)) * 0.3);
+  foamAmt = max(foamAmt, rim * 0.98);
+  foamAmt += lace * 0.6;
+  col = mix(col, uFoam, clamp(foamAmt, 0.0, 0.98));
 
   col = mix(col, uFog, smoothstep(uFogNear, uFogFar, d));
   gl_FragColor = vec4(hazeTop(col), 1.0);

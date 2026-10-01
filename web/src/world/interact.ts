@@ -4,6 +4,7 @@ import { VENICE, shoreAt, type Kind, type LampSet } from './venice';
 import { SpritePool, softDisc } from './sprites';
 import { oceanH } from './ocean';
 import { hash, clamp01, lerp } from './math';
+import { FORMATIONS, cloudFrames } from './pixelcloud';
 
 /**
  * Touching Venice. Once the camera rests off the beach, a tap reaches into the
@@ -35,19 +36,7 @@ const ACTIVE_FROM = 0.9; // progress at which Venice is "the screen"
 
 export type ClickResult = { kind: Kind | 'cooldown'; point?: THREE.Vector3; cloudReadyAt?: number };
 
-// Cloud formations: puffs as [dx, dy, size] about the cloud's centre, in world
-// units on the sky plane. Six shapes: a cumulus heap, a long low stratus, a
-// towering column, a small pair, a wide anvil, and a broken scatter.
-const FORMATIONS: [number, number, number][][] = [
-  [[0, 0, 72], [-34, -6, 58], [36, -4, 60], [-10, 24, 54], [18, 26, 50], [0, -16, 62]],
-  [[-72, 0, 46], [-36, 3, 52], [0, 5, 56], [36, 3, 52], [72, 0, 46], [-52, -10, 40], [52, -10, 40]],
-  [[0, 0, 62], [-14, 28, 54], [12, 32, 52], [0, 58, 46], [-8, 80, 38], [-28, -8, 52], [28, -10, 50]],
-  [[-18, 0, 46], [20, 2, 42], [0, 14, 38]],
-  [[0, 0, 58], [-42, 10, 52], [42, 10, 52], [-84, 18, 42], [84, 18, 42], [0, 26, 50], [-22, -14, 46], [22, -14, 46]],
-  [[-64, 0, 40], [-30, 10, 36], [0, -4, 44], [32, 8, 38], [66, 0, 34], [-48, -14, 32], [48, -12, 32]],
-];
-
-type Cloud = { group: THREE.Group; mats: THREE.SpriteMaterial[]; vx: number; born: number; width: number; bob: number };
+type Cloud = { sprite: THREE.Sprite; frames: THREE.CanvasTexture[]; vx: number; born: number; width: number; bob: number };
 type Particle = { kind: 'drop' | 'sand' | 'leaf' | 'bird'; x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; size: number; r: number; g: number; b: number; seed: number };
 type Lit = { on: boolean; level: number; t: number };
 
@@ -59,7 +48,6 @@ export class Interact {
   private ripples: { mesh: THREE.Mesh; t: number; max: number }[] = [];
   private rippleGeo = new THREE.RingGeometry(0.8, 1, 40);
   private clouds: Cloud[] = [];
-  private cloudTex = softDisc(256, 0.06);
   private cloudReadyAt = 0;
   private cloudCount = 0;
   private towers: Lit[] = VENICE.towers.map(() => ({ on: false, level: 0, t: 0 }));
@@ -181,27 +169,16 @@ export class Interact {
   private spawnCloud(p: THREE.Vector3) {
     // A different formation each time, in a shuffled order rather than a fixed one.
     const form = FORMATIONS[(this.cloudCount++ * 5 + Math.floor(hash(Math.round(p.x), Math.round(this.time * 31)) * 3)) % FORMATIONS.length];
-    const group = new THREE.Group();
-    group.position.copy(p);
-    group.scale.setScalar(0.01);
-    const mats: THREE.SpriteMaterial[] = [];
-    let width = 0;
-    const top = new THREE.Color(0xfff4ea), under = new THREE.Color(0xe8a070);
-    for (const [dx, dy, s] of form) {
-      // Lit from the low sun: the undersides peach, the tops cream.
-      const c = under.clone().lerp(top, clamp01(0.3 + dy / 70));
-      // No scene fog on these: at the sky plane's distance it would paint them the horizon's orange.
-      const m = new THREE.SpriteMaterial({ map: this.cloudTex, color: c, transparent: true, depthWrite: false, opacity: 0.95, fog: false });
-      const sp = new THREE.Sprite(m);
-      sp.position.set(dx * 2.4, dy * 2.4, (hash(dx, dy) - 0.5) * 10);
-      sp.scale.set(s * 2.4, s * 1.8, 1);
-      sp.raycast = () => {};
-      group.add(sp); mats.push(m);
-      width = Math.max(width, (Math.abs(dx) + s / 2) * 2.4);
-    }
-    this.world.scene.add(group);
+    const seed = Math.round(p.x * 3 + this.time * 17);
+    const frames = cloudFrames(form, seed);
+    const CELL = 3.2; // world units per pixel on the cloud plane
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: frames[0], transparent: true, depthWrite: false, fog: false, opacity: 1 }));
+    sprite.position.copy(p);
+    sprite.scale.set(form.w * CELL, form.h * CELL, 1);
+    sprite.raycast = () => {};
+    this.world.scene.add(sprite);
     const vx = (hash(Math.round(p.x * 3), 5) < 0.5 ? -1 : 1) * (5 + hash(Math.round(p.y), 6) * 5);
-    this.clouds.push({ group, mats, vx, born: this.time, width, bob: hash(Math.round(p.x), 9) * 6.28 });
+    this.clouds.push({ sprite, frames, vx, born: this.time, width: form.w * CELL / 2, bob: hash(Math.round(p.x), 9) * 6.28 });
   }
 
   private emit(kind: Particle['kind'], x: number, y: number, z: number, vx: number, vy: number, vz: number, max: number, size: number, r: number, g: number, b: number, seed: number) {
@@ -292,18 +269,19 @@ export class Interact {
     for (let i = nb; i < 80; i++) birds.alpha[i] = 0;
     fx.commit(); birds.commit();
 
-    // Clouds: puff up when born, drift, bounce off the sides of the frame.
+    // Clouds: pop in pixel by pixel when born, drift, bounce off the sides of the frame.
     const cam = this.world.camera;
     const show = clamp01((progress - 0.86) / 0.06);
     for (const c of this.clouds) {
       const age = time - c.born;
-      const grow = age < 1.2 ? 1 - Math.pow(1 - age / 1.2, 3) * (1 + 0.6 * Math.sin(age * 6)) : 1;
-      c.group.scale.setScalar(Math.max(0.01, grow));
-      c.group.position.x += c.vx * dt;
-      c.group.position.y += Math.sin(time * 0.35 + c.bob) * dt * 0.6;
-      for (const m of c.mats) m.opacity = 0.95 * show;
-      // Bounce: project each edge of the cloud; if it has reached the frame's side, turn around.
-      const edge = this.tmp.set(c.group.position.x + Math.sign(c.vx) * c.width, c.group.position.y, c.group.position.z).project(cam);
+      const fi = Math.min(c.frames.length - 1, Math.floor(age / 0.09));
+      const mat = c.sprite.material as THREE.SpriteMaterial;
+      if (mat.map !== c.frames[fi]) { mat.map = c.frames[fi]; mat.needsUpdate = true; }
+      c.sprite.position.x += c.vx * dt;
+      c.sprite.position.y += Math.sin(time * 0.35 + c.bob) * dt * 0.6;
+      mat.opacity = show;
+      // Bounce: project the cloud's leading edge; at the frame's side, turn around.
+      const edge = this.tmp.set(c.sprite.position.x + Math.sign(c.vx) * c.width, c.sprite.position.y, c.sprite.position.z).project(cam);
       if (Math.abs(edge.x) > 0.98 && Math.sign(edge.x) === Math.sign(c.vx)) c.vx = -c.vx;
     }
   }

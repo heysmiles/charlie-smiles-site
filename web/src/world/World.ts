@@ -83,7 +83,7 @@ export class World {
     pmrem.dispose();
     this.scene.add(this.ocean.mesh);
     this.scene.add(this.wave.mesh);
-    this.hazed = [sky.uniforms, (this.ocean.mesh.material as THREE.ShaderMaterial).uniforms, (this.wave.mesh.material as THREE.ShaderMaterial).uniforms, sky.clouds, this.foam.pool.uniforms] as typeof this.hazed;
+    this.hazed = [sky.uniforms, (this.ocean.mesh.material as THREE.ShaderMaterial).uniforms, (this.wave.mesh.material as THREE.ShaderMaterial).uniforms, this.foam.pool.uniforms] as typeof this.hazed;
     this.scene.add(this.foam.points);
     this.scene.add(makeMountains());
     this.scene.add(makeVenice());
@@ -124,8 +124,7 @@ export class World {
     this.hazed[0].uHazeLo.value = 0.42;
     this.hazed[1].uHazeLo.value = water;
     this.hazed[2].uHazeLo.value = water;
-    this.hazed[3].uHazeLo.value = 0.42;
-    this.hazed[4].uHazeLo.value = water;
+    this.hazed[3].uHazeLo.value = water;
 
     const cs = cameraAt(progress);
     const target = new THREE.Vector3(cs.pos[0], cs.pos[1], cs.pos[2]);

@@ -153,6 +153,18 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-01, later — pixel clouds, tiny firework, solid waterline
+
+Charlie sent two pixel-cloud reference sheets: the clouds should be
+pixelated like those, consistent with the rest; the explosion much smaller,
+just small white pixels like a tiny firework; the blobby sky clouds around
+the Malibu range removed; and the water's edge should always carry its
+white foam even mid-animation. Done: `pixelcloud.ts` (cell-grid clouds,
+nearest-filtered, banded sunset shading, pixel-by-pixel birth), the sprite
+cloud pool gone from `sky.ts`, the overlay burst cut to a dozen 2px white
+pixels that twinkle out, and the ocean shader's waterline is a solid rim keyed
+to depth (always at the visible edge) with lace fraying back.
+
 ## Status — 2026-10-01 — touching Venice
 
 Charlie: once you're on the Venice screen, a tap gives a small pixelated
