@@ -25,7 +25,7 @@ export function WaveSection() {
     if (import.meta.env.DEV) { (window as unknown as Record<string, unknown>).__p = (v: number | null) => { override = v; }; (window as unknown as Record<string, unknown>).__overlay = overlay; }
 
     const resize = () => {
-      const w = el.clientWidth, h = window.innerHeight;
+      const w = el.clientWidth, h = stage.clientHeight || window.innerHeight;
       world.resize(w, h);
       overlay.resize(w, h);
     };
@@ -56,8 +56,8 @@ export function WaveSection() {
       last = now;
       const rect = el.getBoundingClientRect();
       // Layout can settle after mount (or the pane can be hidden); re-check.
-      const cw = el.clientWidth, ch = window.innerHeight;
-      if (cw > 0 && ch > 0 && (canvas.current!.width !== Math.round(cw * Math.min(devicePixelRatio, 2)) )) world.resize(cw, ch);
+      const cw = el.clientWidth, ch = stage.clientHeight || window.innerHeight, pr = world.renderer.getPixelRatio();
+      if (cw > 0 && ch > 0 && (canvas.current!.width !== Math.round(cw * pr) || canvas.current!.height !== Math.round(ch * pr))) resize();
       // Progress runs from the moment the section's top edge enters the
       // viewport, so the wave is already breaking while the landing leaves.
       const p = override ?? clamp01((window.innerHeight - rect.top) / Math.max(1, el.offsetHeight));

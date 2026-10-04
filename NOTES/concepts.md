@@ -153,6 +153,23 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-04 — star drawn live; mobile pass; "surf the internet"
+
+Charlie: copy on the landing just "surf the internet" with the arrow. The
+star video sometimes showed a play button (mobile autoplay refused) and its
+poster showed black; rebuild it on the site so it plays on load. Then, while
+rebuilding: the stars should spin slowly in their row for 3–4 s and come
+together less often, so the gathering feels special. Any other mobile fixes.
+Done: `ui/star.ts` draws the three grainy stars on a canvas (straight-edged
+arms as stipple, three grain variants for shimmer, multiply blending), a
+9-second loop: slow turning row until ~3.6 s, gather and spin until ~7 s,
+back out. Slow spin rates are whole sixths per loop so it joins seamlessly.
+The webm files are gone from the repo (12.7 MB). Mobile: `100svh` landing,
+`100dvh` stage (the loop now re-fits the renderer on height changes too),
+pixel ratio ≤ 1.5 and a 2048 shadow map on small/touch screens, no tap
+highlight, no text selection on the stage, a favicon (ember star), light
+colour scheme. Portrait ride and rest checked at 375×812.
+
 ## Status — 2026-10-01, last — pixel cursor; swash is just the sheet
 
 Charlie: the cursor like his reference — a classic pixel arrow, ink outline,

@@ -38,7 +38,9 @@ export class World {
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Phones get a lighter load: a pixel ratio of at most 1.5 and a smaller shadow map.
+    const small = Math.min(window.innerWidth, window.innerHeight) < 700 || matchMedia('(pointer: coarse)').matches;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, small ? 1.5 : 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.NoToneMapping;
     this.renderer.shadowMap.enabled = true;
@@ -54,7 +56,7 @@ export class World {
     sun.target.position.set(L.veniceX - 120, 0, L.shoreZ - 90);
     sun.position.copy(sun.target.position).addScaledVector(sd, 700);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(4096, 4096);
+    sun.shadow.mapSize.set(small ? 2048 : 4096, small ? 2048 : 4096);
     sun.shadow.camera.near = 50; sun.shadow.camera.far = 1500;
     sun.shadow.camera.left = -700; sun.shadow.camera.right = 700;
     sun.shadow.camera.top = 320; sun.shadow.camera.bottom = -320;

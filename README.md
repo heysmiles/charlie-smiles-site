@@ -138,6 +138,25 @@ Nothing in it is an image. It lives in `web/src/world/`:
   page above and the sky are one surface; the haze lifts once the camera is
   in the tube.
 
+The landing (`ui/Landing.tsx`) is the star, the signature and "surf the
+internet" with an arrow. The star is drawn live on a canvas (`ui/star.ts`),
+not played from a video: three grainy six-point stars, orange, blue and
+green, each arm a straight-edged triangle rasterised as stipple (dense down
+the middle, fading to the edges, a dark heart), in a few grain variants so
+it shimmers; multiplied together like inks and multiplied into the cream by
+CSS. They sit in a row turning slowly for most of a nine-second loop, then
+slide into one burst, spin against each other, and slide back out. A canvas
+needs no autoplay (phones in low-power mode refuse video and show a play
+button) and has nothing behind it (a video's poster showed black), and it is
+crisp at any pixel ratio. It only runs while on screen and the tab is
+visible, and holds its first frame under reduced-motion.
+
+Phones: the landing is `100svh` and the stage `100dvh`, so nothing jumps as
+the browser bars come and go; the renderer runs at a pixel ratio of at most
+1.5 and a 2048 shadow map on small or touch screens; the camera widens its
+field of view in portrait (`World.update`); taps are pointer events with a
+move/hold threshold so a scroll never counts as a tap.
+
 The page (`ui/WaveSection.tsx`) is the landing block, then a tall scroll
 track with a sticky, viewport-sized stage: the world scrolls up under the
 landing like any block and pins when it fills the frame. Progress runs from
