@@ -153,6 +153,23 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-05 — star: sharper sheet, clean slow turn before the gathering
+
+Charlie: the sheet looked blurrier than the original (keep the grain, lose
+the blur); and the held loop bounced (the left star hopped) — instead, turn
+the stars slowly and cleanly, then gather, then be smooth on the way out.
+Done: desktop sheet is 480 px frames (6.2 MB, q0.76; the clip itself is 720
+and was shown at up to 920 device px, so this is 1.9× upscale instead of
+2.9×); phones 256 px (1.9 MB). The hold is now a real turn: 3.6 s, each star
+a whole sixth of a turn with ease-in-out, ending at rest on the clip's first
+frame, then the clip (gather, spin, return) and straight back to the hold.
+The held stars are cut from the clip's first frame by six-fold symmetry (the
+top wedge of each star is clear of the neighbours; every pixel is mapped
+into it; trimmed by the PNG silhouette), after a fitted-gradient recolour of
+star.png (yellow tip → red heart, etc.) still read heavier than the clip.
+Per-pixel mapping rather than six clipped drawImage copies, which left faint
+spokes at the wedge edges.
+
 ## Status — 2026-10-04, later — the original star clip is back, as a sprite sheet
 
 Charlie: the canvas-drawn stars looked nothing like the originals; go back.

@@ -145,13 +145,19 @@ and back — but played from a sprite sheet on a canvas (`ui/star.ts`), not
 from a `<video>`: phones in low-power mode refuse to autoplay video and show
 a play button, and a video's poster showed black behind the star; a sheet of
 frames has neither problem, starts when the page does, and is transparent.
-Two sheets of 75 frames at 15 fps (`public/brand/star-320.webp` for larger
-screens, `star-224.webp` for phones; built from the clip in the browser via
-the dev frame sink with `ext=webp&to=brand`). The loop lingers in the row:
-the opening half-second is played back and forth for a few seconds before
-the clip runs through, so the gathering is the event. It only runs while on
-screen and the tab is visible, and holds its first frame under
-reduced-motion.
+Two sheets of 75 frames at 15 fps (`public/brand/star-480.webp` for larger
+screens, `star-256.webp` for phones; built from the clip in the browser via
+the dev frame sink with `ext=webp&to=brand`; the source clips live in
+`public/ref/`, gitignored). The loop lingers in the row before each
+gathering: for 3.6 s the three stars turn slowly in place, each a whole
+sixth of a turn, easing to rest exactly on the clip's first frame; then the
+clip runs through and its last frame hands back to the row. The turning
+stars are cut from the clip's first frame itself — each star's top arm is
+clear of its neighbours, and a six-point star repeats every sixth, so every
+pixel is read from that one clean wedge by symmetry, then trimmed to the
+star's silhouette — so they are the clip's own pixels and the seams are no
+more than the grain changing. It only runs while on screen and the tab is
+visible, and holds its first frame under reduced-motion.
 
 Phones: the landing is `100svh` and the stage `100dvh`, so nothing jumps as
 the browser bars come and go; the renderer runs at a pixel ratio of at most
