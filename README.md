@@ -152,12 +152,15 @@ the dev frame sink with `ext=webp&to=brand`; the source clips live in
 gathering: for 3.6 s the three stars turn slowly in place, each a whole
 sixth of a turn, easing to rest exactly on the clip's first frame; then the
 clip runs through and its last frame hands back to the row. The turning
-stars are cut from the clip's first frame itself — each star's top arm is
-clear of its neighbours, and a six-point star repeats every sixth, so every
-pixel is read from that one clean wedge by symmetry, then trimmed to the
-star's silhouette — so they are the clip's own pixels and the seams are no
-more than the grain changing. It only runs while on screen and the tab is
-visible, and holds its first frame under reduced-motion.
+stars are cut from the clip itself — each star's top arm is clear of its
+neighbours, and a six-point star repeats every sixth, so every pixel is read
+from that one clean wedge by symmetry, then trimmed to the star's
+silhouette — so they are the clip's own pixels. The clip's grain changes
+every frame, so the stars are cut from six resting frames (the clip's first
+three and last three, one pose) and cycled at the clip's 15 fps during the
+hold: the shimmer never stops, and neither seam shows. It only runs while on
+screen and the tab is visible, and holds its first frame under
+reduced-motion.
 
 Phones: the landing is `100svh` and the stage `100dvh`, so nothing jumps as
 the browser bars come and go; the renderer runs at a pixel ratio of at most

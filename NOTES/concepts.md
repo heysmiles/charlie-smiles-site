@@ -153,6 +153,17 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-05, later — the star loop is seamless
+
+Charlie: two visible cuts, right before and right after the gathering.
+Cause: the held stars were one frozen grain image turning, while the clip's
+grain changes every frame — the shimmer stopping and starting read as cuts
+(the poses matched already). Done: the held stars are cut from six resting
+frames (0, 1, 2, 72, 73, 74 — same pose) and cycled at 15 fps during the
+hold, never the same sample twice running, built lazily one frame per tick.
+Measured: per-step alpha change across both seams (1–5) now sits in the same
+range as inside the hold and inside the clip, with no frozen stretch.
+
 ## Status — 2026-10-05 — star: sharper sheet, clean slow turn before the gathering
 
 Charlie: the sheet looked blurrier than the original (keep the grain, lose

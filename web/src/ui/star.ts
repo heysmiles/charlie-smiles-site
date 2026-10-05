@@ -14,12 +14,15 @@
  * first frame; then the clip runs through, and its last frame hands back to
  * the row. Each star turns a whole sixth, so it lands where it began.
  *
- * The turning stars are cut from the clip's first frame itself, so they are
- * the clip's own pixels — same softness, colour and dark heart — and the two
- * seams are no more than the grain changing, as it does every frame. In the
- * row the stars' side arms overlap their neighbours' tips, but the top arm
- * of each is clear, and a six-point star repeats every sixth of a turn: so
- * one clean wedge, replicated six times, is the whole star.
+ * The turning stars are cut from the clip itself, so they are the clip's own
+ * pixels — same softness, colour and dark heart. In the row the stars' side
+ * arms overlap their neighbours' tips, but the top arm of each is clear, and
+ * a six-point star repeats every sixth of a turn: so one clean wedge,
+ * replicated six times, is the whole star. The clip's grain changes every
+ * frame, and a frozen grain turning would read as a cut at each seam, so the
+ * stars are cut from six resting frames (the clip's first three and last
+ * three, which share one pose) and cycled at the clip's frame rate during
+ * the hold: the shimmer never stops, and neither seam shows.
  */
 const FPS = 15;
 const COLS = 9;
@@ -28,6 +31,7 @@ const HOLD = 3.6; // seconds of slow turning before the clip runs
 const CLIP = 720; // the clip's frame size, which the layout below is measured in
 const ROW = { cx: [172, 360, 540], cy: 360, size: 492 }; // the stars in the clip's first frame
 const TURN = [1, -1, 1]; // sixths of a turn each star makes during the hold
+const REST = [0, 1, 2, 72, 73, 74]; // the clip's resting frames, all in the row pose: grain samples for the hold
 
 const ease = (x: number) => { const t = Math.min(1, Math.max(0, x)); return t * t * (3 - 2 * t); };
 
@@ -40,13 +44,13 @@ const ease = (x: number) => { const t = Math.min(1, Math.max(0, x)); return t * 
  * alpha, boosted so the faint tips survive) so nothing of the neighbours'
  * tips comes along.
  */
-function extract(sheet: HTMLImageElement, px: number, silhouette: HTMLImageElement, k: number) {
+function extract(sheet: HTMLImageElement, px: number, silhouette: HTMLImageElement, k: number, f: number) {
   const s = px / CLIP;
   const D = Math.round(ROW.size * s * 1.3), h = D / 2;
   // The frame cell with this star centred, and the silhouette at the same scale.
   const src = document.createElement('canvas'); src.width = src.height = D;
   const sg = src.getContext('2d')!;
-  sg.drawImage(sheet, 0, 0, px, px, h - ROW.cx[k] * s, h - ROW.cy * s, px, px);
+  sg.drawImage(sheet, (f % COLS) * px, Math.floor(f / COLS) * px, px, px, h - ROW.cx[k] * s, h - ROW.cy * s, px, px);
   const sd = sg.getImageData(0, 0, D, D).data;
   const span = 512 * s; // the artwork's 512 px spans 492 clip units
   const mk = document.createElement('canvas'); mk.width = mk.height = D;
@@ -86,7 +90,7 @@ export class StarAnim {
   private ctx: CanvasRenderingContext2D;
   private sheet: HTMLImageElement | null = null;
   private silhouette: HTMLImageElement | null = null;
-  private stars: HTMLCanvasElement[] | null = null;
+  private stars: HTMLCanvasElement[][] = []; // per resting frame, the three stars; built one frame per tick
   private px = 480;
   private size = 0; private dpr = 1;
   private raf = 0;
@@ -108,9 +112,13 @@ export class StarAnim {
     star.onload = () => { this.silhouette = star; this.ready(); };
   }
 
-  private ready() {
-    if (this.sheet && this.silhouette && !this.stars) this.stars = [0, 1, 2].map((k) => extract(this.sheet!, this.px, this.silhouette!, k));
-    this.frame();
+  private ready() { this.frame(); }
+
+  /** Cut one more resting frame's stars, if any remain; spread over ticks so the first paint is not delayed. */
+  private buildOne() {
+    if (!this.sheet || !this.silhouette || this.stars.length >= REST.length) return;
+    const f = REST[this.stars.length];
+    this.stars.push([0, 1, 2].map((k) => extract(this.sheet!, this.px, this.silhouette!, k, f)));
   }
 
   resize(cssSize: number) {
@@ -126,13 +134,14 @@ export class StarAnim {
   stop() { this.running = false; cancelAnimationFrame(this.raf); }
   dispose() { this.stop(); }
 
-  /** The three stars in their row, each turned by `turn` sixths (0 = as in the clip's first frame). */
-  private drawRow(turn: number) {
-    if (!this.stars) return;
+  /** The three stars in their row, each turned by `turn` sixths (0 = as in the clip's first frame), from grain sample `sample`. */
+  private drawRow(turn: number, sample: number) {
+    const set = this.stars[sample % this.stars.length];
+    if (!set) return;
     const g = this.ctx, S = this.canvas.width, k = S / CLIP, up = S / this.px;
     g.save();
     g.globalCompositeOperation = 'multiply';
-    this.stars.forEach((star, i) => {
+    set.forEach((star, i) => {
       g.save();
       g.translate(ROW.cx[i] * k, ROW.cy * k);
       g.rotate(TURN[i] * turn * (Math.PI / 3));
@@ -154,9 +163,15 @@ export class StarAnim {
     if (S === 0 || !this.sheet) return;
     const loop = HOLD + FRAMES / FPS;
     const t = this.still ? 0 : ((performance.now() - this.t0) / 1000) % loop;
+    this.buildOne();
     this.ctx.clearRect(0, 0, S, S);
     if (t < HOLD) {
-      if (this.stars) this.drawRow(ease(t / HOLD)); else this.drawFrame(0);
+      if (this.stars.length) {
+        // a different grain sample each clip-frame tick, never the same one twice running
+        const tick = Math.floor(t * FPS);
+        const n = this.stars.length, sample = n > 1 ? (tick * 7 + Math.floor(tick / n)) % n : 0;
+        this.drawRow(ease(t / HOLD), sample);
+      } else this.drawFrame(0);
     } else {
       this.drawFrame(Math.min(FRAMES - 1, Math.floor((t - HOLD) * FPS)));
     }
