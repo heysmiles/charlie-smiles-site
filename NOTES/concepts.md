@@ -153,6 +153,17 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-05, last — star: soft halo kept, one spin direction
+
+Charlie: still obvious at the switch — the held stars had straight lines at
+the corners that vanish when the clip starts; and the spin reversed (right,
+then left into the gathering, then right). Done: the silhouette mask that
+trimmed the held stars (PNG alpha ×6, a hard star outline) was clipping the
+clip's soft halo; the neighbours' tips stop short of the top wedge anyway,
+so the mask is gone and the halo is whole. All three stars now turn left
+(TURN = −1 each), matching the clip's gathering spin. star.png is no longer
+loaded by the page.
+
 ## Status — 2026-10-05, later — the star loop is seamless
 
 Charlie: two visible cuts, right before and right after the gathering.
