@@ -139,17 +139,19 @@ Nothing in it is an image. It lives in `web/src/world/`:
   in the tube.
 
 The landing (`ui/Landing.tsx`) is the star, the signature and "surf the
-internet" with an arrow. The star is drawn live on a canvas (`ui/star.ts`),
-not played from a video: three grainy six-point stars, orange, blue and
-green, each arm a straight-edged triangle rasterised as stipple (dense down
-the middle, fading to the edges, a dark heart), in a few grain variants so
-it shimmers; multiplied together like inks and multiplied into the cream by
-CSS. They sit in a row turning slowly for most of a nine-second loop, then
-slide into one burst, spin against each other, and slide back out. A canvas
-needs no autoplay (phones in low-power mode refuse video and show a play
-button) and has nothing behind it (a video's poster showed black), and it is
-crisp at any pixel ratio. It only runs while on screen and the tab is
-visible, and holds its first frame under reduced-motion.
+internet" with an arrow. The star is the original clip — three grainy
+six-point stars, orange, blue and green, sliding from a row into one burst
+and back — but played from a sprite sheet on a canvas (`ui/star.ts`), not
+from a `<video>`: phones in low-power mode refuse to autoplay video and show
+a play button, and a video's poster showed black behind the star; a sheet of
+frames has neither problem, starts when the page does, and is transparent.
+Two sheets of 75 frames at 15 fps (`public/brand/star-320.webp` for larger
+screens, `star-224.webp` for phones; built from the clip in the browser via
+the dev frame sink with `ext=webp&to=brand`). The loop lingers in the row:
+the opening half-second is played back and forth for a few seconds before
+the clip runs through, so the gathering is the event. It only runs while on
+screen and the tab is visible, and holds its first frame under
+reduced-motion.
 
 Phones: the landing is `100svh` and the stage `100dvh`, so nothing jumps as
 the browser bars come and go; the renderer runs at a pixel ratio of at most

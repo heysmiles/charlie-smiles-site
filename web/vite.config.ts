@@ -17,12 +17,16 @@ function frameSink(): Plugin {
       mkdirSync(dir, { recursive: true })
       server.middlewares.use('/__frame', (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
-        const name = new URL(req.url || '', 'http://x').searchParams.get('name') || 'frame'
+        const q = new URL(req.url || '', 'http://x').searchParams
+        const name = q.get('name') || 'frame'
+        // `ext` picks the file type (jpg by default); `to=brand` writes into public/brand instead (for building assets).
+        const ext = (q.get('ext') || 'jpg').replace(/[^a-z]/g, '') || 'jpg'
+        const outDir = q.get('to') === 'brand' ? join(process.cwd(), 'public', 'brand') : dir
         let body = ''
         req.on('data', (c) => { body += c })
         req.on('end', () => {
-          const b64 = body.replace(/^data:image\/\w+;base64,/, '')
-          const file = join(dir, `${name.replace(/[^a-z0-9_-]/gi, '')}.jpg`)
+          const b64 = body.replace(/^data:image\/[\w+-]+;base64,/, '')
+          const file = join(outDir, `${name.replace(/[^a-z0-9_-]/gi, '')}.${ext}`)
           writeFileSync(file, Buffer.from(b64, 'base64'))
           res.setHeader('content-type', 'text/plain')
           res.end(file)

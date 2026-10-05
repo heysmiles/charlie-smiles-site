@@ -153,6 +153,18 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-04, later — the original star clip is back, as a sprite sheet
+
+Charlie: the canvas-drawn stars looked nothing like the originals; go back.
+Done: the original `star.webm` frames (75 at 15 fps) extracted in the
+browser into two WebP sprite sheets (320 px frames, 2.7 MB; 224 px for
+phones, 1.4 MB) and played on the same canvas by `ui/star.ts`. So it is the
+clip's own pixels, still with no autoplay and nothing black behind. The row
+is held (opening frames played back and forth) for 3.5 s before the clip
+runs, per his "come together less often" note. The source clips live in
+`web/public/ref/` (gitignored); the sink in `vite.config.ts` takes
+`ext=webp&to=brand` to rebuild the sheets.
+
 ## Status — 2026-10-04 — star drawn live; mobile pass; "surf the internet"
 
 Charlie: copy on the landing just "surf the internet" with the arrow. The

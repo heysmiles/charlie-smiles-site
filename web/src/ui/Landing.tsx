@@ -3,15 +3,16 @@ import { StarAnim } from './star';
 
 /**
  * The still, warm page you land on. A normal block at the top of the page;
- * the world scrolls up beneath it. The star is drawn live (see star.ts), so
- * it needs no autoplay and has nothing behind it.
+ * the world scrolls up beneath it. The star is the original clip played from
+ * a sprite sheet (see star.ts), so it needs no autoplay and has nothing
+ * behind it.
  */
 export function Landing() {
   const star = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = star.current!;
-    const anim = new StarAnim(canvas);
+    const anim = new StarAnim(canvas, import.meta.env.BASE_URL);
     if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__star = anim;
     const ro = new ResizeObserver(() => anim.resize(canvas.clientWidth));
     ro.observe(canvas);
