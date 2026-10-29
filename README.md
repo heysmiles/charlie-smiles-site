@@ -151,14 +151,18 @@ low-power mode show a play button instead) or cannot play either file, a
 sprite sheet of the clip's frames at 15 fps (`star-480.webp`, `star-256.webp`
 for phones) stands in, so the star always runs and is always transparent; a
 video's own poster would have shown black. The loop lingers in the row
-before each gathering: for 3.6 s the three stars turn slowly in place, each
-a whole sixth of a turn to the left (the way the clip spins them together),
-easing to rest exactly on the clip's first frame; then the clip plays
-through; then the hold again. The turning stars are cut from the clip's own
-resting frames (its first three and last three, one pose) — each star's top
-arm is clear of its neighbours, and a six-point star repeats every sixth, so
-every pixel is read from that one clean wedge by symmetry, halo and all —
-and six grain samples cycle at the clip's rate during the hold, so the
+before each gathering: for 4 s the three stars turn slowly in place, each
+a half turn to the left (the way the clip spins them together), easing to
+rest exactly on the clip's first frame; then the clip plays through; then
+the hold again. The turning stars are cut from the clip's own resting
+frames (six of them, one pose). Each star has two long arms and four short
+ones and is mirror-symmetric, and in the row the stars overlap — orange
+under blue under green — so the orange star is its clean left half
+mirrored, the green its clean right half, and the blue (clean only along
+its long arms) is the orange star recoloured, by radius, to the blue
+gradient measured on those arms. The held stars composite in the clip's
+own order, and the resting frames cycle upright and flipped at the clip's
+grain rate (every other frame) during the hold, so the
 shimmer never stops across either seam. It only runs while on screen and
 the tab is visible, and holds its first frame under reduced-motion.
 

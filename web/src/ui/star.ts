@@ -11,65 +11,121 @@
  * at 15 fps stands in, so the star always runs and is always transparent.
  *
  * The loop: for a few seconds the three stars turn slowly in place, each a
- * whole sixth of a turn, easing to rest exactly on the clip's first frame;
+ * half turn to the left, easing to rest exactly on the clip's first frame;
  * then the clip plays through; then the hold again. The turning stars are
- * cut from the clip's own resting frames (its first three and last three,
- * one pose): each star's top arm is clear of its neighbours and a six-point
- * star repeats every sixth, so every pixel is read from that one clean wedge
- * by symmetry, halo and all. Six grain samples cycle at the clip's rate
- * during the hold, so the shimmer never stops across either seam.
+ * cut from the clip's own resting frames. Each star has two long arms and
+ * four short ones and is mirror-symmetric, and in the row the stars overlap
+ * (orange under blue under green), so: the orange star is its clean left
+ * half mirrored, the green its clean right half, and the blue its left half
+ * with the arms that lie over the orange star rebuilt from the orange star's
+ * own pixels, recoloured by radius to the blue star's gradient. The clip's
+ * grain changes every other frame; the hold cycles through the resting
+ * frames at that rate, so the shimmer never stops across either seam.
  */
 const CLIP = 720; // the clip's frame size; the row layout below is measured in it
 const ROW = { cx: [172, 360, 540], cy: 360, size: 492 }; // the stars in the clip's first frame
-const TURN = -1; // sixths of a turn each star makes during the hold: to the left, the way the clip spins them together
-const HOLD = 3.6; // seconds of slow turning before the clip runs
-const SHIMMER = 1 / 15; // seconds per grain sample during the hold
-const REST_T = (dur: number) => [0, 1 / 60, 2 / 60, dur - 3 / 60, dur - 2 / 60, dur - 1 / 60]; // the clip's resting frames, one pose
+const TURN = -1; // half turns each star makes during the hold: to the left, the way the clip spins them together
+const HOLD = 4; // seconds of slow turning before the clip runs
+const SHIMMER = 1 / 30; // seconds per grain sample during the hold: the clip's own grain rate
+const REST_F = [0, 2, 4, 296, 298, 299]; // the clip's resting frames (at 60 fps): one pose, six grains
 // The fallback sheet: 9 columns of 15 fps frames, 480 px for larger screens, 256 px for phones.
-const SHEET = { fps: 15, cols: 9, frames: 75, rest: [0, 1, 2, 72, 73, 74] };
+const SHEET = { fps: 15, cols: 9, frames: 75, rest: [0, 1, 73, 74] };
 
 const ease = (x: number) => { const t = Math.min(1, Math.max(0, x)); return t * t * (3 - 2 * t); };
 
 /**
- * One star cut from a resting frame: `src` holds the whole 720-unit frame
- * (scaled to `px` pixels, at `sx, sy` within `src`). Every pixel of the star
- * is read from the top wedge (a sixth of a turn, centred on the upward arm)
- * by rotating its position into that wedge; only a soft fade at the canvas
- * edge, well outside the halo.
+ * The three stars cut from one resting frame: `src` holds the whole
+ * 720-unit frame scaled to `px` pixels at `sx, sy`. Each star is a square
+ * canvas centred on the star, with a soft fade at the canvas edge well
+ * outside the star.
  */
-function extract(src: CanvasImageSource, sx: number, sy: number, px: number, k: number) {
+function cutStars(src: CanvasImageSource, sx: number, sy: number, px: number): HTMLCanvasElement[] {
   const s = px / CLIP;
   const D = Math.round(ROW.size * s * 1.3), h = D / 2;
-  const fr = document.createElement('canvas'); fr.width = fr.height = D;
-  const fg = fr.getContext('2d')!;
-  fg.drawImage(src, sx, sy, px, px, h - ROW.cx[k] * s, h - ROW.cy * s, px, px);
-  const sd = fg.getImageData(0, 0, D, D).data;
-  const out = document.createElement('canvas'); out.width = out.height = D;
-  const og = out.getContext('2d')!;
-  const id = og.createImageData(D, D), d = id.data;
-  const SIXTH = Math.PI / 3, UP = -Math.PI / 2;
-  for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) {
-    const o = (y * D + x) * 4;
-    const dx = x + 0.5 - h, dy = y + 0.5 - h;
-    const r = Math.hypot(dx, dy), th = Math.atan2(dy, dx);
-    const edge = r / h;
-    if (edge >= 1) continue;
-    const mask = edge < 0.92 ? 1 : 1 - (edge - 0.92) / 0.08;
-    const n = Math.round((th - UP) / SIXTH);
-    const t2 = th - n * SIXTH;
-    const qx = h + r * Math.cos(t2) - 0.5, qy = h + r * Math.sin(t2) - 0.5;
-    const x0 = Math.floor(qx), y0 = Math.floor(qy), fx = qx - x0, fy = qy - y0;
+  // The frame's pixels.
+  const fc = document.createElement('canvas'); fc.width = fc.height = px;
+  const fg = fc.getContext('2d', { willReadFrequently: true })!;
+  fg.drawImage(src, sx, sy, px, px, 0, 0, px, px);
+  const F = fg.getImageData(0, 0, px, px).data;
+  // Bilinear sample of the frame at a continuous point; premultiplied result.
+  const sample = (qx: number, qy: number, out: Float64Array) => {
+    const x0 = Math.floor(qx - 0.5), y0 = Math.floor(qy - 0.5), fx = qx - 0.5 - x0, fy = qy - 0.5 - y0;
     let R = 0, G = 0, B = 0, A = 0;
     for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
-      const xx = Math.min(D - 1, Math.max(0, x0 + i)), yy = Math.min(D - 1, Math.max(0, y0 + j));
-      const w = (i ? fx : 1 - fx) * (j ? fy : 1 - fy), q = (yy * D + xx) * 4, a = sd[q + 3] * w;
-      R += sd[q] * a; G += sd[q + 1] * a; B += sd[q + 2] * a; A += a;
+      const xx = x0 + i, yy = y0 + j;
+      if (xx < 0 || yy < 0 || xx >= px || yy >= px) continue;
+      const w = (i ? fx : 1 - fx) * (j ? fy : 1 - fy), q = (yy * px + xx) * 4, a = F[q + 3] * w;
+      R += F[q] * a; G += F[q + 1] * a; B += F[q + 2] * a; A += a;
     }
-    if (A <= 0) continue;
-    d[o] = R / A; d[o + 1] = G / A; d[o + 2] = B / A; d[o + 3] = A * mask;
+    out[0] = R; out[1] = G; out[2] = B; out[3] = A;
+  };
+  // Each star's clean half, mirrored into a whole star: premultiplied floats.
+  const raw: Float64Array[] = [];
+  const tmp = new Float64Array(4);
+  for (let k = 0; k < 3; k++) {
+    const d = new Float64Array(D * D * 4);
+    for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) {
+      const u = x + 0.5 - h, v = y + 0.5 - h;
+      const edge = Math.hypot(u, v) / h;
+      if (edge >= 1) continue;
+      const mask = edge < 0.92 ? 1 : 1 - (edge - 0.92) / 0.08;
+      const um = k === 2 ? Math.abs(u) : -Math.abs(u); // orange and blue from the left, green from the right
+      sample(ROW.cx[k] * s + um, ROW.cy * s + v, tmp);
+      if (tmp[3] <= 0) continue;
+      const o = (y * D + x) * 4;
+      d[o] = tmp[0] * mask; d[o + 1] = tmp[1] * mask; d[o + 2] = tmp[2] * mask; d[o + 3] = tmp[3] * mask;
+    }
+    raw.push(d);
   }
-  og.putImageData(id, 0, 0);
-  return out;
+  // The blue star lies over the orange one, so its short arms are mixed with
+  // orange. Measure, by radius, how the blue gradient differs from the orange
+  // (on the clean long arms), and build the blue star from the orange one.
+  const BIN = 2 * s, bins = Math.ceil(h / BIN) + 1;
+  const prof = (d: Float64Array) => {
+    const acc = new Float64Array(bins * 4);
+    for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) {
+      const u = x + 0.5 - h, v = y + 0.5 - h, r = Math.hypot(u, v);
+      if (r < 1 || Math.abs(u) / r > 0.342) continue; // within 20 degrees of the vertical arms
+      const o = (y * D + x) * 4, a = d[o + 3];
+      if (a < 128) continue; // solid pixels only
+      const b = Math.floor(r / BIN) * 4;
+      acc[b] += d[o]; acc[b + 1] += d[o + 1]; acc[b + 2] += d[o + 2]; acc[b + 3] += a;
+    }
+    return acc;
+  };
+  const pO = prof(raw[0]), pB = prof(raw[1]);
+  const shift = new Float64Array(bins * 3);
+  let last = [0, 0, 0];
+  for (let b = 0; b < bins; b++) {
+    if (pO[b * 4 + 3] > 0 && pB[b * 4 + 3] > 0) {
+      last = [0, 1, 2].map((c) => pB[b * 4 + c] / pB[b * 4 + 3] - pO[b * 4 + c] / pO[b * 4 + 3]);
+    }
+    shift[b * 3] = last[0]; shift[b * 3 + 1] = last[1]; shift[b * 3 + 2] = last[2];
+  }
+  // The blue star is the orange star's pixels, shifted: the blue star's own
+  // pixels are only clean along its long arms, and its grain is just grain.
+  const O = raw[0], Bl = raw[1];
+  for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) {
+    const o = (y * D + x) * 4, ta = O[o + 3];
+    if (ta <= 0) { Bl[o] = Bl[o + 1] = Bl[o + 2] = Bl[o + 3] = 0; continue; }
+    const r = Math.hypot(x + 0.5 - h, y + 0.5 - h);
+    const b = Math.min(bins - 1, Math.floor(r / BIN)) * 3;
+    for (let c = 0; c < 3; c++) Bl[o + c] = Math.min(255, Math.max(0, O[o + c] / ta + shift[b + c])) * ta;
+    Bl[o + 3] = ta;
+  }
+  // To canvases.
+  return raw.map((d) => {
+    const c = document.createElement('canvas'); c.width = c.height = D;
+    const g = c.getContext('2d')!;
+    const id = g.createImageData(D, D), p = id.data;
+    for (let i = 0; i < D * D; i++) {
+      const o = i * 4, a = d[o + 3];
+      if (a <= 0) continue;
+      p[o] = d[o] / a; p[o + 1] = d[o + 1] / a; p[o + 2] = d[o + 2] / a; p[o + 3] = a;
+    }
+    g.putImageData(id, 0, 0);
+    return c;
+  });
 }
 
 type Phase = 'hold' | 'clip';
@@ -117,10 +173,10 @@ export class StarAnim {
     v.onerror = () => this.useSheet();
     v.onloadedmetadata = () => {
       // Cut the resting frames first (seeking through them), then prove autoplay works.
-      this.restPending = REST_T(v.duration);
+      this.restPending = REST_F.map((f) => Math.min(v.duration, (f + 0.5) / 60));
       v.onseeked = () => {
         if (!this.restPending.length) return;
-        this.stars.push([0, 1, 2].map((k) => extract(v, 0, 0, CLIP, k)));
+        this.stars.push(cutStars(v, 0, 0, CLIP));
         this.restPending.shift();
         if (this.restPending.length) v.currentTime = this.restPending[0];
         else {
@@ -145,7 +201,7 @@ export class StarAnim {
   private buildOneFromSheet() {
     if (!this.sheet || this.stars.length >= SHEET.rest.length) return;
     const f = SHEET.rest[this.stars.length], px = this.px;
-    this.stars.push([0, 1, 2].map((k) => extract(this.sheet!, (f % SHEET.cols) * px, Math.floor(f / SHEET.cols) * px, px, k)));
+    this.stars.push(cutStars(this.sheet, (f % SHEET.cols) * px, Math.floor(f / SHEET.cols) * px, px));
   }
 
   resize(cssSize: number) {
@@ -167,18 +223,23 @@ export class StarAnim {
   stop() { this.running = false; cancelAnimationFrame(this.raf); if (this.video) this.video.pause(); }
   dispose() { this.stop(); if (this.video) { this.video.removeAttribute('src'); this.video.load(); } }
 
-  /** The three stars in their row, each turned by `turn` sixths (0 = as in the clip's first frame), from grain sample `sample`. */
+  /** How many grain samples there are: each cut frame, upright and upside down (the stars are symmetric). */
+  private samples() { return this.stars.length * 2; }
+
+  /** The three stars in their row, each turned by `turn` half turns (0 = as in the clip's first frame), from grain sample `sample`. */
   private drawRow(turn: number, sample: number) {
-    const set = this.stars[sample % this.stars.length];
+    const set = this.stars[sample >> 1];
     if (!set) return;
+    const flip = sample & 1 ? -1 : 1;
     const g = this.ctx, S = this.canvas.width, k = S / CLIP;
     const srcPx = this.videoOk ? CLIP : this.px, up = S / srcPx;
     g.save();
-    g.globalCompositeOperation = 'multiply';
+    // orange under blue under green, as the clip composites them
     set.forEach((star, i) => {
       g.save();
       g.translate(ROW.cx[i] * k, ROW.cy * k);
-      g.rotate(TURN * turn * (Math.PI / 3));
+      g.rotate(TURN * turn * Math.PI);
+      g.scale(1, flip);
       const d = star.width * up;
       g.drawImage(star, -d / 2, -d / 2, d, d);
       g.restore();
@@ -211,7 +272,7 @@ export class StarAnim {
         if (this.videoOk) { this.video!.currentTime = 0; this.video!.play().catch(() => this.useSheet()); }
       } else {
         // a different grain sample each tick, never the same one twice running
-        if (now - this.sampleAt >= SHIMMER * 1000) { const n = this.stars.length; this.sample = n > 1 ? (this.sample + 1 + Math.floor(Math.random() * (n - 1))) % n : 0; this.sampleAt = now; }
+        if (now - this.sampleAt >= SHIMMER * 1000) { const n = this.samples(); this.sample = n > 1 ? (this.sample + 1 + Math.floor(Math.random() * (n - 1))) % n : 0; this.sampleAt = now; }
         if (this.stars.length) this.drawRow(ease(t / HOLD), this.sample);
         else if (this.videoOk) g.drawImage(this.video!, 0, 0, S, S); else this.drawSheetFrame(0);
         return;

@@ -153,6 +153,24 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-29 — star: the hold's stars rebuilt from mirrored halves
+
+Charlie: the gathering is fine now, but from untangle to the next gathering
+the stutter is there, with lines between the parts of each star. Cause,
+found by looking at the frame: the stars are not six-fold — two long arms,
+four short — so the six-fold wedge copy drew the wrong shape with a seam at
+every arm. Done: `cutStars` in `ui/star.ts` mirrors each star's clean half
+(orange left, green right; the stars composite orange < blue < green in the
+clip) and builds the blue star from the orange one with a per-radius colour
+shift measured on the clean long arms. The hold is a half turn (the stars
+are two-fold) over 4 s; grain cycles at the clip's own rate (its grain
+changes every other frame) through six resting frames, upright and flipped;
+held stars composite source-over like the clip, not multiply, so the hold's
+last frame matches the clip's first. Verified by frame sheets in the Chrome
+pane (`.frames/hold_mirror.jpg`, `hold_seam.jpg`, `hold_loop.jpg`).
+
+---
+
 ## Status — 2026-10-29 — star: the clip plays at its real 60 fps again
 
 Charlie: still buggy, not smooth at all. Cause found by measuring the clip:
