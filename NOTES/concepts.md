@@ -153,6 +153,21 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-10-29 — star: the clip plays at its real 60 fps again
+
+Charlie: still buggy, not smooth at all. Cause found by measuring the clip:
+it is 60 fps, and the sprite sheet played it at 15 fps, so the fast
+gathering stuttered — the "cuts" were the frame rate. Done: video first.
+A hidden muted `<video>` is drawn onto the canvas each frame: star.webm
+(VP9 alpha, Chrome/Firefox) or star.mov (HEVC alpha for Safari/iOS, 6.1 MB,
+encoded with `tools/star-hevc-alpha.swift` via AVAssetWriter from 300 PNGs
+exported in the browser; no ffmpeg on this Mac). The resting frames for the
+hold are cut from the video itself at 720. The sheet stays as the fallback
+when play() is refused (iOS low power) or neither file plays. Verified in
+the Chrome pane: webm chosen, six grain sets cut, hold → clip (video runs
+5.00 s) → hold. The Safari/HEVC path is untested here (no Safari in the
+pane).
+
 ## Status — 2026-10-05, last — star: soft halo kept, one spin direction
 
 Charlie: still obvious at the switch — the held stars had straight lines at

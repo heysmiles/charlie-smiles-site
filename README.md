@@ -141,27 +141,26 @@ Nothing in it is an image. It lives in `web/src/world/`:
 The landing (`ui/Landing.tsx`) is the star, the signature and "surf the
 internet" with an arrow. The star is the original clip — three grainy
 six-point stars, orange, blue and green, sliding from a row into one burst
-and back — but played from a sprite sheet on a canvas (`ui/star.ts`), not
-from a `<video>`: phones in low-power mode refuse to autoplay video and show
-a play button, and a video's poster showed black behind the star; a sheet of
-frames has neither problem, starts when the page does, and is transparent.
-Two sheets of 75 frames at 15 fps (`public/brand/star-480.webp` for larger
-screens, `star-256.webp` for phones; built from the clip in the browser via
-the dev frame sink with `ext=webp&to=brand`; the source clips live in
-`public/ref/`, gitignored). The loop lingers in the row before each
-gathering: for 3.6 s the three stars turn slowly in place, each a whole
-sixth of a turn, easing to rest exactly on the clip's first frame; then the
-clip runs through and its last frame hands back to the row. The turning
-stars are cut from the clip itself — each star's top arm is clear of its
-neighbours, and a six-point star repeats every sixth, so every pixel is read
-from that one clean wedge by symmetry, halo and all — so they are the clip's
-own pixels. All three turn to the left, the way the clip spins them
-together, so the motion never reverses. The clip's grain changes
-every frame, so the stars are cut from six resting frames (the clip's first
-three and last three, one pose) and cycled at the clip's 15 fps during the
-hold: the shimmer never stops, and neither seam shows. It only runs while on
-screen and the tab is visible, and holds its first frame under
-reduced-motion.
+and back, 5 s at 60 fps — drawn onto a canvas by `ui/star.ts`. The clip
+comes from a muted, hidden `<video>` whose frames are copied to the canvas
+every animation frame: `public/brand/star.webm` (VP9 with alpha) for Chrome
+and Firefox, `star.mov` (HEVC with alpha, made by `tools/star-hevc-alpha.swift`
+from a PNG frame sequence exported in the browser) for Safari and iOS, which
+play WebM without its alpha. If a browser will not autoplay (phones in
+low-power mode show a play button instead) or cannot play either file, a
+sprite sheet of the clip's frames at 15 fps (`star-480.webp`, `star-256.webp`
+for phones) stands in, so the star always runs and is always transparent; a
+video's own poster would have shown black. The loop lingers in the row
+before each gathering: for 3.6 s the three stars turn slowly in place, each
+a whole sixth of a turn to the left (the way the clip spins them together),
+easing to rest exactly on the clip's first frame; then the clip plays
+through; then the hold again. The turning stars are cut from the clip's own
+resting frames (its first three and last three, one pose) — each star's top
+arm is clear of its neighbours, and a six-point star repeats every sixth, so
+every pixel is read from that one clean wedge by symmetry, halo and all —
+and six grain samples cycle at the clip's rate during the hold, so the
+shimmer never stops across either seam. It only runs while on screen and
+the tab is visible, and holds its first frame under reduced-motion.
 
 Phones: the landing is `100svh` and the stage `100dvh`, so nothing jumps as
 the browser bars come and go; the renderer runs at a pixel ratio of at most
