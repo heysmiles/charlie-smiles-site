@@ -153,6 +153,19 @@ videography · Brooks → the apartment · Stan → work.
 
 ---
 
+## Status — 2026-11-08 — star: back to the plain looping clip
+
+Charlie: "lets just go back to the video, you have not been able to
+reproduce it smoothly correctly." Done: the hold (slow turn between
+gatherings) is gone. `ui/star.ts` is now only the clip, looping, drawn from
+the hidden video onto the canvas (webm for Chrome/Firefox, HEVC mov for
+Safari/iOS), with the 15 fps sheet as the autoplay fallback. Verified in the
+Chrome pane: webm chosen, loop on, frames across 0–4.95 s
+(`.frames/video_loop.jpg`). The synthesized-hold work stays in history
+(aec5b1e) if a pause between gatherings is ever wanted again.
+
+---
+
 ## Status — 2026-10-29 — star: the hold's stars rebuilt from mirrored halves
 
 Charlie: the gathering is fine now, but from untangle to the next gathering
